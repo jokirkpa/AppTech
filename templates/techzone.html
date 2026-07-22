@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Techzone – AppTech</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Header ───────────────────────────────────────────── */
+        .tz-header {
+            background-color: #333;
+            border-bottom: 2px solid #555;
+            padding: 22px 40px;
+            text-align: center;
+        }
+        .tz-header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #069494;
+            letter-spacing: 2px;
+        }
+        .tz-header p {
+            font-size: 13px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* ── Body ─────────────────────────────────────────────── */
+        .tz-body {
+            flex: 1;
+            padding: 40px;
+            max-width: 860px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .tz-subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 24px;
+        }
+        .tz-subtitle span {
+            color: #e8c030;
+            font-weight: bold;
+        }
+
+        /* ── Table ────────────────────────────────────────────── */
+        .tz-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .tz-table thead tr {
+            background-color: #2a2a2a;
+            border-bottom: 2px solid #444;
+        }
+        .tz-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+        }
+        .tz-table th.col-add {
+            text-align: center;
+            width: 80px;
+        }
+        .tz-table tbody tr {
+            border-bottom: 1px solid #2d2d2d;
+            transition: background 0.15s;
+        }
+        .tz-table tbody tr:hover {
+            background-color: #222;
+        }
+        .tz-table td {
+            padding: 14px 16px;
+            vertical-align: top;
+        }
+        .tool-name {
+            font-size: 15px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .tool-desc {
+            font-size: 12px;
+            color: #999;
+            line-height: 1.4;
+        }
+        .tool-by {
+            font-size: 12px;
+            color: #069494;
+        }
+        .col-add {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        /* ── Custom checkbox ──────────────────────────────────── */
+        .tz-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #555;
+            border-radius: 5px;
+            background: #1a1a1a;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.2s, background 0.2s;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .tz-checkbox:checked {
+            background: #069494;
+            border-color: #069494;
+        }
+        .tz-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 1px;
+            width: 8px;
+            height: 12px;
+            border: 2px solid #fff;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+        .tz-checkbox:hover {
+            border-color: #069494;
+        }
+
+        /* ── Toast ────────────────────────────────────────────── */
+        .tz-toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #069494;
+            color: #fff;
+            font-size: 13px;
+            padding: 10px 22px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.25s, transform 0.25s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .tz-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── Back link ────────────────────────────────────────── */
+        .tz-back {
+            display: inline-block;
+            margin-bottom: 24px;
+            color: #069494;
+            font-size: 13px;
+            text-decoration: none;
+            letter-spacing: 0.3px;
+        }
+        .tz-back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="tz-header">
+        <h1>Application Techzone</h1>
+        <p>Manage which tools appear on your AppTech dashboard</p>
+    </div>
+
+    <div class="tz-body">
+        <a href="/apptech" class="tz-back">&#8592; Back to Dashboard</a>
+
+        <p class="tz-subtitle">
+            <span id="activeCount">0</span> of <span id="totalCount">0</span> tools active on dashboard.
+            Changes take effect immediately.
+        </p>
+
+        <table class="tz-table">
+            <thead>
+                <tr>
+                    <th style="width:30%">Tool</th>
+                    <th>Description</th>
+                    <th style="width:110px">Author</th>
+                    <th class="col-add">On Dashboard</th>
+                </tr>
+            </thead>
+            <tbody id="toolTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <div class="tz-toast" id="tzToast"></div>
+
+    <script>
+    // ── Canonical tool list (must match dashboard data-tool-id values) ──
+    const TOOLS = [
+        { id: 'portSpeedModal',    name: 'Port Speed Calculator',  by: 'jokirkpa',
+          desc: 'Convert network speed units, and determine Rx/Tx load percentages for switch ports' },
+        { id: 'subnetModal',       name: 'Subnet Calculator',      by: 'jokirkpa',
+          desc: 'Calculate subnet details, and determine overlapping subnets' },
+        { id: 'tcpdumpModal',      name: 'TCPDUMP Builder',        by: 'jokirkpa',
+          desc: 'Build tcpdump commands with filters for interface, source, destination, protocol, and more' },
+        { id: 'timeCalcModal',     name: 'Time/Date Calculator',   by: 'jokirkpa',
+          desc: 'Calculate time/date differences, and timezone offsets' },
+        { id: 'hexToIpModal',      name: 'Hex Converter',          by: 'jokirkpa',
+          desc: 'Convert between hexadecimal and network addresses' },
+        { id: 'jsonPrettyModal',   name: 'Pretty Text',            by: 'jokirkpa',
+          desc: 'Format and beautify JSON and XML with proper indentation' },
+        { id: 'pingGraphModal',    name: 'Ping Graph',             by: 'jokirkpa',
+          desc: 'Visualize ping results with latency graphs and annotations for packet loss and TTL changes' },
+        { id: 'logAnalyzerModal',  name: 'Log Analyzer',           by: 'jokirkpa',
+          desc: 'Analyze logs with pattern detection and repeating message identification' },
+        { id: 'diffModal',         name: 'Diff Check',             by: 'jokirkpa',
+          desc: 'Compare two text blocks and highlight differences line-by-line' },
+        { id: 'aciContractModal',  name: 'ACI Contract Trainer',   by: 'jokirkpa',
+          desc: 'Visual representation of how contracts work in ACI' },
+        { id: 'columnSorterModal', name: 'Column Sorter',          by: 'jokirkpa',
+          desc: 'Paste columnar output, auto-detect columns, sort by any column asc/desc, and copy results' },
+    ];
+
+    const LS_KEY = 'apptechHiddenTools';
+
+    function getHidden() {
+        try { return new Set(JSON.parse(localStorage.getItem(LS_KEY) || '[]')); }
+        catch(e) { return new Set(); }
+    }
+
+    function saveHidden(hiddenSet) {
+        localStorage.setItem(LS_KEY, JSON.stringify([...hiddenSet]));
+    }
+
+    let _toastTimer = null;
+    function showToast(msg) {
+        const t = document.getElementById('tzToast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    function updateCount() {
+        const hidden = getHidden();
+        const active = TOOLS.filter(t => !hidden.has(t.id)).length;
+        document.getElementById('activeCount').textContent = active;
+        document.getElementById('totalCount').textContent  = TOOLS.length;
+    }
+
+    function buildTable() {
+        const hidden = getHidden();
+        const tbody  = document.getElementById('toolTableBody');
+        tbody.innerHTML = '';
+
+        TOOLS.forEach(tool => {
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>'
+                    + '<div class="tool-name">' + escHtml(tool.name) + '</div>'
+                    + '<div class="tool-desc">' + escHtml(tool.desc) + '</div>'
+                + '</td>'
+                + '<td></td>'  // desc column is inside first td for layout — keep empty
+                + '<td class="tool-by">By: ' + escHtml(tool.by) + '</td>'
+                + '<td class="col-add">'
+                    + '<input type="checkbox" class="tz-checkbox" data-id="' + tool.id + '"'
+                    + (hidden.has(tool.id) ? '' : ' checked') + '>'
+                + '</td>';
+
+            // Fix: merge name+desc into first td, description column shows desc
+            tr.innerHTML =
+                '<td>'
+                    + '<div class="tool-name">' + escHtml(tool.name) + '</div>'
+                + '</td>'
+                + '<td><div class="tool-desc">' + escHtml(tool.desc) + '</div></td>'
+                + '<td class="tool-by">By: ' + escHtml(tool.by) + '</td>'
+                + '<td class="col-add">'
+                    + '<input type="checkbox" class="tz-checkbox" data-id="' + tool.id + '"'
+                    + (hidden.has(tool.id) ? '' : ' checked') + '>'
+                + '</td>';
+
+            tbody.appendChild(tr);
+        });
+
+        // Wire checkboxes
+        tbody.querySelectorAll('.tz-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const hidden = getHidden();
+                if (this.checked) {
+                    hidden.delete(this.dataset.id);
+                    showToast('Added to dashboard');
+                } else {
+                    hidden.add(this.dataset.id);
+                    showToast('Removed from dashboard');
+                }
+                saveHidden(hidden);
+                updateCount();
+            });
+        });
+
+        updateCount();
+    }
+
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    buildTable();
+    </script>
+</body>
+</html>

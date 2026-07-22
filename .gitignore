@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.env
+circuit_credentials.json
+circuit_logs/
+*.png
+*.db
+*.db-shm
+*.db-wal
+.DS_Store

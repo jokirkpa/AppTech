@@ -1,0 +1,1981 @@
+<!-- Port Speed Calculator Tool -->
+    <!-- Port Speed Calculator Modal -->
+    <div id="portSpeedModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>⚡ Port Speed Calculator</h2>
+                <button class="close-btn" onclick="closeModal('portSpeedModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div style="display: flex; border-bottom: 2px solid #555; margin-bottom: 20px;">
+                    <button id="tabSpeedConversion" class="tab-btn active" onclick="switchPortSpeedTab('speedConversion')">Speed Conversion</button>
+                    <button id="tabLoadCalc" class="tab-btn" onclick="switchPortSpeedTab('loadCalc')">Load Calculation</button>
+                    <button id="tabPowerCalc" class="tab-btn" onclick="switchPortSpeedTab('powerCalc')">xcvr dom raw</button>
+                </div>
+
+                <!-- Tab 1: Speed Unit Conversion -->
+                <div id="speedConversionTab" class="tab-content active">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Speed Unit Conversion</h3>
+                    <div class="form-group">
+                        <label for="speedValue">Speed Value</label>
+                        <input type="number" id="speedValue" placeholder="Enter speed value" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="speedUnit">Unit</label>
+                        <select id="speedUnit">
+                            <option value="bps">bps (bits per second)</option>
+                            <option value="Kbps">Kbps (Kilobits per second)</option>
+                            <option value="Mbps" selected>Mbps (Megabits per second)</option>
+                            <option value="Gbps">Gbps (Gigabits per second)</option>
+                            <option value="Tbps">Tbps (Terabits per second)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="calculatePortSpeed()" style="flex: 1;">Calculate Conversion</button>
+                        <button class="btn" onclick="clearPortSpeed()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+                    <div id="portSpeedResult"></div>
+                </div>
+
+                <!-- Tab 2: Load Calculation -->
+                <div id="loadCalcTab" class="tab-content">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Load Calculation</h3>
+                    <div class="form-group">
+                        <label for="portSpeed">Port Speed</label>
+                        <select id="portSpeed">
+                            <option value="100M">100M</option>
+                            <option value="1G" selected>1G</option>
+                            <option value="10G">10G</option>
+                            <option value="25G">25G</option>
+                            <option value="40G">40G</option>
+                            <option value="50G">50G</option>
+                            <option value="100G">100G</option>
+                            <option value="200G">200G</option>
+                            <option value="400G">400G</option>
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="txLoad">TX Load</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="number" id="txLoad" placeholder="0-255" value="0" min="0" max="255" style="flex: 1;" oninput="if(this.value > 255) this.value = 255; if(this.value < 0) this.value = 0;">
+                                <span style="color: #aaa;">/255</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="rxLoad">RX Load</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="number" id="rxLoad" placeholder="0-255" value="0" min="0" max="255" style="flex: 1;" oninput="if(this.value > 255) this.value = 255; if(this.value < 0) this.value = 0;">
+                                <span style="color: #aaa;">/255</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="calculatePortLoad()" style="flex: 1;">Calculate Load</button>
+                        <button class="btn" onclick="clearPortLoad()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+                    <div id="portLoadResult"></div>
+                </div>
+
+                <!-- Tab 3: xcvr dom raw -->
+                <div id="powerCalcTab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: #069494; margin: 0;">xcvr dom raw</h3>
+                        
+                        <!-- Port Number Input and Copy Command -->
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label for="portNumber" style="color: #ccc; font-size: 14px; white-space: nowrap;">Port Number:</label>
+                            <input type="number" id="portNumber" min="1" placeholder="26" 
+                                   style="width: 80px; padding: 6px 8px; background-color: #2a2a2a; color: white; border: 1px solid #555; border-radius: 5px; appearance: none; -webkit-appearance: none; -moz-appearance: textfield;">
+                            <button class="btn" onclick="copyDomCommand()" style="padding: 6px 12px; background-color: #2d5aa0; font-size: 13px; white-space: nowrap;">📋 Copy Command</button>
+                            <button class="btn" id="addNeighborBtn" onclick="toggleNeighborMode()" style="padding: 6px 12px; background-color: #7b2d7b; font-size: 13px; white-space: nowrap;">➕ Add Neighbor</button>
+                            <span id="commandCopyFeedback" style="color: #00ff00; font-size: 12px; display: none; white-space: nowrap;">✓ Command copied!</span>
+                        </div>
+                    </div>
+                    
+                    <style>
+                        #portNumber::-webkit-inner-spin-button,
+                        #portNumber::-webkit-outer-spin-button {
+                            -webkit-appearance: none;
+                            margin: 0;
+                        }
+                    </style>
+                    
+                    <div id="domInputContainer" style="display: flex; gap: 15px; align-items: flex-start;">
+                        <div class="form-group" style="flex: 1; margin: 0;">
+                            <label for="domRawData" style="display: block; margin-bottom: 8px; min-height: 40px;">Paste 'show platform internal usd xcvr dom raw port &lt;#&gt;' output or formatted transceiver data:</label>
+                            <textarea id="domRawData" rows="15" style="width: 100%; padding: 10px; background-color: #2a2a2a; color: white; border: 1px solid #555; border-radius: 5px; font-family: monospace; font-size: 11px; resize: vertical;" placeholder="Paste raw DOM hex output OR formatted text...&#10;Raw: [b'000-b'015] 11 07 00 00...&#10;Formatted: transceiver is present..."></textarea>
+                        </div>
+                        
+                        <!-- Neighbor 2 Input (hidden by default) -->
+                        <div id="neighbor2Section" class="form-group" style="flex: 1; display: none; margin: 0;">
+                            <label for="domRawDataNeighbor2" style="color: #7b2d7b; display: block; margin-bottom: 8px; min-height: 40px;">Paste Neighbor 2 raw or formatted transceiver data:</label>
+                            <textarea id="domRawDataNeighbor2" rows="15" style="width: 100%; padding: 10px; background-color: #2a2a2a; color: white; border: 1px solid #7b2d7b; border-radius: 5px; font-family: monospace; font-size: 11px; resize: vertical;" placeholder="Paste raw DOM hex output OR formatted text...&#10;Raw: [b'000-b'015] 11 07 00 00...&#10;Formatted: transceiver is present..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="calculatePowerFromDom()" style="flex: 1;">Parse DOM Data</button>
+                        <button class="btn" onclick="clearPowerCalc()" style="flex: 1; background-color: #555;">Clear</button>
+                        <button id="copyDomResultBtn" class="btn" onclick="copyDomResultToClipboard()" style="flex: 1; background-color: #2d5aa0; display: none;">📋 Copy Results</button>
+                    </div>
+                    <div id="powerCalcResult"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+        // Clear Port Load Results
+        function clearPortLoad() {
+            document.getElementById('portLoadResult').innerHTML = '';
+        }
+
+        // Generate TX power warning based on dBm value
+        function generateTxPowerWarning(txDbm) {
+            if (txDbm <= -1 && txDbm > -3) {
+                return '<div style="margin-top: 15px; padding: 10px; background-color: rgba(255, 140, 0, 0.2); border-left: 4px solid orange; border-radius: 5px;"><span style="color: orange; font-weight: bold;">⚠ TX Warning:</span> Link is suspect to flapping</div>';
+            } else if (txDbm <= -3) {
+                return '<div style="margin-top: 15px; padding: 10px; background-color: rgba(255, 0, 0, 0.2); border-left: 4px solid red; border-radius: 5px;"><span style="color: red; font-weight: bold;">🚨 TX Alert:</span> Link is flapping</div>';
+            }
+            return '';
+        }
+
+        // Generate RX power warning based on dBm value
+        function generateRxPowerWarning(rxDbm) {
+            if (rxDbm <= -1 && rxDbm > -3) {
+                return '<div style="margin-top: 15px; padding: 10px; background-color: rgba(255, 140, 0, 0.2); border-left: 4px solid orange; border-radius: 5px;"><span style="color: orange; font-weight: bold;">⚠ RX Warning:</span> Link is suspect to flapping</div>';
+            } else if (rxDbm <= -3) {
+                return '<div style="margin-top: 15px; padding: 10px; background-color: rgba(255, 0, 0, 0.2); border-left: 4px solid red; border-radius: 5px;"><span style="color: red; font-weight: bold;">🚨 RX Alert:</span> Link is flapping</div>';
+            }
+            return '';
+        }
+
+        // Clear Power Calculator Results
+        function clearPowerCalc() {
+            document.getElementById('domRawData').value = '';
+            document.getElementById('domRawDataNeighbor2').value = '';
+            document.getElementById('powerCalcResult').innerHTML = '';
+            document.getElementById('copyDomResultBtn').style.display = 'none';
+            window.domClipboardText = null;
+            
+            // Reset neighbor mode if active
+            if (window.neighborModeActive) {
+                toggleNeighborMode();
+            }
+        }
+
+        // Global variable to store formatted clipboard text
+        window.domClipboardText = null;
+        
+        // Global variable to track neighbor mode
+        window.neighborModeActive = false;
+
+        // Toggle Neighbor Mode
+        function toggleNeighborMode() {
+            const neighbor2Section = document.getElementById('neighbor2Section');
+            const addNeighborBtn = document.getElementById('addNeighborBtn');
+            
+            window.neighborModeActive = !window.neighborModeActive;
+            
+            if (window.neighborModeActive) {
+                neighbor2Section.style.display = 'block';
+                addNeighborBtn.textContent = '➖ Remove Neighbor';
+                addNeighborBtn.style.backgroundColor = '#555';
+            } else {
+                neighbor2Section.style.display = 'none';
+                addNeighborBtn.textContent = '➕ Add Neighbor';
+                addNeighborBtn.style.backgroundColor = '#7b2d7b';
+                document.getElementById('domRawDataNeighbor2').value = '';
+            }
+        }
+
+        // Power Calculator from DOM raw data
+        function calculatePowerFromDom() {
+            const domData = document.getElementById('domRawData').value;
+            const resultDiv = document.getElementById('powerCalcResult');
+
+            if (!domData.trim()) {
+                resultDiv.innerHTML = '<div class="error-message">Please paste DOM data (raw hex or formatted text)</div>';
+                return;
+            }
+            
+            // Check if neighbor mode is active
+            if (window.neighborModeActive) {
+                const domData2 = document.getElementById('domRawDataNeighbor2').value;
+                if (!domData2.trim()) {
+                    resultDiv.innerHTML = '<div class="error-message">Please paste Neighbor 2 DOM data (raw hex or formatted text)</div>';
+                    return;
+                }
+                calculateNeighborComparison(domData, domData2, resultDiv);
+                return;
+            }
+
+            try {
+                // Check if this is formatted text instead of raw hex
+                if (isFormattedText(domData)) {
+                    const data = parseFormattedText(domData);
+                    if (!data) {
+                        resultDiv.innerHTML = '<div class="error-message">Failed to parse formatted text</div>';
+                        return;
+                    }
+                    
+                    // Display the data using appropriate function
+                    if (data.isQSFP) {
+                        displayQSFPResults(resultDiv, data);
+                    } else {
+                        displaySFPResults(resultDiv, data);
+                    }
+                    return;
+                }
+                
+                // Parse all lines and build a byte array
+                const lines = domData.split('\n');
+                const byteArray = [];
+                
+                for (let line of lines) {
+                    // Match lines like [b'032-b'047] or [b\'032-b\'047]
+                    const match = line.match(/\[b['"](\d+)-b['"](\d+)\]\s+(.+)/);
+                    if (match) {
+                        const startByte = parseInt(match[1]);
+                        const hexValues = match[3].trim().split(/\s+/);
+                        
+                        // Store hex values with their byte positions
+                        hexValues.forEach((hex, index) => {
+                            byteArray[startByte + index] = hex;
+                        });
+                    }
+                }
+
+                if (byteArray.length < 100) {
+                    resultDiv.innerHTML = '<div class="error-message">Insufficient DOM data.</div>';
+                    return;
+                }
+
+                // Detect transceiver type from byte 0 (or byte 128 for QSFP paged data)
+                const identifierByte0 = byteArray[0] ? parseInt(byteArray[0], 16) : null;
+                const identifierByte128 = byteArray[128] ? parseInt(byteArray[128], 16) : null;
+                
+                let isQSFP = false;
+                let isSFP = false;
+                
+                // Check byte 128 first (QSFP page 0 upper memory)
+                if (identifierByte128 === 0x0C || identifierByte128 === 0x0D || identifierByte128 === 0x11 || identifierByte128 === 0x18) {
+                    isQSFP = true;
+                }
+                // Check byte 0 (SFP identifier)
+                else if (identifierByte0 === 0x03) {
+                    isSFP = true;
+                }
+                // If neither is clearly identified, make a best guess
+                else if (byteArray.length > 200 && byteArray[148]) {
+                    // If we have data at byte 148+ (QSFP vendor name location), assume QSFP
+                    isQSFP = true;
+                } else {
+                    resultDiv.innerHTML = '<div class="error-message">Unable to detect transceiver type. Please ensure DOM data is complete.</div>';
+                    return;
+                }
+
+                // Route to appropriate parser
+                if (isQSFP) {
+                    parseQSFPData(byteArray, resultDiv);
+                } else {
+                    parseSFPData(byteArray, resultDiv);
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">Error parsing DOM data: ${error.message}</div>`;
+                document.getElementById('copyDomResultBtn').style.display = 'none';
+                window.domClipboardText = null;
+            }
+        }
+
+        // ============================================================================
+        // NEIGHBOR COMPARISON FUNCTIONS
+        // ============================================================================
+
+        function isFormattedText(data) {
+            // Check if data looks like formatted output rather than raw hex
+            return data.includes('transceiver is present') || data.includes('SFP Detail Diagnostics Information');
+        }
+
+        function parseFormattedText(data) {
+            const lines = data.split('\n');
+            let type = 'Unknown';
+            let vendor = 'Unknown';
+            let partNumber = 'Unknown';
+            let serialNumber = 'Unknown';
+            let nominalBitrate = 0;
+            let linkLengths = { copper: 0, om1: 0, om2: 0, om3: 0, smf: 0 };
+            let ciscoInfo = { productId: '', partNumber: '', versionId: '' };
+            let temperature = 0;
+            let voltage = 0;
+            let txBias = [];
+            let txPowers = [];
+            let rxPowers = [];
+            let isQSFP = false;
+            let laneCount = 0;
+            
+            // Parse identification fields
+            for (let line of lines) {
+                line = line.trim();
+                
+                // Check more specific patterns first to avoid substring matches
+                if (line.includes('cisco product id is ')) {
+                    ciscoInfo.productId = line.split('cisco product id is ')[1].trim();
+                } else if (line.includes('cisco part number is ')) {
+                    ciscoInfo.partNumber = line.split('cisco part number is ')[1].trim();
+                } else if (line.includes('cisco version id is ')) {
+                    ciscoInfo.versionId = line.split('cisco version id is ')[1].trim();
+                } else if (line.includes('cisco vendor id is ')) {
+                    ciscoInfo.versionId = line.split('cisco vendor id is ')[1].trim();
+                } else if (line.includes('type is ')) {
+                    type = line.split('type is ')[1].trim();
+                    if (type.includes('QSFP')) isQSFP = true;
+                } else if (line.includes('name is ')) {
+                    vendor = line.split('name is ')[1].trim();
+                } else if (line.includes('part number is ')) {
+                    partNumber = line.split('part number is ')[1].trim();
+                } else if (line.includes('serial number is ')) {
+                    serialNumber = line.split('serial number is ')[1].trim();
+                } else if (line.includes('nominal bitrate is ')) {
+                    const match = line.match(/nominal bitrate is (\d+)/);
+                    if (match) nominalBitrate = parseInt(match[1]);
+                } else if (line.includes('Link length supported for cable assembly is ')) {
+                    const match = line.match(/(\d+)\s*m/);
+                    if (match) linkLengths.copper = parseInt(match[1]);
+                } else if (line.includes('Link length supported for 62.5/125um fiber is ')) {
+                    const match = line.match(/(\d+)\s*m/);
+                    if (match) linkLengths.om1 = parseInt(match[1]);
+                } else if (line.includes('Link length supported for 50/125um') && line.includes('OM2')) {
+                    const match = line.match(/(\d+)\s*m/);
+                    if (match) linkLengths.om2 = parseInt(match[1]);
+                } else if (line.includes('Link length supported for 50/125um') && line.includes('OM3')) {
+                    const match = line.match(/(\d+)\s*m/);
+                    if (match) linkLengths.om3 = parseInt(match[1]);
+                } else if (line.includes('Link length supported for SMF fiber is ')) {
+                    const match = line.match(/(\d+)\s*km/);
+                    if (match) linkLengths.smf = parseInt(match[1]);
+                } else if (line.includes('Lane Number')) {
+                    laneCount++;
+                }
+            }
+            
+            // Determine if QSFP based on lane count if not already determined
+            if (laneCount >= 4) isQSFP = true;
+            
+            // Initialize threshold tracking
+            let thresholds = {
+                temperature: null,
+                voltage: null,
+                txBias: null,
+                txPower: null,
+                rxPower: null
+            };
+            
+            // Parse operational values and thresholds from each lane
+            let currentLane = -1;
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line.includes('Lane Number')) {
+                    currentLane++;
+                }
+                
+                if (line.startsWith('Temperature')) {
+                    // Match: Temperature   60.51 C        75.00 C     -5.00 C     70.00 C        0.00 C
+                    const values = line.match(/([\d.-]+)\s*C/g);
+                    if (values && values.length >= 1) {
+                        temperature = parseFloat(values[0].replace(/\s*C/, ''));
+                        if (values.length >= 5) {
+                            thresholds.temperature = {
+                                highAlarm: parseFloat(values[1].replace(/\s*C/, '')),
+                                lowAlarm: parseFloat(values[2].replace(/\s*C/, '')),
+                                highWarn: parseFloat(values[3].replace(/\s*C/, '')),
+                                lowWarn: parseFloat(values[4].replace(/\s*C/, ''))
+                            };
+                        }
+                    }
+                }
+                if (line.startsWith('Voltage')) {
+                    const values = line.match(/([\d.-]+)\s*V/g);
+                    if (values && values.length >= 1) {
+                        voltage = parseFloat(values[0].replace(/\s*V/, ''));
+                        if (values.length >= 5) {
+                            thresholds.voltage = {
+                                highAlarm: parseFloat(values[1].replace(/\s*V/, '')),
+                                lowAlarm: parseFloat(values[2].replace(/\s*V/, '')),
+                                highWarn: parseFloat(values[3].replace(/\s*V/, '')),
+                                lowWarn: parseFloat(values[4].replace(/\s*V/, ''))
+                            };
+                        }
+                    }
+                }
+                if (line.startsWith('Current')) {
+                    const values = line.match(/([\d.-]+)\s*mA/g);
+                    if (values && values.length >= 1) {
+                        const bias = parseFloat(values[0].replace(/\s*mA/, ''));
+                        if (isQSFP) {
+                            txBias.push(bias);
+                        } else {
+                            txBias = bias;
+                        }
+                        if (values.length >= 5) {
+                            thresholds.txBias = {
+                                highAlarm: parseFloat(values[1].replace(/\s*mA/, '')),
+                                lowAlarm: parseFloat(values[2].replace(/\s*mA/, '')),
+                                highWarn: parseFloat(values[3].replace(/\s*mA/, '')),
+                                lowWarn: parseFloat(values[4].replace(/\s*mA/, ''))
+                            };
+                        }
+                    }
+                }
+                if (line.startsWith('Tx Power')) {
+                    const values = line.match(/([\d.-]+)\s*dBm/g);
+                    if (values && values.length >= 1) {
+                        const power = parseFloat(values[0].replace(/\s*dBm/, ''));
+                        if (isQSFP) {
+                            txPowers.push(power);
+                        } else {
+                            txPowers = power;
+                        }
+                        if (values.length >= 5) {
+                            thresholds.txPower = {
+                                highAlarm: parseFloat(values[1].replace(/\s*dBm/, '')),
+                                lowAlarm: parseFloat(values[2].replace(/\s*dBm/, '')),
+                                highWarn: parseFloat(values[3].replace(/\s*dBm/, '')),
+                                lowWarn: parseFloat(values[4].replace(/\s*dBm/, ''))
+                            };
+                        }
+                    }
+                }
+                if (line.startsWith('Rx Power')) {
+                    const values = line.match(/([\d.-]+)\s*dBm/g);
+                    if (values && values.length >= 1) {
+                        const power = parseFloat(values[0].replace(/\s*dBm/, ''));
+                        if (isQSFP) {
+                            rxPowers.push(power);
+                        } else {
+                            rxPowers = power;
+                        }
+                        if (values.length >= 5) {
+                            thresholds.rxPower = {
+                                highAlarm: parseFloat(values[1].replace(/\s*dBm/, '')),
+                                lowAlarm: parseFloat(values[2].replace(/\s*dBm/, '')),
+                                highWarn: parseFloat(values[3].replace(/\s*dBm/, '')),
+                                lowWarn: parseFloat(values[4].replace(/\s*dBm/, ''))
+                            };
+                        }
+                    }
+                }
+            }
+            
+            // Use default thresholds only for values that couldn't be parsed
+            const defaultThresholds = {
+                temperature: thresholds.temperature || { highAlarm: 75, lowAlarm: -5, highWarn: 70, lowWarn: 0 },
+                voltage: thresholds.voltage || { highAlarm: 3.63, lowAlarm: 2.97, highWarn: 3.465, lowWarn: 3.135 },
+                txBias: thresholds.txBias || { highAlarm: 10.5, lowAlarm: 2.5, highWarn: 10.5, lowWarn: 2.5 },
+                txPower: thresholds.txPower || { highAlarm: 2.0, lowAlarm: -14, highWarn: -1, lowWarn: -10 },
+                rxPower: thresholds.rxPower || { highAlarm: 2.0, lowAlarm: -14, highWarn: -1, lowWarn: -10 }
+            };
+            
+            const allZeroData = temperature === 0 && voltage === 0 && 
+                               (Array.isArray(txBias) ? txBias.every(v => v === 0) : txBias === 0);
+            
+            const isAffectedByFN = serialNumber.startsWith('FOF') && ciscoInfo.versionId === 'V01';
+            
+            if (isQSFP) {
+                // Ensure we have 4 lanes
+                while (txBias.length < 4) txBias.push(0);
+                while (txPowers.length < 4) txPowers.push(null);
+                while (rxPowers.length < 4) rxPowers.push(null);
+                
+                return {
+                    isQSFP: true,
+                    allZeroData: allZeroData,
+                    type: type,
+                    vendor: vendor,
+                    partNumber: partNumber,
+                    serialNumber: serialNumber,
+                    nominalBitrate: nominalBitrate,
+                    linkLengths: linkLengths,
+                    ciscoInfo: ciscoInfo,
+                    temperature: temperature,
+                    voltage: voltage,
+                    txBias: txBias,
+                    txPowers: txPowers,
+                    rxPowers: rxPowers,
+                    thresholds: defaultThresholds,
+                    isAffectedByFN: isAffectedByFN
+                };
+            } else {
+                return {
+                    isQSFP: false,
+                    allZeroData: allZeroData,
+                    type: type,
+                    vendor: vendor,
+                    partNumber: partNumber,
+                    serialNumber: serialNumber,
+                    nominalBitrate: nominalBitrate,
+                    linkLengths: linkLengths,
+                    ciscoInfo: ciscoInfo,
+                    temperature: temperature,
+                    voltage: voltage,
+                    txBias: Array.isArray(txBias) ? txBias[0] || 0 : txBias,
+                    txPower: Array.isArray(txPowers) ? txPowers[0] || null : txPowers,
+                    rxPower: Array.isArray(rxPowers) ? rxPowers[0] || null : rxPowers,
+                    thresholds: defaultThresholds
+                };
+            }
+        }
+
+        function calculateNeighborComparison(domData1, domData2, resultDiv) {
+            try {
+                const neighbor1 = parseDOMToObject(domData1);
+                const neighbor2 = parseDOMToObject(domData2);
+                
+                if (!neighbor1 || !neighbor2) {
+                    resultDiv.innerHTML = '<div class="error-message">Failed to parse one or both neighbor data sets</div>';
+                    return;
+                }
+                
+                displayNeighborComparison(neighbor1, neighbor2, resultDiv);
+                document.getElementById('copyDomResultBtn').style.display = 'none';
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">Error comparing neighbors: ${error.message}</div>`;
+            }
+        }
+
+        function parseDOMToObject(domData) {
+            // Check if this is formatted text instead of raw hex
+            if (isFormattedText(domData)) {
+                return parseFormattedText(domData);
+            }
+            
+            const lines = domData.split('\n');
+            const byteArray = [];
+            
+            for (let line of lines) {
+                const match = line.match(/\[b['"](\d+)-b['"](\d+)\]\s+(.+)/);
+                if (match) {
+                    const startByte = parseInt(match[1]);
+                    const hexValues = match[3].trim().split(/\s+/);
+                    hexValues.forEach((hex, index) => {
+                        byteArray[startByte + index] = hex;
+                    });
+                }
+            }
+
+            if (byteArray.length < 100) return null;
+
+            const identifierByte0 = byteArray[0] ? parseInt(byteArray[0], 16) : null;
+            const identifierByte128 = byteArray[128] ? parseInt(byteArray[128], 16) : null;
+            
+            let isQSFP = false;
+            if (identifierByte128 === 0x0C || identifierByte128 === 0x0D || identifierByte128 === 0x11 || identifierByte128 === 0x18) {
+                isQSFP = true;
+            } else if (identifierByte0 === 0x03) {
+                isQSFP = false;
+            } else if (byteArray.length > 200 && byteArray[148]) {
+                isQSFP = true;
+            } else {
+                return null;
+            }
+
+            return parseTransceiverData(byteArray, isQSFP);
+        }
+
+        function parseTransceiverData(byteArray, isQSFP) {
+            if (isQSFP) {
+                const qsfpType = getQSFPType(byteArray);
+                const qsfpVendor = getQSFPVendor(byteArray);
+                const qsfpPartNumber = getQSFPPartNumber(byteArray);
+                const qsfpSerialNumber = getQSFPSerialNumber(byteArray);
+                const qsfpNominalBitrate = getQSFPNominalBitrate(byteArray);
+                const qsfpLinkLengths = getQSFPLinkLengths(byteArray);
+                const qsfpCiscoInfo = getQSFPCiscoInfo(byteArray);
+                const qsfpTemperature = getQSFPTemperature(byteArray);
+                const qsfpVoltage = getQSFPVoltage(byteArray);
+                const qsfpRxPowers = getQSFPRxPowers(byteArray);
+                const qsfpTxBias = getQSFPTxBias(byteArray);
+                const qsfpTxPowers = getQSFPTxPowers(byteArray);
+                const qsfpThresholds = getQSFPThresholds(byteArray);
+                
+                const allZero = qsfpTemperature === 0 && qsfpVoltage === 0 && 
+                               qsfpTxBias.every(v => v === 0) && 
+                               qsfpRxPowers.every(v => v === null) && 
+                               qsfpTxPowers.every(v => v === null);
+                               
+                const isAffectedByFN = qsfpSerialNumber.startsWith('FOF') && qsfpCiscoInfo.versionId === 'V01';
+                
+                return {
+                    isQSFP: true,
+                    allZeroData: allZero,
+                    type: qsfpType,
+                    vendor: qsfpVendor,
+                    partNumber: qsfpPartNumber,
+                    serialNumber: qsfpSerialNumber,
+                    nominalBitrate: qsfpNominalBitrate,
+                    linkLengths: qsfpLinkLengths,
+                    ciscoInfo: qsfpCiscoInfo,
+                    temperature: qsfpTemperature,
+                    voltage: qsfpVoltage,
+                    txBias: qsfpTxBias,
+                    txPowers: qsfpTxPowers,
+                    rxPowers: qsfpRxPowers,
+                    thresholds: qsfpThresholds,
+                    isAffectedByFN: isAffectedByFN
+                };
+            } else {
+                const sfpType = getSFPType(byteArray);
+                const sfpVendor = getSFPVendor(byteArray);
+                const sfpPartNumber = getSFPPartNumber(byteArray);
+                const sfpSerialNumber = getSFPSerialNumber(byteArray);
+                const sfpNominalBitrate = getSFPNominalBitrate(byteArray);
+                const sfpLinkLengths = getSFPLinkLengths(byteArray);
+                const sfpCiscoInfo = getSFPCiscoInfo(byteArray);
+                const sfpTemperature = getSFPTemperature(byteArray);
+                const sfpVoltage = getSFPVoltage(byteArray);
+                const sfpTxBias = getSFPTxBias(byteArray);
+                const sfpTxPower = getSFPTxPower(byteArray);
+                const sfpRxPower = getSFPRxPower(byteArray);
+                const sfpThresholds = getSFPThresholds(byteArray);
+                
+                const allZero = sfpTemperature === 0 && sfpVoltage === 0 && 
+                               sfpTxBias === 0 && 
+                               sfpTxPower === null && 
+                               sfpRxPower === null;
+                
+                return {
+                    isQSFP: false,
+                    allZeroData: allZero,
+                    type: sfpType,
+                    vendor: sfpVendor,
+                    partNumber: sfpPartNumber,
+                    serialNumber: sfpSerialNumber,
+                    nominalBitrate: sfpNominalBitrate,
+                    linkLengths: sfpLinkLengths,
+                    ciscoInfo: sfpCiscoInfo,
+                    temperature: sfpTemperature,
+                    voltage: sfpVoltage,
+                    txBias: sfpTxBias,
+                    txPower: sfpTxPower,
+                    rxPower: sfpRxPower,
+                    thresholds: sfpThresholds
+                };
+            }
+        }
+
+        function getPowerDifference(power1, power2) {
+            if (power1 === null || power2 === null) return null;
+            return Math.abs(power1 - power2);
+        }
+
+        function getGradeFromDifference(diff) {
+            if (diff === null) return { text: 'N/A', color: '#888' };
+            if (diff <= 1) return { text: 'Excellent', color: '#00ff00' };
+            if (diff <= 3) return { text: 'Normal', color: '#4444ff' };
+            if (diff <= 5) return { text: 'Caution', color: '#ff9900' };
+            return { text: 'Alert', color: '#ff4444' };
+        }
+
+        function displayNeighborComparison(neighbor1, neighbor2, resultDiv) {
+            let html = `<div class="result-box" style="font-family: 'Courier New', monospace; font-size: 13px; padding: 20px;">`;
+            
+            // Neighbor Summary box
+            html += buildNeighborSummary(neighbor1, neighbor2);
+            
+            // Tabs for individual neighbors
+            html += buildNeighborTabs(neighbor1, neighbor2);
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+
+        function buildNeighborSummary(neighbor1, neighbor2) {
+            let html = `<div style="margin-bottom: 30px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 2px solid #7b2d7b;">
+                <h3 style="color: #7b2d7b; margin: 0 0 20px 0; text-align: center;">📊 Neighbor Link Summary</h3>`;
+            
+            if (neighbor1.allZeroData || neighbor2.allZeroData) {
+                html += `<div style="text-align: center; color: #ff9900; padding: 20px;">
+                    One or both neighbors do not support DOM. Cannot perform comparison.
+                </div></div>`;
+                return html;
+            }
+            
+            // Add column headers
+            html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                <div style="text-align: center; color: #069494; font-weight: bold; font-size: 14px;">Neighbor 1</div>
+                <div style="text-align: center; color: #7b2d7b; font-weight: bold; font-size: 14px;">Neighbor 2</div>
+            </div>`;
+            
+            if (neighbor1.isQSFP) {
+                // 4-lane comparison with lane labels as side column
+                for (let lane = 0; lane < 4; lane++) {
+                    const n1Tx = neighbor1.txPowers[lane];
+                    const n1Rx = neighbor1.rxPowers[lane];
+                    const n2Tx = neighbor2.txPowers[lane];
+                    const n2Rx = neighbor2.rxPowers[lane];
+                    
+                    const diff1 = getPowerDifference(n1Tx, n2Rx);
+                    const diff2 = getPowerDifference(n2Tx, n1Rx);
+                    const grade1 = getGradeFromDifference(diff1);
+                    const grade2 = getGradeFromDifference(diff2);
+                    
+                    html += `<div style="display: grid; grid-template-columns: 60px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
+                        <div style="color: #069494; font-weight: bold; font-size: 12px; text-align: right;">Lane ${lane + 1}</div>
+                        
+                        <div style="padding: 10px; background-color: #1a1a1a; border-radius: 5px;">
+                            <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; margin-bottom: 8px;">
+                                <div style="text-align: right;">
+                                    <span style="color: #aaa; font-size: 10px;">TX: </span>
+                                    <span style="color: white; font-weight: bold; font-size: 12px;">${formatValue(n1Tx, 'dBm')}</span>
+                                </div>
+                                <div style="position: relative; flex-grow: 1; min-width: 80px;">
+                                    <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 10;">
+                                        <span style="color: ${grade1.color}; font-weight: bold; font-size: 9px; background-color: #1a1a1a; padding: 0 6px; border: 1px solid #1a1a1a; white-space: nowrap;">${grade1.text}</span>
+                                    </div>
+                                    <div style="border-top: 2px solid ${grade1.color};"></div>
+                                </div>
+                                <div style="text-align: left;">
+                                    <span style="color: #aaa; font-size: 10px;">RX: </span>
+                                    <span style="color: white; font-weight: bold; font-size: 12px;">${formatValue(n2Rx, 'dBm')}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center;">
+                                <div style="text-align: right;">
+                                    <span style="color: #aaa; font-size: 10px;">RX: </span>
+                                    <span style="color: white; font-weight: bold; font-size: 12px;">${formatValue(n1Rx, 'dBm')}</span>
+                                </div>
+                                <div style="position: relative; flex-grow: 1; min-width: 80px;">
+                                    <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 10;">
+                                        <span style="color: ${grade2.color}; font-weight: bold; font-size: 9px; background-color: #1a1a1a; padding: 0 6px; border: 1px solid #1a1a1a; white-space: nowrap;">${grade2.text}</span>
+                                    </div>
+                                    <div style="border-top: 2px solid ${grade2.color};"></div>
+                                </div>
+                                <div style="text-align: left;">
+                                    <span style="color: #aaa; font-size: 10px;">TX: </span>
+                                    <span style="color: white; font-weight: bold; font-size: 12px;">${formatValue(n2Tx, 'dBm')}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+            } else {
+                // Single lane comparison
+                const n1Tx = neighbor1.txPower;
+                const n1Rx = neighbor1.rxPower;
+                const n2Tx = neighbor2.txPower;
+                const n2Rx = neighbor2.rxPower;
+                
+                const diff1 = getPowerDifference(n1Tx, n2Rx);
+                const diff2 = getPowerDifference(n2Tx, n1Rx);
+                const grade1 = getGradeFromDifference(diff1);
+                const grade2 = getGradeFromDifference(diff2);
+                
+                html += `<div style="padding: 12px; background-color: #1a1a1a; border-radius: 5px;">
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-bottom: 12px;">
+                        <div style="text-align: right;">
+                            <span style="color: #aaa; font-size: 11px;">TX: </span>
+                            <span style="color: white; font-weight: bold; font-size: 14px;">${formatValue(n1Tx, 'dBm')}</span>
+                        </div>
+                        <div style="position: relative; flex-grow: 1; min-width: 100px;">
+                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 10;">
+                                <span style="color: ${grade1.color}; font-weight: bold; font-size: 10px; background-color: #1a1a1a; padding: 0 8px; border: 1px solid #1a1a1a; white-space: nowrap;">${grade1.text}</span>
+                            </div>
+                            <div style="border-top: 3px solid ${grade1.color};"></div>
+                        </div>
+                        <div style="text-align: left;">
+                            <span style="color: #aaa; font-size: 11px;">RX: </span>
+                            <span style="color: white; font-weight: bold; font-size: 14px;">${formatValue(n2Rx, 'dBm')}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center;">
+                        <div style="text-align: right;">
+                            <span style="color: #aaa; font-size: 11px;">RX: </span>
+                            <span style="color: white; font-weight: bold; font-size: 14px;">${formatValue(n1Rx, 'dBm')}</span>
+                        </div>
+                        <div style="position: relative; flex-grow: 1; min-width: 100px;">
+                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 10;">
+                                <span style="color: ${grade2.color}; font-weight: bold; font-size: 10px; background-color: #1a1a1a; padding: 0 8px; border: 1px solid #1a1a1a; white-space: nowrap;">${grade2.text}</span>
+                            </div>
+                            <div style="border-top: 3px solid ${grade2.color};"></div>
+                        </div>
+                        <div style="text-align: left;">
+                            <span style="color: #aaa; font-size: 11px;">TX: </span>
+                            <span style="color: white; font-weight: bold; font-size: 14px;">${formatValue(n2Tx, 'dBm')}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            
+            html += '</div>';
+            return html;
+        }
+
+        function buildNeighborTabs(neighbor1, neighbor2) {
+            let html = `<div style="margin-top: 20px;">
+                <div style="display: flex; border-bottom: 2px solid #555; margin-bottom: 20px;">
+                    <button class="neighbor-tab-btn" onclick="switchNeighborTab('neighbor1')" id="neighbor1Tab" 
+                            style="flex: 1; padding: 12px; background-color: #069494; color: white; border: none; cursor: pointer; font-size: 14px; font-weight: bold;">
+                        Neighbor 1
+                    </button>
+                    <button class="neighbor-tab-btn" onclick="switchNeighborTab('neighbor2')" id="neighbor2Tab"
+                            style="flex: 1; padding: 12px; background-color: #2a2a2a; color: #888; border: none; cursor: pointer; font-size: 14px; font-weight: bold;">
+                        Neighbor 2
+                    </button>
+                </div>
+                
+                <div id="neighbor1Content" style="display: block;">
+                    ${buildIndividualNeighborContent(neighbor1)}
+                </div>
+                
+                <div id="neighbor2Content" style="display: none;">
+                    ${buildIndividualNeighborContent(neighbor2)}
+                </div>
+            </div>`;
+            
+            return html;
+        }
+
+        function buildIndividualNeighborContent(data) {
+            let html = buildTransceiverInfoHTML(data, data.isQSFP);
+            
+            if (data.allZeroData) {
+                html += `<div style="margin: 20px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 2px solid #ff9900; text-align: center;">
+                    <div style="color: #ff9900; font-size: 16px; font-weight: bold;">DOM unsupported</div>
+                </div>`;
+            } else if (data.isQSFP) {
+                for (let i = 0; i < 4; i++) {
+                    html += buildLaneHTML(i + 1, {
+                        temp: data.temperature,
+                        volt: data.voltage,
+                        bias: data.txBias[i],
+                        txPwr: data.txPowers[i],
+                        rxPwr: data.rxPowers[i]
+                    }, data.thresholds, true);
+                }
+            } else {
+                html += buildLaneHTML(null, {
+                    temp: data.temperature,
+                    volt: data.voltage,
+                    bias: data.txBias,
+                    txPwr: data.txPower,
+                    rxPwr: data.rxPower
+                }, data.thresholds, false);
+            }
+            
+            html += '</div>'; // Close result-box div
+            return html;
+        }
+
+        function switchNeighborTab(tabName) {
+            // Hide all content
+            document.getElementById('neighbor1Content').style.display = 'none';
+            document.getElementById('neighbor2Content').style.display = 'none';
+            
+            // Reset all tab buttons
+            document.getElementById('neighbor1Tab').style.backgroundColor = '#2a2a2a';
+            document.getElementById('neighbor1Tab').style.color = '#888';
+            document.getElementById('neighbor2Tab').style.backgroundColor = '#2a2a2a';
+            document.getElementById('neighbor2Tab').style.color = '#888';
+            
+            // Show selected content and highlight tab
+            if (tabName === 'neighbor1') {
+                document.getElementById('neighbor1Content').style.display = 'block';
+                document.getElementById('neighbor1Tab').style.backgroundColor = '#069494';
+                document.getElementById('neighbor1Tab').style.color = 'white';
+            } else {
+                document.getElementById('neighbor2Content').style.display = 'block';
+                document.getElementById('neighbor2Tab').style.backgroundColor = '#069494';
+                document.getElementById('neighbor2Tab').style.color = 'white';
+            }
+        }
+
+        // ============================================================================
+        // QSFP PARSING FUNCTIONS (SFF-8636)
+        // ============================================================================
+
+        function parseQSFPData(byteArray, resultDiv) {
+            if (byteArray.length < 211) {
+                resultDiv.innerHTML = '<div class="error-message">Insufficient QSFP DOM data. Expected at least 211 bytes.</div>';
+                return;
+            }
+
+            // QSFP-specific extraction functions
+            const qsfpType = getQSFPType(byteArray);
+            const qsfpVendor = getQSFPVendor(byteArray);
+            const qsfpPartNumber = getQSFPPartNumber(byteArray);
+            const qsfpSerialNumber = getQSFPSerialNumber(byteArray);
+            const qsfpNominalBitrate = getQSFPNominalBitrate(byteArray);
+            const qsfpLinkLengths = getQSFPLinkLengths(byteArray);
+            const qsfpCiscoInfo = getQSFPCiscoInfo(byteArray);
+            
+            // Current values (Page 0, bytes 0-127)
+            const qsfpTemperature = getQSFPTemperature(byteArray);
+            const qsfpVoltage = getQSFPVoltage(byteArray);
+            const qsfpRxPowers = getQSFPRxPowers(byteArray);  // 4 lanes
+            const qsfpTxBias = getQSFPTxBias(byteArray);      // 4 lanes
+            const qsfpTxPowers = getQSFPTxPowers(byteArray);  // 4 lanes
+            
+            // Thresholds (would be Page 3, but using Page 0 addresses for now if available)
+            const qsfpThresholds = getQSFPThresholds(byteArray);
+            
+            // Check if all operational values are zero (DDM not supported or not functioning)
+            const allZero = qsfpTemperature === 0 && qsfpVoltage === 0 && 
+                           qsfpTxBias.every(v => v === 0) && 
+                           qsfpRxPowers.every(v => v === null) && 
+                           qsfpTxPowers.every(v => v === null);
+            
+            // Check if transceiver is affected by FN70438
+            const isAffectedByFN = qsfpSerialNumber.startsWith('FOF') && qsfpCiscoInfo.versionId === 'V01';
+            
+            // Build output
+            displayQSFPResults(resultDiv, {
+                allZeroData: allZero,
+                type: qsfpType,
+                vendor: qsfpVendor,
+                partNumber: qsfpPartNumber,
+                serialNumber: qsfpSerialNumber,
+                nominalBitrate: qsfpNominalBitrate,
+                linkLengths: qsfpLinkLengths,
+                ciscoInfo: qsfpCiscoInfo,
+                temperature: qsfpTemperature,
+                voltage: qsfpVoltage,
+                rxPowers: qsfpRxPowers,
+                txBias: qsfpTxBias,
+                txPowers: qsfpTxPowers,
+                thresholds: qsfpThresholds,
+                isAffectedByFN: isAffectedByFN
+            });
+        }
+
+        // QSFP extraction functions
+        function getQSFPType(byteArray) {
+            const identifier = byteArray[128] ? parseInt(byteArray[128], 16) : 0;
+            const typeMap = {
+                0x0C: 'QSFP',
+                0x0D: 'QSFP+',
+                0x11: 'QSFP28',
+                0x18: 'QSFP-DD'
+            };
+            return typeMap[identifier] || `Unknown (0x${byteArray[128]})`;
+        }
+
+        function getQSFPVendor(byteArray) {
+            return extractAsciiString(byteArray, 148, 163);
+        }
+
+        function getQSFPPartNumber(byteArray) {
+            return extractAsciiString(byteArray, 168, 183);
+        }
+
+        function getQSFPSerialNumber(byteArray) {
+            return extractAsciiString(byteArray, 196, 211);
+        }
+
+        function getQSFPNominalBitrate(byteArray) {
+            // Byte 140, units of 100 Mbps
+            return byteArray[140] ? (parseInt(byteArray[140], 16) * 100) : 0;
+        }
+
+        function getQSFPLinkLengths(byteArray) {
+            return {
+                smf: byteArray[142] ? parseInt(byteArray[142], 16) : 0,  // km
+                om3: byteArray[143] ? (parseInt(byteArray[143], 16) * 2) : 0,  // 2m units
+                om2: byteArray[144] ? parseInt(byteArray[144], 16) : 0,  // m
+                om1: byteArray[145] ? parseInt(byteArray[145], 16) : 0,  // m
+                copper: byteArray[146] ? parseInt(byteArray[146], 16) : 0  // m
+            };
+        }
+
+        function getQSFPCiscoInfo(byteArray) {
+            const productId = extractAsciiString(byteArray, 448, 463);
+            const partNumber = extractAsciiString(byteArray, 384, 399);
+            const versionIdRaw = extractAsciiString(byteArray, 400, 415);
+            const versionMatch = versionIdRaw.match(/V\d+/);
+            const versionId = versionMatch ? versionMatch[0] : versionIdRaw;
+            
+            return { productId, partNumber, versionId };
+        }
+
+        function getQSFPTemperature(byteArray) {
+            // Bytes 22-23
+            const hexValue = getTwoBytes(byteArray, 22, 23);
+            return hexToTemperature(hexValue);
+        }
+
+        function getQSFPVoltage(byteArray) {
+            // Bytes 26-27
+            const hexValue = getTwoBytes(byteArray, 26, 27);
+            return hexToVoltage(hexValue);
+        }
+
+        function getQSFPRxPowers(byteArray) {
+            // Bytes 34-41 (4 lanes, 2 bytes each)
+            return [
+                hexToPowerDbm(getTwoBytes(byteArray, 34, 35)),
+                hexToPowerDbm(getTwoBytes(byteArray, 36, 37)),
+                hexToPowerDbm(getTwoBytes(byteArray, 38, 39)),
+                hexToPowerDbm(getTwoBytes(byteArray, 40, 41))
+            ];
+        }
+
+        function getQSFPTxBias(byteArray) {
+            // Bytes 42-49 (4 lanes, 2 bytes each)
+            return [
+                hexToBiasMa(getTwoBytes(byteArray, 42, 43)),
+                hexToBiasMa(getTwoBytes(byteArray, 44, 45)),
+                hexToBiasMa(getTwoBytes(byteArray, 46, 47)),
+                hexToBiasMa(getTwoBytes(byteArray, 48, 49))
+            ];
+        }
+
+        function getQSFPTxPowers(byteArray) {
+            // Bytes 50-57 (4 lanes, 2 bytes each)
+            return [
+                hexToPowerDbm(getTwoBytes(byteArray, 50, 51)),
+                hexToPowerDbm(getTwoBytes(byteArray, 52, 53)),
+                hexToPowerDbm(getTwoBytes(byteArray, 54, 55)),
+                hexToPowerDbm(getTwoBytes(byteArray, 56, 57))
+            ];
+        }
+
+        function getQSFPThresholds(byteArray) {
+            // Attempt to read Page 3 threshold data
+            // Note: Page 3 data may not be available from standard DOM dumps
+            const tempHighAlarm = getThresholdValue(byteArray, 128, hexToTemperature);
+            const tempLowAlarm = getThresholdValue(byteArray, 130, hexToTemperature);
+            const voltHighAlarm = getThresholdValue(byteArray, 144, hexToVoltage);
+            const voltLowAlarm = getThresholdValue(byteArray, 146, hexToVoltage);
+            
+            // Check if we have valid Page 3 data by seeing if thresholds are non-null
+            // If Page 0 is present at these addresses, we'll get vendor name bytes instead
+            const hasPage3Data = tempHighAlarm !== null && tempLowAlarm !== null && 
+                                 voltHighAlarm !== null && voltLowAlarm !== null &&
+                                 tempHighAlarm > 0 && tempHighAlarm < 150 && // Reasonable temp range
+                                 tempLowAlarm < 50 && tempLowAlarm > -50;
+            
+            if (!hasPage3Data) {
+                // Return industry-standard default thresholds for QSFP28 SR4/LR4 optics
+                // These match typical Cisco QSFP specifications
+                return {
+                    temperature: {
+                        highAlarm: 75.0,
+                        lowAlarm: -5.0,
+                        highWarn: 70.0,
+                        lowWarn: 0.0
+                    },
+                    voltage: {
+                        highAlarm: 3.63,
+                        lowAlarm: 2.97,
+                        highWarn: 3.46,
+                        lowWarn: 3.13
+                    },
+                    txBias: {
+                        highAlarm: 10.0,
+                        lowAlarm: 2.0,
+                        highWarn: 8.5,
+                        lowWarn: 3.0
+                    },
+                    txPower: {
+                        highAlarm: 6.99,
+                        lowAlarm: -10.0,
+                        highWarn: 3.99,
+                        lowWarn: -6.0
+                    },
+                    rxPower: {
+                        highAlarm: 6.99,
+                        lowAlarm: -11.93,
+                        highWarn: 3.99,
+                        lowWarn: -7.90
+                    }
+                };
+            }
+            
+            // Page 3 data appears to be available, read all thresholds
+            return {
+                temperature: {
+                    highAlarm: tempHighAlarm,
+                    lowAlarm: tempLowAlarm,
+                    highWarn: getThresholdValue(byteArray, 132, hexToTemperature),
+                    lowWarn: getThresholdValue(byteArray, 134, hexToTemperature)
+                },
+                voltage: {
+                    highAlarm: voltHighAlarm,
+                    lowAlarm: voltLowAlarm,
+                    highWarn: getThresholdValue(byteArray, 148, hexToVoltage),
+                    lowWarn: getThresholdValue(byteArray, 150, hexToVoltage)
+                },
+                txBias: {
+                    highAlarm: getThresholdValue(byteArray, 160, hexToBiasMa),
+                    lowAlarm: getThresholdValue(byteArray, 162, hexToBiasMa),
+                    highWarn: getThresholdValue(byteArray, 164, hexToBiasMa),
+                    lowWarn: getThresholdValue(byteArray, 166, hexToBiasMa)
+                },
+                txPower: {
+                    highAlarm: getThresholdValue(byteArray, 192, hexToPowerDbm),
+                    lowAlarm: getThresholdValue(byteArray, 194, hexToPowerDbm),
+                    highWarn: getThresholdValue(byteArray, 196, hexToPowerDbm),
+                    lowWarn: getThresholdValue(byteArray, 198, hexToPowerDbm)
+                },
+                rxPower: {
+                    highAlarm: getThresholdValue(byteArray, 176, hexToPowerDbm),
+                    lowAlarm: getThresholdValue(byteArray, 178, hexToPowerDbm),
+                    highWarn: getThresholdValue(byteArray, 180, hexToPowerDbm),
+                    lowWarn: getThresholdValue(byteArray, 182, hexToPowerDbm)
+                }
+            };
+        }
+
+        // ============================================================================
+        // SFP PARSING FUNCTIONS (SFF-8472)
+        // ============================================================================
+
+        function parseSFPData(byteArray, resultDiv) {
+            if (byteArray.length < 100) {
+                resultDiv.innerHTML = '<div class="error-message">Insufficient SFP DOM data.</div>';
+                return;
+            }
+
+            // SFP-specific extraction functions
+            const sfpType = getSFPType(byteArray);
+            const sfpVendor = getSFPVendor(byteArray);
+            const sfpPartNumber = getSFPPartNumber(byteArray);
+            const sfpSerialNumber = getSFPSerialNumber(byteArray);
+            const sfpNominalBitrate = getSFPNominalBitrate(byteArray);
+            const sfpLinkLengths = getSFPLinkLengths(byteArray);
+            const sfpCiscoInfo = getSFPCiscoInfo(byteArray);
+            
+            // Current values (Address A2h, bytes 96-105)
+            const sfpTemperature = getSFPTemperature(byteArray);
+            const sfpVoltage = getSFPVoltage(byteArray);
+            const sfpTxBias = getSFPTxBias(byteArray);
+            const sfpTxPower = getSFPTxPower(byteArray);
+            const sfpRxPower = getSFPRxPower(byteArray);
+            
+            // Thresholds (Address A2h, bytes 0-39)
+            const sfpThresholds = getSFPThresholds(byteArray);
+            
+            // Check if all operational values are zero (DDM not supported or not functioning)
+            const allZero = sfpTemperature === 0 && sfpVoltage === 0 && 
+                           sfpTxBias === 0 && 
+                           sfpTxPower === null && 
+                           sfpRxPower === null;
+            
+            // Build output (SFP doesn't have FN70438 check)
+            displaySFPResults(resultDiv, {
+                allZeroData: allZero,
+                type: sfpType,
+                vendor: sfpVendor,
+                partNumber: sfpPartNumber,
+                serialNumber: sfpSerialNumber,
+                nominalBitrate: sfpNominalBitrate,
+                linkLengths: sfpLinkLengths,
+                ciscoInfo: sfpCiscoInfo,
+                temperature: sfpTemperature,
+                voltage: sfpVoltage,
+                txBias: sfpTxBias,
+                txPower: sfpTxPower,
+                rxPower: sfpRxPower,
+                thresholds: sfpThresholds
+            });
+        }
+
+        // SFP extraction functions
+        function getSFPType(byteArray) {
+            const identifier = byteArray[0] ? parseInt(byteArray[0], 16) : 0;
+            if (identifier === 0x03) return 'SFP/SFP+/SFP28';
+            return `Unknown (0x${byteArray[0]})`;
+        }
+
+        function getSFPVendor(byteArray) {
+            return extractAsciiString(byteArray, 20, 35);
+        }
+
+        function getSFPPartNumber(byteArray) {
+            return extractAsciiString(byteArray, 40, 55);
+        }
+
+        function getSFPSerialNumber(byteArray) {
+            return extractAsciiString(byteArray, 68, 83);
+        }
+
+        function getSFPNominalBitrate(byteArray) {
+            // Byte 12, units of 100 Mbps
+            return byteArray[12] ? (parseInt(byteArray[12], 16) * 100) : 0;
+        }
+
+        function getSFPLinkLengths(byteArray) {
+            return {
+                smf: byteArray[14] ? parseInt(byteArray[14], 16) : 0,  // km
+                smfExtended: byteArray[15] ? (parseInt(byteArray[15], 16) / 10) : 0,  // 100m units
+                om2: byteArray[16] ? (parseInt(byteArray[16], 16) * 10) : 0,  // 10m units
+                om1: byteArray[17] ? (parseInt(byteArray[17], 16) * 10) : 0,  // 10m units
+                copper: byteArray[18] ? parseInt(byteArray[18], 16) : 0,  // m
+                om3: byteArray[19] ? (parseInt(byteArray[19], 16) * 10) : 0  // 10m units
+            };
+        }
+
+        function getSFPCiscoInfo(byteArray) {
+            // SFP Cisco vendor extensions at same byte offsets as QSFP
+            const productId = extractAsciiString(byteArray, 448, 463);
+            const partNumber = extractAsciiString(byteArray, 384, 399);
+            const versionIdRaw = extractAsciiString(byteArray, 400, 415);
+            const versionMatch = versionIdRaw.match(/V\d+/);
+            const versionId = versionMatch ? versionMatch[0] : versionIdRaw.trim();
+            
+            return { productId, partNumber, versionId };
+        }
+
+        function getSFPTemperature(byteArray) {
+            // A2h bytes 96-97 = dump bytes 352-353 (256 offset for A2h)
+            const hexValue = getTwoBytes(byteArray, 352, 353);
+            return hexToTemperature(hexValue);
+        }
+
+        function getSFPVoltage(byteArray) {
+            // A2h bytes 98-99 = dump bytes 354-355
+            const hexValue = getTwoBytes(byteArray, 354, 355);
+            return hexToVoltage(hexValue);
+        }
+
+        function getSFPTxBias(byteArray) {
+            // A2h bytes 100-101 = dump bytes 356-357
+            const hexValue = getTwoBytes(byteArray, 356, 357);
+            return hexToBiasMa(hexValue);
+        }
+
+        function getSFPTxPower(byteArray) {
+            // A2h bytes 102-103 = dump bytes 358-359
+            const hexValue = getTwoBytes(byteArray, 358, 359);
+            return hexToPowerDbm(hexValue);
+        }
+
+        function getSFPRxPower(byteArray) {
+            // A2h bytes 104-105 = dump bytes 360-361
+            const hexValue = getTwoBytes(byteArray, 360, 361);
+            return hexToPowerDbm(hexValue);
+        }
+
+        function getSFPThresholds(byteArray) {
+            // Attempt to read A2h address space threshold data (A2h bytes 0-39 = dump bytes 256-295)
+            const tempHighAlarm = getThresholdValue(byteArray, 256, hexToTemperature);
+            const tempLowAlarm = getThresholdValue(byteArray, 258, hexToTemperature);
+            const voltHighAlarm = getThresholdValue(byteArray, 264, hexToVoltage);
+            const voltLowAlarm = getThresholdValue(byteArray, 266, hexToVoltage);
+            
+            // Check if we have valid A2h threshold data
+            const hasA2hData = tempHighAlarm !== null && tempLowAlarm !== null && 
+                               voltHighAlarm !== null && voltLowAlarm !== null &&
+                               tempHighAlarm > 0 && tempHighAlarm < 150 && // Reasonable temp range
+                               tempLowAlarm < 50 && tempLowAlarm > -50;
+            
+            if (!hasA2hData) {
+                // Return industry-standard default thresholds for SFP/SFP+ optics
+                return {
+                    temperature: {
+                        highAlarm: 75.0,
+                        lowAlarm: -5.0,
+                        highWarn: 70.0,
+                        lowWarn: 0.0
+                    },
+                    voltage: {
+                        highAlarm: 3.63,
+                        lowAlarm: 2.97,
+                        highWarn: 3.46,
+                        lowWarn: 3.13
+                    },
+                    txBias: {
+                        highAlarm: 10.0,
+                        lowAlarm: 2.0,
+                        highWarn: 8.5,
+                        lowWarn: 3.0
+                    },
+                    txPower: {
+                        highAlarm: 6.99,
+                        lowAlarm: -10.0,
+                        highWarn: 3.99,
+                        lowWarn: -6.0
+                    },
+                    rxPower: {
+                        highAlarm: 6.99,
+                        lowAlarm: -11.93,
+                        highWarn: 3.99,
+                        lowWarn: -7.90
+                    }
+                };
+            }
+            
+            // A2h data appears to be available, read all thresholds
+            return {
+                temperature: {
+                    highAlarm: tempHighAlarm,
+                    lowAlarm: tempLowAlarm,
+                    highWarn: getThresholdValue(byteArray, 260, hexToTemperature),
+                    lowWarn: getThresholdValue(byteArray, 262, hexToTemperature)
+                },
+                voltage: {
+                    highAlarm: voltHighAlarm,
+                    lowAlarm: voltLowAlarm,
+                    highWarn: getThresholdValue(byteArray, 268, hexToVoltage),
+                    lowWarn: getThresholdValue(byteArray, 270, hexToVoltage)
+                },
+                txBias: {
+                    highAlarm: getThresholdValue(byteArray, 272, hexToBiasMa),
+                    lowAlarm: getThresholdValue(byteArray, 274, hexToBiasMa),
+                    highWarn: getThresholdValue(byteArray, 276, hexToBiasMa),
+                    lowWarn: getThresholdValue(byteArray, 278, hexToBiasMa)
+                },
+                txPower: {
+                    highAlarm: getThresholdValue(byteArray, 280, hexToPowerDbm),
+                    lowAlarm: getThresholdValue(byteArray, 282, hexToPowerDbm),
+                    highWarn: getThresholdValue(byteArray, 284, hexToPowerDbm),
+                    lowWarn: getThresholdValue(byteArray, 286, hexToPowerDbm)
+                },
+                rxPower: {
+                    highAlarm: getThresholdValue(byteArray, 288, hexToPowerDbm),
+                    lowAlarm: getThresholdValue(byteArray, 290, hexToPowerDbm),
+                    highWarn: getThresholdValue(byteArray, 292, hexToPowerDbm),
+                    lowWarn: getThresholdValue(byteArray, 294, hexToPowerDbm)
+                }
+            };
+        }
+
+        // ============================================================================
+        // COMMON HELPER FUNCTIONS
+        // ============================================================================
+
+        function getTwoBytes(byteArray, pos1, pos2) {
+            return byteArray[pos1] + byteArray[pos2];
+        }
+
+        function hexToPowerDbm(hexValue) {
+            const decimal = parseInt(hexValue, 16);
+            // Return null for invalid/zero values to avoid -Infinity
+            if (decimal === 0 || decimal === 0xFFFF) {
+                return null;
+            }
+            const mW = decimal / 10000;
+            return 10 * Math.log10(mW);
+        }
+
+        function hexToBiasMa(hexValue) {
+            const decimal = parseInt(hexValue, 16);
+            return (decimal * 2) / 1000;
+        }
+
+        function hexToTemperature(hexValue) {
+            const decimal = parseInt(hexValue, 16);
+            const signed = decimal > 32767 ? decimal - 65536 : decimal;
+            return signed / 256;
+        }
+
+        function hexToVoltage(hexValue) {
+            const decimal = parseInt(hexValue, 16);
+            return decimal / 10000;
+        }
+
+        function extractAsciiString(byteArray, startByte, endByte) {
+            let str = '';
+            for (let i = startByte; i <= endByte; i++) {
+                if (byteArray[i]) {
+                    const charCode = parseInt(byteArray[i], 16);
+                    if (charCode >= 32 && charCode <= 126) {
+                        str += String.fromCharCode(charCode);
+                    } else {
+                        str += ' ';
+                    }
+                }
+            }
+            return str.trim();
+        }
+
+        function getThresholdValue(byteArray, startByte, conversionFunc) {
+            if (!byteArray[startByte] || !byteArray[startByte + 1]) {
+                return null;
+            }
+            const hexValue = getTwoBytes(byteArray, startByte, startByte + 1);
+            if (hexValue === '0000' || hexValue === 'FFFF' || hexValue === 'ffff') {
+                return null;
+            }
+            try {
+                const value = conversionFunc(hexValue);
+                if (!isFinite(value)) {
+                    return null;
+                }
+                return value;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function getAlarmStatus(value, highAlarm, lowAlarm, highWarn, lowWarn) {
+            if (value === null || highAlarm === null || lowAlarm === null || highWarn === null || lowWarn === null) {
+                return '';
+            }
+            if (value >= highAlarm) return '++';
+            if (value <= lowAlarm) return '--';
+            if (value >= highWarn) return '+';
+            if (value <= lowWarn) return '-';
+            return '';
+        }
+
+        function formatThreshold(value, unit) {
+            if (value === null) return `0.00 ${unit}`;
+            return `${value.toFixed(2)} ${unit}`;
+        }
+        
+        function formatValue(value, unit) {
+            if (value === null) return `N/A ${unit}`;
+            return `${value.toFixed(2)} ${unit}`;
+        }
+
+        // ============================================================================
+        // DISPLAY FUNCTIONS
+        // ============================================================================
+
+        function displayQSFPResults(resultDiv, data) {
+            // Build plain text version for clipboard
+            let plainText = '';
+            
+            plainText += `transceiver is present\n`;
+            plainText += `type is ${data.type}\n`;
+            plainText += `name is ${data.vendor}\n`;
+            plainText += `part number is ${data.partNumber}\n`;
+            plainText += `serial number is ${data.serialNumber}\n`;
+            if (data.nominalBitrate > 0) plainText += `nominal bitrate is ${data.nominalBitrate} MBit/sec per channel\n`;
+            if (data.linkLengths.copper > 0) plainText += `Link length supported for cable assembly is ${data.linkLengths.copper} m\n`;
+            if (data.linkLengths.om1 > 0) plainText += `Link length supported for 62.5/125um fiber is ${data.linkLengths.om1} m\n`;
+            if (data.linkLengths.om2 > 0) plainText += `Link length supported for 50/125um fiber is ${data.linkLengths.om2} m\n`;
+            if (data.linkLengths.om3 > 0) plainText += `Link length supported for 50/125um fiber is ${data.linkLengths.om3} m\n`;
+            if (data.linkLengths.smf > 0) plainText += `Link length supported for SMF fiber is ${data.linkLengths.smf} km\n`;
+            if (data.ciscoInfo.productId) plainText += `cisco product id is ${data.ciscoInfo.productId}\n`;
+            if (data.ciscoInfo.partNumber) plainText += `cisco part number is ${data.ciscoInfo.partNumber}\n`;
+            if (data.ciscoInfo.versionId) plainText += `cisco vendor id is ${data.ciscoInfo.versionId}\n`;
+            plainText += '\n';
+
+            if (data.allZeroData) {
+                plainText += 'DOM unsupported\n';
+            } else {
+                // Add 4 lanes for QSFP
+                for (let i = 0; i < 4; i++) {
+                    plainText += buildLanePlainText(i + 1, {
+                        temp: data.temperature,
+                        volt: data.voltage,
+                        bias: data.txBias[i],
+                        txPwr: data.txPowers[i],
+                        rxPwr: data.rxPowers[i]
+                    }, data.thresholds, true);
+                }
+            }
+            
+            window.domClipboardText = plainText;
+
+            // Build HTML output
+            let html = buildTransceiverInfoHTML(data, true);
+            
+            if (data.allZeroData) {
+                html += `<div style="margin: 20px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 2px solid #ff9900; text-align: center;">
+                    <div style="color: #ff9900; font-size: 16px; font-weight: bold;">DOM unsupported</div>
+                </div>`;
+            } else {
+                // Add 4 lanes HTML
+                for (let i = 0; i < 4; i++) {
+                    html += buildLaneHTML(i + 1, {
+                        temp: data.temperature,
+                        volt: data.voltage,
+                        bias: data.txBias[i],
+                        txPwr: data.txPowers[i],
+                        rxPwr: data.rxPowers[i]
+                    }, data.thresholds, true);
+                }
+            }
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+            document.getElementById('copyDomResultBtn').style.display = 'block';
+        }
+
+        function displaySFPResults(resultDiv, data) {
+            // Build plain text version for clipboard
+            let plainText = `transceiver is present\n`;
+            plainText += `type is ${data.type}\n`;
+            plainText += `name is ${data.vendor}\n`;
+            plainText += `part number is ${data.partNumber}\n`;
+            plainText += `serial number is ${data.serialNumber}\n`;
+            if (data.nominalBitrate > 0) plainText += `nominal bitrate is ${data.nominalBitrate} MBit/sec per channel\n`;
+            if (data.linkLengths.copper > 0) plainText += `Link length supported for cable assembly is ${data.linkLengths.copper} m\n`;
+            if (data.linkLengths.om1 > 0) plainText += `Link length supported for 62.5/125um fiber is ${data.linkLengths.om1} m\n`;
+            if (data.linkLengths.om2 > 0) plainText += `Link length supported for 50/125um fiber is ${data.linkLengths.om2} m\n`;
+            if (data.linkLengths.om3 > 0) plainText += `Link length supported for 50/125um fiber is ${data.linkLengths.om3} m\n`;
+            if (data.linkLengths.smf > 0) plainText += `Link length supported for SMF fiber is ${data.linkLengths.smf} km\n`;
+            if (data.ciscoInfo.productId) plainText += `cisco product id is ${data.ciscoInfo.productId}\n`;
+            if (data.ciscoInfo.partNumber) plainText += `cisco part number is ${data.ciscoInfo.partNumber}\n`;
+            if (data.ciscoInfo.versionId) plainText += `cisco vendor id is ${data.ciscoInfo.versionId}\n`;
+            plainText += '\n';
+
+            if (data.allZeroData) {
+                plainText += 'DOM unsupported\n';
+            } else {
+                // Add single lane for SFP
+                plainText += buildLanePlainText(null, {
+                    temp: data.temperature,
+                    volt: data.voltage,
+                    bias: data.txBias,
+                    txPwr: data.txPower,
+                    rxPwr: data.rxPower
+                }, data.thresholds, false);
+            }
+
+            window.domClipboardText = plainText;
+
+            // Build HTML output
+            let html = buildTransceiverInfoHTML(data, false);
+            
+            if (data.allZeroData) {
+                html += `<div style="margin: 20px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 2px solid #ff9900; text-align: center;">
+                    <div style="color: #ff9900; font-size: 16px; font-weight: bold;">DOM unsupported</div>
+                </div>`;
+            } else {
+                // Add single lane HTML
+                html += buildLaneHTML(null, {
+                    temp: data.temperature,
+                    volt: data.voltage,
+                    bias: data.txBias,
+                    txPwr: data.txPower,
+                    rxPwr: data.rxPower
+                }, data.thresholds, false);
+            }
+            
+            html += '</div>';
+            resultDiv.innerHTML = html;
+            document.getElementById('copyDomResultBtn').style.display = 'block';
+        }
+
+        function buildTransceiverInfoHTML(data, isQSFP) {
+            let html = `<div class="result-box" style="font-family: 'Courier New', monospace; font-size: 13px; padding: 20px;">`;
+            
+            // Add FN70438 warning for QSFP only
+            if (isQSFP && data.isAffectedByFN) {
+                html += `<div style="margin-bottom: 20px; padding: 15px; background-color: #663300; border-left: 5px solid #ff9933; border-radius: 5px;">
+                    <div style="color: #ffaa33; font-weight: bold; font-size: 15px; margin-bottom: 8px;">⚠️ Affected by FN70438</div>
+                    <div style="color: #ffd9b3; font-size: 13px;">This transceiver is affected by a known field notice. <a href="https://ciscofn.service-now.com/fn?id=fn&number=FN70438" target="_blank" style="color: #ffaa66; text-decoration: underline;">View FN70438 Details</a></div>
+                </div>`;
+            }
+            
+            html += `<div style="margin-bottom: 20px; padding: 15px; background-color: #2a2a2a; border-radius: 5px;">
+                <div style="color: #069494; margin-bottom: 10px;">transceiver is present</div>
+                <div style="color: #ccc;">type is <span style="color: #ffd700;">${data.type}</span></div>
+                <div style="color: #ccc;">name is <span style="color: #ffd700;">${data.vendor}</span></div>
+                <div style="color: #ccc;">part number is <span style="color: #ffd700;">${data.partNumber}</span></div>
+                <div style="color: #ccc;">serial number is <span style="color: #ffd700;">${data.serialNumber}</span></div>`;
+            
+            if (data.nominalBitrate > 0) {
+                html += `<div style="color: #ccc;">nominal bitrate is <span style="color: #ffd700;">${data.nominalBitrate}</span> MBit/sec per channel</div>`;
+            }
+            if (data.linkLengths.copper > 0) {
+                html += `<div style="color: #ccc;">Link length supported for cable assembly is <span style="color: #ffd700;">${data.linkLengths.copper}</span> m</div>`;
+            }
+            if (data.linkLengths.om1 > 0) {
+                html += `<div style="color: #ccc;">Link length supported for 62.5/125um fiber is <span style="color: #ffd700;">${data.linkLengths.om1}</span> m</div>`;
+            }
+            if (data.linkLengths.om2 > 0) {
+                html += `<div style="color: #ccc;">Link length supported for 50/125um fiber is <span style="color: #ffd700;">${data.linkLengths.om2}</span> m</div>`;
+            }
+            if (data.linkLengths.om3 > 0) {
+                html += `<div style="color: #ccc;">Link length supported for 50/125um fiber is <span style="color: #ffd700;">${data.linkLengths.om3}</span> m</div>`;
+            }
+            if (data.linkLengths.smf > 0) {
+                html += `<div style="color: #ccc;">Link length supported for SMF fiber is <span style="color: #ffd700;">${data.linkLengths.smf}</span> km</div>`;
+            }
+            if (data.ciscoInfo.productId) {
+                html += `<div style="color: #ccc;">cisco product id is <span style="color: #ffd700;">${data.ciscoInfo.productId}</span></div>`;
+            }
+            if (data.ciscoInfo.partNumber) {
+                html += `<div style="color: #ccc;">cisco part number is <span style="color: #ffd700;">${data.ciscoInfo.partNumber}</span></div>`;
+            }
+            if (data.ciscoInfo.versionId) {
+                html += `<div style="color: #ccc;">cisco vendor id is <span style="color: #ffd700;">${data.ciscoInfo.versionId}</span></div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+
+        function buildLanePlainText(laneNum, values, thresholds, isQSFP) {
+            const tempAlarm = getAlarmStatus(values.temp, thresholds.temperature.highAlarm, thresholds.temperature.lowAlarm, 
+                                            thresholds.temperature.highWarn, thresholds.temperature.lowWarn);
+            const voltAlarm = getAlarmStatus(values.volt, thresholds.voltage.highAlarm, thresholds.voltage.lowAlarm, 
+                                            thresholds.voltage.highWarn, thresholds.voltage.lowWarn);
+            const biasAlarm = getAlarmStatus(values.bias, thresholds.txBias.highAlarm, thresholds.txBias.lowAlarm, 
+                                            thresholds.txBias.highWarn, thresholds.txBias.lowWarn);
+            const txAlarm = getAlarmStatus(values.txPwr, thresholds.txPower.highAlarm, thresholds.txPower.lowAlarm, 
+                                          thresholds.txPower.highWarn, thresholds.txPower.lowWarn);
+            const rxAlarm = getAlarmStatus(values.rxPwr, thresholds.rxPower.highAlarm, thresholds.rxPower.lowAlarm, 
+                                          thresholds.rxPower.highWarn, thresholds.rxPower.lowWarn);
+
+            let text = '';
+            if (isQSFP && laneNum) {
+                text += `Lane Number:${laneNum} Network Lane\n`;
+            }
+            text += `SFP Detail Diagnostics Information (internal calibration)\n`;
+            text += `----------------------------------------------------------------------------\n`;
+            text += `              Current              Alarms                  Warnings\n`;
+            text += `              Measurement     High        Low         High          Low\n`;
+            text += `----------------------------------------------------------------------------\n`;
+            
+            const tempVal = `${values.temp.toFixed(2)} C ${tempAlarm}`.padEnd(19);
+            const tempHA = formatThreshold(thresholds.temperature.highAlarm, 'C').padEnd(11);
+            const tempLA = formatThreshold(thresholds.temperature.lowAlarm, 'C').padEnd(11);
+            const tempHW = formatThreshold(thresholds.temperature.highWarn, 'C').padEnd(13);
+            const tempLW = formatThreshold(thresholds.temperature.lowWarn, 'C');
+            text += `Temperature   ${tempVal} ${tempHA} ${tempLA} ${tempHW} ${tempLW}\n`;
+            
+            const voltVal = `${values.volt.toFixed(2)} V ${voltAlarm}`.padEnd(19);
+            const voltHA = formatThreshold(thresholds.voltage.highAlarm, 'V').padEnd(11);
+            const voltLA = formatThreshold(thresholds.voltage.lowAlarm, 'V').padEnd(11);
+            const voltHW = formatThreshold(thresholds.voltage.highWarn, 'V').padEnd(13);
+            const voltLW = formatThreshold(thresholds.voltage.lowWarn, 'V');
+            text += `Voltage       ${voltVal} ${voltHA} ${voltLA} ${voltHW} ${voltLW}\n`;
+            
+            const biasVal = `${values.bias.toFixed(2)} mA ${biasAlarm}`.padEnd(19);
+            const biasHA = formatThreshold(thresholds.txBias.highAlarm, 'mA').padEnd(11);
+            const biasLA = formatThreshold(thresholds.txBias.lowAlarm, 'mA').padEnd(11);
+            const biasHW = formatThreshold(thresholds.txBias.highWarn, 'mA').padEnd(13);
+            const biasLW = formatThreshold(thresholds.txBias.lowWarn, 'mA');
+            text += `Current       ${biasVal} ${biasHA} ${biasLA} ${biasHW} ${biasLW}\n`;
+            
+            const txVal = `${formatValue(values.txPwr, 'dBm')} ${txAlarm}`.padEnd(19);
+            const txHA = formatThreshold(thresholds.txPower.highAlarm, 'dBm').padEnd(11);
+            const txLA = formatThreshold(thresholds.txPower.lowAlarm, 'dBm').padEnd(11);
+            const txHW = formatThreshold(thresholds.txPower.highWarn, 'dBm').padEnd(13);
+            const txLW = formatThreshold(thresholds.txPower.lowWarn, 'dBm');
+            text += `Tx Power      ${txVal} ${txHA} ${txLA} ${txHW} ${txLW}\n`;
+            
+            const rxVal = `${formatValue(values.rxPwr, 'dBm')} ${rxAlarm}`.padEnd(19);
+            const rxHA = formatThreshold(thresholds.rxPower.highAlarm, 'dBm').padEnd(11);
+            const rxLA = formatThreshold(thresholds.rxPower.lowAlarm, 'dBm').padEnd(11);
+            const rxHW = formatThreshold(thresholds.rxPower.highWarn, 'dBm').padEnd(13);
+            const rxLW = formatThreshold(thresholds.rxPower.lowWarn, 'dBm');
+            text += `Rx Power      ${rxVal} ${rxHA} ${rxLA} ${rxHW} ${rxLW}\n`;
+            
+            text += `Transmit Fault Count = 0\n`;
+            text += `----------------------------------------------------------------------------\n`;
+            text += `Note: ++ high-alarm; + high-warning; -- low-alarm; - low-warning\n\n`;
+            
+            return text;
+        }
+
+        function buildLaneHTML(laneNum, values, thresholds, isQSFP) {
+            const tempAlarm = getAlarmStatus(values.temp, thresholds.temperature.highAlarm, thresholds.temperature.lowAlarm, 
+                                            thresholds.temperature.highWarn, thresholds.temperature.lowWarn);
+            const voltAlarm = getAlarmStatus(values.volt, thresholds.voltage.highAlarm, thresholds.voltage.lowAlarm, 
+                                            thresholds.voltage.highWarn, thresholds.voltage.lowWarn);
+            const biasAlarm = getAlarmStatus(values.bias, thresholds.txBias.highAlarm, thresholds.txBias.lowAlarm, 
+                                            thresholds.txBias.highWarn, thresholds.txBias.lowWarn);
+            const txAlarm = getAlarmStatus(values.txPwr, thresholds.txPower.highAlarm, thresholds.txPower.lowAlarm, 
+                                          thresholds.txPower.highWarn, thresholds.txPower.lowWarn);
+            const rxAlarm = getAlarmStatus(values.rxPwr, thresholds.rxPower.highAlarm, thresholds.rxPower.lowAlarm, 
+                                          thresholds.rxPower.highWarn, thresholds.rxPower.lowWarn);
+
+            let html = `<div style="margin-bottom: 20px; padding: 20px; background-color: #1a1a1a; border-radius: 8px; border: 2px solid #069494; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">`;
+            
+            if (isQSFP && laneNum) {
+                html += `<div style="color: #069494; font-weight: bold; margin-bottom: 15px;">Lane Number: ${laneNum} Network Lane</div>`;
+            }
+            
+            html += `<div style="color: #aaa; margin-bottom: 10px;">SFP Detail Diagnostics Information (internal calibration)</div>
+                <div style="border-top: 1px solid #444; padding: 15px 10px 10px 10px;">
+                    <div style="display: grid; grid-template-columns: 150px 80px 100px 100px 100px 100px; gap: 10px; color: #888; font-size: 11px; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #444;">
+                        <div></div><div></div>
+                        <div style="text-align: center;">Alarms</div><div style="text-align: center;"></div>
+                        <div style="text-align: center;">Warnings</div><div style="text-align: center;"></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 150px 80px 100px 100px 100px 100px; gap: 10px; color: #888; font-size: 11px; margin-bottom: 8px;">
+                        <div>Measurement</div><div></div>
+                        <div style="text-align: right; padding-right: 5px;">High</div>
+                        <div style="text-align: right; padding-right: 5px;">Low</div>
+                        <div style="text-align: right; padding-right: 5px;">High</div>
+                        <div style="text-align: right; padding-right: 5px;">Low</div>
+                    </div>
+                    
+                    <!-- Temperature -->
+                    <div style="display: grid; grid-template-columns: 150px 80px 100px 100px 100px 100px; gap: 10px; padding: 5px 0; color: #ccc;">
+                        <div>Temperature</div>
+                        <div style="color: ${tempAlarm === '++' ? '#ff4444' : tempAlarm === '--' ? '#4444ff' : tempAlarm === '+' ? '#ff9900' : tempAlarm === '-' ? '#9999ff' : '#00ff00'};">
+                            ${values.temp.toFixed(2)} C ${tempAlarm}
+                        </div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff4444;">${formatThreshold(thresholds.temperature.highAlarm, 'C')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #4444ff;">${formatThreshold(thresholds.temperature.lowAlarm, 'C')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff9900;">${formatThreshold(thresholds.temperature.highWarn, 'C')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #9999ff;">${formatThreshold(thresholds.temperature.lowWarn, 'C')}</div>
+                    </div>
+                    
+                    <!-- Voltage -->
+                    <div style="display: grid; grid-template-columns: 150px 80px 100px 100px 100px 100px; gap: 10px; padding: 5px 0; color: #ccc;">
+                        <div>Voltage</div>
+                        <div style="color: ${voltAlarm === '++' ? '#ff4444' : voltAlarm === '--' ? '#4444ff' : voltAlarm === '+' ? '#ff9900' : voltAlarm === '-' ? '#9999ff' : '#00ff00'};">
+                            ${values.volt.toFixed(2)} V ${voltAlarm}
+                        </div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff4444;">${formatThreshold(thresholds.voltage.highAlarm, 'V')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #4444ff;">${formatThreshold(thresholds.voltage.lowAlarm, 'V')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff9900;">${formatThreshold(thresholds.voltage.highWarn, 'V')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #9999ff;">${formatThreshold(thresholds.voltage.lowWarn, 'V')}</div>
+                    </div>
+                    
+                    <!-- Current/Bias -->
+                    <div style="display: grid; grid-template-columns: 150px 80px 100px 100px 100px 100px; gap: 10px; padding: 5px 0; color: #ccc;">
+                        <div>Current</div>
+                        <div style="color: ${biasAlarm === '++' ? '#ff4444' : biasAlarm === '--' ? '#4444ff' : biasAlarm === '+' ? '#ff9900' : biasAlarm === '-' ? '#9999ff' : '#00ff00'};">
+                            ${values.bias.toFixed(2)} mA ${biasAlarm}
+                        </div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff4444;">${formatThreshold(thresholds.txBias.highAlarm, 'mA')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #4444ff;">${formatThreshold(thresholds.txBias.lowAlarm, 'mA')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff9900;">${formatThreshold(thresholds.txBias.highWarn, 'mA')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #9999ff;">${formatThreshold(thresholds.txBias.lowWarn, 'mA')}</div>
+                    </div>
+                    
+                    <!-- TX Power -->
+                    <div style="display: grid; grid-template-columns: 150px 80px 100px 100px 100px 100px; gap: 10px; padding: 5px 0; color: #ccc;">
+                        <div>Tx Power</div>
+                        <div style="color: ${txAlarm === '++' ? '#ff4444' : txAlarm === '--' ? '#4444ff' : txAlarm === '+' ? '#ff9900' : txAlarm === '-' ? '#9999ff' : '#00ff00'};">
+                            ${formatValue(values.txPwr, 'dBm')} ${txAlarm}
+                        </div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff4444;">${formatThreshold(thresholds.txPower.highAlarm, 'dBm')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #4444ff;">${formatThreshold(thresholds.txPower.lowAlarm, 'dBm')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff9900;">${formatThreshold(thresholds.txPower.highWarn, 'dBm')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #9999ff;">${formatThreshold(thresholds.txPower.lowWarn, 'dBm')}</div>
+                    </div>
+                    
+                    <!-- RX Power -->
+                    <div style="display: grid; grid-template-columns: 150px 80px 100px 100px 100px 100px; gap: 10px; padding: 5px 0; color: #ccc;">
+                        <div>Rx Power</div>
+                        <div style="color: ${rxAlarm === '++' ? '#ff4444' : rxAlarm === '--' ? '#4444ff' : rxAlarm === '+' ? '#ff9900' : rxAlarm === '-' ? '#9999ff' : '#00ff00'};">
+                            ${formatValue(values.rxPwr, 'dBm')} ${rxAlarm}
+                        </div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff4444;">${formatThreshold(thresholds.rxPower.highAlarm, 'dBm')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #4444ff;">${formatThreshold(thresholds.rxPower.lowAlarm, 'dBm')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #ff9900;">${formatThreshold(thresholds.rxPower.highWarn, 'dBm')}</div>
+                        <div style="text-align: right; padding-right: 5px; color: #9999ff;">${formatThreshold(thresholds.rxPower.lowWarn, 'dBm')}</div>
+                    </div>
+                    
+                    <div style="margin-top: 10px; color: #ccc;">Transmit Fault Count = 0</div>
+                </div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #444; font-size: 11px; color: #888;">
+                    Note: <span style="color: #ff4444;">++</span> high-alarm; <span style="color: #ff9900;">+</span> high-warning; <span style="color: #4444ff;">--</span> low-alarm; <span style="color: #9999ff;">-</span> low-warning
+                </div>
+            </div>`;
+            
+            return html;
+        }
+
+        // Copy DOM results to clipboard
+        function copyDomResultToClipboard() {
+            if (!window.domClipboardText) {
+                alert('No results to copy');
+                return;
+            }
+
+            navigator.clipboard.writeText(window.domClipboardText).then(() => {
+                // Visual feedback
+                const btn = document.getElementById('copyDomResultBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✓ Copied!';
+                btn.style.backgroundColor = '#18631a';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.backgroundColor = '#2d5aa0';
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy to clipboard: ' + err);
+            });
+        }
+
+        // Copy DOM command to clipboard
+        function copyDomCommand() {
+            const portNumber = document.getElementById('portNumber').value;
+            
+            if (!portNumber || portNumber < 1) {
+                alert('Please enter a valid port number');
+                return;
+            }
+            
+            const command = `vsh_lc -c "show platform internal usd xcvr dom raw port ${portNumber}"`;
+            
+            navigator.clipboard.writeText(command).then(() => {
+                // Visual feedback
+                const feedback = document.getElementById('commandCopyFeedback');
+                feedback.style.display = 'inline';
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy to clipboard: ' + err);
+            });
+        }
+
+        // Port Load Calculator
+        async function calculatePortLoad() {
+            const portSpeed = document.getElementById('portSpeed').value;
+            const txLoad = parseInt(document.getElementById('txLoad').value);
+            const rxLoad = parseInt(document.getElementById('rxLoad').value);
+            const resultDiv = document.getElementById('portLoadResult');
+
+            if (isNaN(txLoad) || txLoad < 0 || txLoad > 255) {
+                resultDiv.innerHTML = '<div class="error-message">TX Load must be between 0 and 255</div>';
+                return;
+            }
+
+            if (isNaN(rxLoad) || rxLoad < 0 || rxLoad > 255) {
+                resultDiv.innerHTML = '<div class="error-message">RX Load must be between 0 and 255</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/apptech/api/port_load', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ port_speed: portSpeed, tx_load: txLoad, rx_load: rxLoad })
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    const r = data.result;
+                    resultDiv.innerHTML = `
+                        <div class="result-box">
+                            <h3 style="color: #069494; margin-bottom: 15px;">Load Results</h3>
+                            <div class="result-row">
+                                <span class="result-label">Port Speed:</span>
+                                <span class="result-value">${r.port_speed} (${r.port_speed_mbps.toLocaleString()} Mbps)</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">TX Load:</span>
+                                <span class="result-value" style="color: #0b58a3; font-weight: bold;">${r.tx_load}/255 (${r.tx_percentage.toFixed(2)}%)</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">TX Speed:</span>
+                                <span class="result-value" style="color: #0b58a3; font-weight: bold;">${r.tx_speed_mbps.toFixed(2)} Mbps / ${r.tx_speed_gbps.toFixed(3)} Gbps</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">RX Load:</span>
+                                <span class="result-value" style="color: #18631a; font-weight: bold;">${r.rx_load}/255 (${r.rx_percentage.toFixed(2)}%)</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">RX Speed:</span>
+                                <span class="result-value" style="color: #18631a; font-weight: bold;">${r.rx_speed_mbps.toFixed(2)} Mbps / ${r.rx_speed_gbps.toFixed(3)} Gbps</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Clear Port Speed Results
+        function clearPortSpeed() {
+            document.getElementById('portSpeedResult').innerHTML = '';
+        }
+
+        // Port Speed Calculator
+        async function calculatePortSpeed() {
+            const speed = parseFloat(document.getElementById('speedValue').value);
+            const unit = document.getElementById('speedUnit').value;
+            const resultDiv = document.getElementById('portSpeedResult');
+
+            if (isNaN(speed) || speed <= 0) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter a valid speed value</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/apptech/api/port_speed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ speed, unit })
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    const r = data.result;
+                    resultDiv.innerHTML = `
+                        <div class="result-box">
+                            <h3 style="color: #069494; margin-bottom: 15px;">Conversions</h3>
+                            <div class="result-row">
+                                <span class="result-label">Bits per second:</span>
+                                <span class="result-value">${r.bps.toLocaleString()} bps</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Kilobits per second:</span>
+                                <span class="result-value">${r.Kbps.toLocaleString()} Kbps</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Megabits per second:</span>
+                                <span class="result-value">${r.Mbps.toLocaleString()} Mbps</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Gigabits per second:</span>
+                                <span class="result-value">${r.Gbps.toLocaleString()} Gbps</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Terabits per second:</span>
+                                <span class="result-value">${r.Tbps.toLocaleString()} Tbps</span>
+                            </div>
+                            <h3 style="color: #069494; margin: 20px 0 15px 0;">Bytes (per second)</h3>
+                            <div class="result-row">
+                                <span class="result-label">Bytes/sec:</span>
+                                <span class="result-value">${r.bytes_per_sec.toLocaleString()} B/s</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Kilobytes/sec:</span>
+                                <span class="result-value">${r.KB_per_sec.toLocaleString()} KB/s</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Megabytes/sec:</span>
+                                <span class="result-value">${r.MB_per_sec.toLocaleString()} MB/s</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Gigabytes/sec:</span>
+                                <span class="result-value">${r.GB_per_sec.toLocaleString()} GB/s</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+            }
+        }
+
+                function switchPortSpeedTab(tabName) {
+            // Remove active class from all port speed tabs
+            document.getElementById('tabSpeedConversion').classList.remove('active');
+            document.getElementById('tabLoadCalc').classList.remove('active');
+            document.getElementById('tabPowerCalc').classList.remove('active');
+            document.getElementById('speedConversionTab').classList.remove('active');
+            document.getElementById('loadCalcTab').classList.remove('active');
+            document.getElementById('powerCalcTab').classList.remove('active');
+            
+            // Add active class to selected tab
+            if (tabName === 'speedConversion') {
+                document.getElementById('tabSpeedConversion').classList.add('active');
+                document.getElementById('speedConversionTab').classList.add('active');
+            } else if (tabName === 'loadCalc') {
+                document.getElementById('tabLoadCalc').classList.add('active');
+                document.getElementById('loadCalcTab').classList.add('active');
+            } else if (tabName === 'powerCalc') {
+                document.getElementById('tabPowerCalc').classList.add('active');
+                document.getElementById('powerCalcTab').classList.add('active');
+            }
+        }
+</script>
