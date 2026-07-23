@@ -1,0 +1,15 @@
+This file contains the complete ARP subtabs restoration for dashboard.html
+
+Instructions:
+1. Open dashboard.html
+2. Find line 1228: <div id="tcpdumpArpTab" class="tab-content">
+3. Replace from line 1228 through line 1315 (ending with </div> before the TCPDUMP Help Modal)
+4. Use the HTML code below
+
+Then search for the JavaScript section and add the ARP subtab functions after the switchTcpdumpTab function.
+
+=== STEP 1: Replace the ARP Tab HTML (lines 1228-1315) with this: ===
+
+See the detailed restoration code in the subsequent edit operations.
+
+This backup was created on February 12, 2026 to restore ARP Both, ARP Request, and ARP Reply subtabs with diagrams.

@@ -10,10 +10,13 @@ Start:
 
 import asyncio
 import base64
+import hashlib
 import itertools
 import json
 import os
 import queue
+import re
+import secrets
 import threading
 import traceback
 from collections import deque
@@ -26,12 +29,12 @@ from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
 _APPTECH_ROOT = os.path.dirname(os.path.abspath(__file__))
-BASE_PREFIX = os.getenv("WEB_APP_BASE_PREFIX", "/apptech")
+BASE_PREFIX = os.getenv("WEB_APP_BASE_PREFIX", "").rstrip("/")
 
 app = FastAPI(
     title="AppTech",
-    docs_url=f"{BASE_PREFIX}/docs",
-    openapi_url=f"{BASE_PREFIX}/openapi.json",
+    docs_url=f"{BASE_PREFIX}/docs" if BASE_PREFIX else "/docs",
+    openapi_url=f"{BASE_PREFIX}/openapi.json" if BASE_PREFIX else "/openapi.json",
     redoc_url=None,
 )
 
@@ -142,15 +145,16 @@ circuit_worker = _CircuitWorker()
 
 
 # === Frontend routes ===
-@app.get(f"{BASE_PREFIX}", include_in_schema=False)
 @app.get(f"{BASE_PREFIX}/", include_in_schema=False)
-async def dashboard():
-    return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "dashboard.html"))
+@app.get(BASE_PREFIX or "/", include_in_schema=False)
+async def login_page():
+    return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "login.html"))
 
 
 @app.get(f"{BASE_PREFIX}/techzone", include_in_schema=False)
-async def techzone():
-    return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "techzone.html"))
+async def techzone_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/", status_code=302)
 
 
 # === API: Port Load Calculator ===
@@ -1063,6 +1067,16 @@ def _save_profile(profile_data):
         return False
 
 
+def _default_dashboard_profile():
+    return {
+        "categories": [{"id": "misc", "name": "Miscellaneous", "color": "#2d5aa0"}],
+        "assignments": {},
+        "order": [],
+        "columns": 3,
+    }
+
+
+# Legacy global profile endpoints (kept for compatibility)
 @app.get(f"{BASE_PREFIX}/api/profile/load")
 async def api_profile_load():
     try:
@@ -1082,11 +1096,186 @@ async def api_profile_save(request: Request):
             "columns": data.get("columns", 3),
         }
         if _save_profile(profile_data):
-            debug_log("profile", action="save", status="success")
             return {"ok": True, "message": "Profile saved"}
         return {"ok": False, "error": "Failed to save profile"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+# Per-user dashboard profile (tabs, categories, assignments, column count)
+@app.get(f"{BASE_PREFIX}/api/users/{{username}}/profile")
+async def api_get_user_profile(username: str):
+    try:
+        profile = _load_user(username.lower())
+        if not profile:
+            return {"ok": False, "error": "User not found"}
+        return {"ok": True, "profile": profile.get("dashboard_profile", _default_dashboard_profile())}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post(f"{BASE_PREFIX}/api/users/{{username}}/profile")
+async def api_save_user_profile(username: str, request: Request):
+    try:
+        data = await request.json()
+        profile = _load_user(username.lower())
+        if not profile:
+            return {"ok": False, "error": "User not found"}
+        profile["dashboard_profile"] = {
+            "categories": data.get("categories", [{"id": "misc", "name": "Miscellaneous", "color": "#2d5aa0"}]),
+            "assignments": data.get("assignments", {}),
+            "order": data.get("order", []),
+            "columns": data.get("columns", 3),
+        }
+        _save_user(profile)
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# === User Profile Management ===
+_RESERVED_USERNAMES = {
+    "api", "static", "applications", "docs", "openapi.json",
+    "techzone", "favicon.ico", "robots.txt",
+}
+_USERNAME_RE = re.compile(r'^[a-zA-Z0-9_-]{2,32}$')
+
+
+def _user_profiles_dir():
+    d = os.path.join(_APPTECH_ROOT, "user_profiles")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
+def _user_profile_path(username: str):
+    return os.path.join(_user_profiles_dir(), f"{username}.json")
+
+
+def _hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    h = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000)
+    return f"{salt}:{h.hex()}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    try:
+        salt, h_hex = stored.split(":", 1)
+        h = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000)
+        return h.hex() == h_hex
+    except Exception:
+        return False
+
+
+def _load_user(username: str):
+    path = _user_profile_path(username)
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        return json.load(f)
+
+
+def _save_user(profile: dict):
+    with open(_user_profile_path(profile["username"]), "w") as f:
+        json.dump(profile, f, indent=2)
+
+
+@app.post(f"{BASE_PREFIX}/api/users/create")
+async def api_users_create(request: Request):
+    try:
+        data = await request.json()
+        username = (data.get("username") or "").strip().lower()
+        password = data.get("password") or ""
+        if not _USERNAME_RE.match(username):
+            return {"ok": False, "error": "Username must be 2-32 chars (letters, numbers, _ -)"}
+        if username in _RESERVED_USERNAMES:
+            return {"ok": False, "error": "That username is reserved."}
+        if len(password) < 4:
+            return {"ok": False, "error": "Password must be at least 4 characters."}
+        if _load_user(username):
+            return {"ok": False, "error": f'Username "{username}" is already taken.'}
+        profile = {
+            "username": username,
+            "password": _hash_password(password),
+            "tools": [],
+            "created": datetime.now().isoformat(timespec="seconds"),
+        }
+        _save_user(profile)
+        return {"ok": True, "username": username}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post(f"{BASE_PREFIX}/api/users/login")
+async def api_users_login(request: Request):
+    try:
+        data = await request.json()
+        username = (data.get("username") or "").strip().lower()
+        password = data.get("password") or ""
+        profile = _load_user(username)
+        if not profile or not _verify_password(password, profile["password"]):
+            return {"ok": False, "error": "Invalid username or password."}
+        return {"ok": True, "username": username}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get(f"{BASE_PREFIX}/api/users/{{username}}/tools")
+async def api_get_user_tools(username: str):
+    try:
+        profile = _load_user(username.lower())
+        if not profile:
+            return {"ok": False, "error": "User not found"}
+        return {"ok": True, "tools": profile.get("tools", [])}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post(f"{BASE_PREFIX}/api/users/{{username}}/tools")
+async def api_save_user_tools(username: str, request: Request):
+    try:
+        data = await request.json()
+        tools = data.get("tools", [])
+        profile = _load_user(username.lower())
+        if not profile:
+            return {"ok": False, "error": "User not found"}
+        profile["tools"] = tools
+        _save_user(profile)
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get(f"{BASE_PREFIX}/api/users")
+async def api_list_users():
+    try:
+        d = _user_profiles_dir()
+        users = []
+        for f in os.listdir(d):
+            if f.endswith(".json"):
+                users.append(f[:-5])
+        return {"ok": True, "users": sorted(users)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# === Per-user frontend routes (must be last — path params match anything) ===
+_RESERVED_PATH_PREFIXES = {"api", "static", "applications", "docs", "techzone", "openapi.json"}
+
+
+@app.get(f"{BASE_PREFIX}/{{username}}", include_in_schema=False)
+async def user_dashboard(username: str):
+    if username in _RESERVED_PATH_PREFIXES or not _USERNAME_RE.match(username):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404)
+    return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "dashboard.html"))
+
+
+@app.get(f"{BASE_PREFIX}/{{username}}/techzone", include_in_schema=False)
+async def user_techzone(username: str):
+    if username in _RESERVED_PATH_PREFIXES or not _USERNAME_RE.match(username):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404)
+    return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "techzone.html"))
 
 
 if __name__ == "__main__":

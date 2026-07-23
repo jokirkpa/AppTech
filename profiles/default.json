@@ -4,9 +4,16 @@
       "color": "#2d5aa0",
       "id": "misc",
       "name": "Miscellaneous"
+    },
+    {
+      "id": "cat_mrxfi0gd131iy",
+      "name": "Training",
+      "color": "#9f2d96"
     }
   ],
-  "assignments": {},
+  "assignments": {
+    "aciContractModal": "cat_mrxfi0gd131iy"
+  },
   "order": [],
   "columns": 3
 }

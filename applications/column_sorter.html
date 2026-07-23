@@ -1,0 +1,303 @@
+<!-- Column Sorter Tool -->
+    <!-- Column Sorter Modal -->
+    <div id="columnSorterModal" class="modal-overlay" onclick="closeModal('columnSorterModal')">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 1100px; width: 96vw;">
+            <div class="modal-header">
+                <h2>↕️ Column Sorter</h2>
+                <button class="close-btn" onclick="closeModal('columnSorterModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+
+                <!-- Paste area -->
+                <div id="csPasteSection">
+                    <div class="form-group">
+                        <label for="csInput">Paste your columnar output here</label>
+                        <textarea id="csInput" rows="14" style="width:100%; padding:10px; background:#1a1a1a; color:#d8e6c9; border:1px solid #555; border-radius:5px; font-family:monospace; font-size:12px; resize:vertical;" placeholder="Paste any space- or tab-aligned columnar text (e.g. 'show processes memory')…"></textarea>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn" onclick="csParseAndRender()" style="background:#2d6a9e; flex:1; font-size:14px;">🔍 Detect Columns &amp; Sort</button>
+                        <button class="btn" onclick="csClear()" style="background:#555; padding:10px 16px;">✕ Clear</button>
+                    </div>
+                </div>
+
+                <!-- Results area (hidden until parsed) -->
+                <div id="csResultSection" style="display:none; margin-top:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                        <span id="csColCount" style="color:#8fb3c8; font-size:13px;"></span>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn" onclick="csCopyResult()" style="background:#2d8659; padding:8px 16px;">📋 Copy</button>
+                            <button class="btn" onclick="csReset()" style="background:#555; padding:8px 14px;">↩ Paste New</button>
+                        </div>
+                    </div>
+                    <!-- Sort buttons row -->
+                    <div id="csSortButtons" style="display:flex; gap:0; margin-bottom:0; overflow-x:auto;"></div>
+                    <!-- Rendered table -->
+                    <div id="csTableWrap" style="overflow-x:auto; max-height:520px; overflow-y:auto;">
+                        <pre id="csOutput" style="margin:0; background:#0f0f0f; color:#d8e6c9; padding:12px 14px; font-family:monospace; font-size:12px; line-height:1.5; border:1px solid #333; border-top:none; white-space:pre;"></pre>
+                    </div>
+                    <div id="csCopiedMsg" style="display:none; color:#2d8659; font-size:12px; margin-top:6px; text-align:right;">✅ Copied to clipboard!</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+<script>
+    // =====================================================================
+    // Column Sorter Tool
+    // =====================================================================
+    (function () {
+        // Internal state
+        let _csLines   = [];   // all original lines (including blank/separator)
+        let _csHeader  = null; // header line text (first non-blank non-separator line)
+        let _csColDefs = [];   // [{ name, start, end }]  — char positions
+        let _csSortCol = -1;   // currently sorted column index (-1 = unsorted)
+        let _csSortAsc = true;
+
+        // ── Public entry points (called from HTML) ───────────────────────
+
+        window.csParseAndRender = function () {
+            const raw = (document.getElementById('csInput') || {}).value || '';
+            if (!raw.trim()) { alert('Paste some output first.'); return; }
+            _csLines   = raw.split('\n');
+            _csColDefs = detectColumns(_csLines);
+            _csHeader  = null;
+            _csSortCol = -1;
+            _csSortAsc = true;
+
+            if (_csColDefs.length === 0) {
+                alert('Could not detect columns. Make sure the text has a header row with space- or tab-aligned data below it.');
+                return;
+            }
+
+            // Find the header row (first non-blank, non-separator line)
+            for (const ln of _csLines) {
+                if (ln.trim() && !isSeparator(ln)) { _csHeader = ln; break; }
+            }
+
+            document.getElementById('csPasteSection').style.display = 'none';
+            document.getElementById('csResultSection').style.display = 'block';
+            document.getElementById('csColCount').textContent =
+                `Detected ${_csColDefs.length} column${_csColDefs.length === 1 ? '' : 's'}`;
+
+            renderSortButtons();
+            renderOutput(_csLines);
+        };
+
+        window.csClear = function () {
+            const el = document.getElementById('csInput');
+            if (el) el.value = '';
+        };
+
+        window.csReset = function () {
+            _csLines = []; _csHeader = null; _csColDefs = []; _csSortCol = -1; _csSortAsc = true;
+            document.getElementById('csPasteSection').style.display = 'block';
+            document.getElementById('csResultSection').style.display = 'none';
+            const el = document.getElementById('csInput');
+            if (el) el.value = '';
+        };
+
+        window.csSortBy = function (colIdx) {
+            if (_csSortCol === colIdx) {
+                _csSortAsc = !_csSortAsc;
+            } else {
+                _csSortCol = colIdx;
+                _csSortAsc = true;
+            }
+            const sorted = sortLines(_csLines, colIdx, _csSortAsc);
+            renderSortButtons();
+            renderOutput(sorted);
+        };
+
+        window.csCopyResult = function () {
+            const pre = document.getElementById('csOutput');
+            if (!pre) return;
+            const text = pre.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const msg = document.getElementById('csCopiedMsg');
+                if (!msg) return;
+                msg.style.display = 'block';
+                setTimeout(() => { msg.style.display = 'none'; }, 2000);
+            }).catch(() => {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy');
+                document.body.removeChild(ta);
+                const msg = document.getElementById('csCopiedMsg');
+                if (msg) { msg.style.display = 'block'; setTimeout(() => { msg.style.display = 'none'; }, 2000); }
+            });
+        };
+
+        // ── Column detection ─────────────────────────────────────────────
+
+        function isSeparator(line) {
+            // Lines made only of dashes, equals, pipes, spaces, underscores
+            return /^[\s\-=_|]+$/.test(line);
+        }
+
+        function detectColumns(lines) {
+            // Find the header line and the separator / first data line beneath it.
+            // Strategy:
+            //   1. If there is a dashes-only separator (e.g. "---  ------  ---"),
+            //      the column boundaries come from the dash groups.
+            //   2. Otherwise, infer boundaries from the header words.
+
+            let headerIdx = -1;
+            let sepIdx    = -1;
+
+            for (let i = 0; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                if (isSeparator(lines[i])) continue;
+                if (headerIdx === -1) { headerIdx = i; continue; }
+                if (isSeparator(lines[i])) { sepIdx = i; break; }
+                break;
+            }
+
+            // Re-scan to find separator right after header
+            if (sepIdx === -1 && headerIdx !== -1) {
+                for (let i = headerIdx + 1; i < Math.min(headerIdx + 4, lines.length); i++) {
+                    if (lines[i] && isSeparator(lines[i])) { sepIdx = i; break; }
+                }
+            }
+
+            const header = headerIdx !== -1 ? lines[headerIdx] : null;
+            const sep    = sepIdx    !== -1 ? lines[sepIdx]    : null;
+
+            if (sep && /\-/.test(sep)) {
+                // Derive boundaries from the separator row
+                return parseSeparatorColumns(sep, header);
+            } else if (header) {
+                // Derive boundaries from header words
+                return parseHeaderColumns(header);
+            }
+            return [];
+        }
+
+        function parseSeparatorColumns(sep, header) {
+            // Find runs of dashes; each run is one column.
+            const cols = [];
+            const re = /(-+)/g;
+            let m;
+            while ((m = re.exec(sep)) !== null) {
+                const start = m.index;
+                const end   = m.index + m[0].length;
+                const name  = header ? header.substring(start, end).trim() : `Col${cols.length + 1}`;
+                cols.push({ name: name || `Col${cols.length + 1}`, start, end });
+            }
+            // Extend the last column to end-of-line
+            if (cols.length) cols[cols.length - 1].end = Infinity;
+            return cols;
+        }
+
+        function parseHeaderColumns(header) {
+            // Split header on 2+ spaces (common in NX-OS / Linux output).
+            const cols = [];
+            const re = /(\S+(?:\s\S+)*?)(?=\s{2,}|$)/g;
+            let m;
+            while ((m = re.exec(header)) !== null) {
+                cols.push({ name: m[1].trim(), start: m.index, end: m.index + m[0].length });
+            }
+            if (cols.length) cols[cols.length - 1].end = Infinity;
+            return cols;
+        }
+
+        function getCell(line, col) {
+            if (line.length <= col.start) return '';
+            const end = col.end === Infinity ? line.length : Math.min(col.end, line.length);
+            return line.substring(col.start, end).trim();
+        }
+
+        // ── Sorting ──────────────────────────────────────────────────────
+
+        function sortLines(lines, colIdx, asc) {
+            const col = _csColDefs[colIdx];
+
+            // Split into sections: preamble (blank + separator + header + separator),
+            // then data rows, preserving any trailing blanks.
+            let preamble = [];
+            let dataRows = [];
+            let foundData = false;
+            let headerDone = false;
+            let sepCount = 0;
+
+            for (const ln of lines) {
+                if (!foundData) {
+                    preamble.push(ln);
+                    if (!ln.trim()) continue;
+                    if (isSeparator(ln)) { sepCount++; if (sepCount >= 1 && headerDone) { foundData = true; } continue; }
+                    if (!headerDone) { headerDone = true; continue; }
+                } else {
+                    dataRows.push(ln);
+                }
+            }
+
+            // If preamble consumed everything (no separator found), treat all non-header as data
+            if (!foundData) {
+                preamble = [];
+                dataRows = [];
+                let hSeen = false;
+                for (const ln of lines) {
+                    if (!ln.trim() && !hSeen) { preamble.push(ln); continue; }
+                    if (!hSeen && !isSeparator(ln)) { preamble.push(ln); hSeen = true; continue; }
+                    if (isSeparator(ln) && !dataRows.length) { preamble.push(ln); continue; }
+                    dataRows.push(ln);
+                }
+            }
+
+            // Sort data rows (skip blank lines at end)
+            const trailing = [];
+            while (dataRows.length && !dataRows[dataRows.length - 1].trim()) {
+                trailing.unshift(dataRows.pop());
+            }
+
+            dataRows.sort((a, b) => {
+                const va = getCell(a, col);
+                const vb = getCell(b, col);
+                // Numeric sort if both look like numbers
+                const na = parseFloat(va.replace(/,/g, ''));
+                const nb = parseFloat(vb.replace(/,/g, ''));
+                let cmp;
+                if (!isNaN(na) && !isNaN(nb)) {
+                    cmp = na - nb;
+                } else {
+                    cmp = va.localeCompare(vb, undefined, { numeric: true, sensitivity: 'base' });
+                }
+                return asc ? cmp : -cmp;
+            });
+
+            return [...preamble, ...dataRows, ...trailing];
+        }
+
+        // ── Rendering ────────────────────────────────────────────────────
+
+        function renderSortButtons() {
+            const wrap = document.getElementById('csSortButtons');
+            if (!wrap) return;
+            wrap.innerHTML = _csColDefs.map((col, i) => {
+                const active = i === _csSortCol;
+                const arrow  = active ? (_csSortAsc ? ' ▲' : ' ▼') : ' ⇅';
+                const bg     = active ? '#2d6a9e' : '#2a2a2a';
+                const border = active ? '2px solid #5ba3d9' : '2px solid #444';
+                // Width: derive from column span in chars (approx 8px per char, min 80px)
+                const charW = col.end === Infinity ? 120 : (col.end - col.start);
+                const w = Math.max(80, Math.min(charW * 8, 200));
+                return `<button onclick="csSortBy(${i})" style="
+                    background:${bg}; border:${border}; color:#d8e6c9;
+                    padding:6px 10px; font-size:12px; font-family:monospace;
+                    cursor:pointer; white-space:nowrap; min-width:${w}px;
+                    flex-shrink:0; border-radius:4px 4px 0 0; margin-right:2px;
+                    font-weight:${active ? '700' : '400'};
+                " title="Sort by ${col.name}">${col.name}${arrow}</button>`;
+            }).join('');
+        }
+
+        function renderOutput(lines) {
+            const pre = document.getElementById('csOutput');
+            if (pre) pre.textContent = lines.join('\n');
+        }
+
+    })();
+</script>

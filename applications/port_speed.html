@@ -1837,7 +1837,7 @@
             }
 
             try {
-                const response = await fetch('/apptech/api/port_load', {
+                const response = await fetch('/api/port_load', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ port_speed: portSpeed, tx_load: txLoad, rx_load: rxLoad })
@@ -1897,7 +1897,7 @@
             }
 
             try {
-                const response = await fetch('/apptech/api/port_speed', {
+                const response = await fetch('/api/port_speed', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ speed, unit })

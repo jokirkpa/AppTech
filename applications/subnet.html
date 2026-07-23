@@ -1,0 +1,551 @@
+<!-- Subnet Calculator Tool -->
+    <div id="subnetModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>🌐 Subnet Calculator</h2>
+                <button class="close-btn" onclick="closeModal('subnetModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div style="display: flex; border-bottom: 2px solid #555; margin-bottom: 20px;">
+                    <button id="tabIpv4Calc" class="tab-btn active" onclick="switchSubnetTab('ipv4Calc')">IPv4 Calculator</button>
+                    <button id="tabIpv6Calc" class="tab-btn" onclick="switchSubnetTab('ipv6Calc')">IPv6 Calculator</button>
+                    <button id="tabIpv4Ranges" class="tab-btn" onclick="switchSubnetTab('ipv4Ranges')">IPv4 Overlap</button>
+                </div>
+
+                <!-- Tab 1: IPv4 Calculator -->
+                <div id="ipv4CalcTab" class="tab-content active">
+                    <h3 style="color: #069494; margin-bottom: 15px;">IPv4 Subnet Calculator</h3>
+                    <div class="form-group">
+                        <label for="ipAddress">IP Address</label>
+                        <input type="text" id="ipAddress" placeholder="e.g., 192.168.1.100" value="192.168.1.100">
+                    </div>
+                    <div class="form-group">
+                        <label for="cidrValue">Subnet Mask / CIDR</label>
+                        <select id="cidrValue">
+                            <option value="0">0.0.0.0 - /0</option>
+                            <option value="1">128.0.0.0 - /1</option>
+                            <option value="2">192.0.0.0 - /2</option>
+                            <option value="3">224.0.0.0 - /3</option>
+                            <option value="4">240.0.0.0 - /4</option>
+                            <option value="5">248.0.0.0 - /5</option>
+                            <option value="6">252.0.0.0 - /6</option>
+                            <option value="7">254.0.0.0 - /7</option>
+                            <option value="8">255.0.0.0 - /8</option>
+                            <option value="9">255.128.0.0 - /9</option>
+                            <option value="10">255.192.0.0 - /10</option>
+                            <option value="11">255.224.0.0 - /11</option>
+                            <option value="12">255.240.0.0 - /12</option>
+                            <option value="13">255.248.0.0 - /13</option>
+                            <option value="14">255.252.0.0 - /14</option>
+                            <option value="15">255.254.0.0 - /15</option>
+                            <option value="16">255.255.0.0 - /16</option>
+                            <option value="17">255.255.128.0 - /17</option>
+                            <option value="18">255.255.192.0 - /18</option>
+                            <option value="19">255.255.224.0 - /19</option>
+                            <option value="20">255.255.240.0 - /20</option>
+                            <option value="21">255.255.248.0 - /21</option>
+                            <option value="22">255.255.252.0 - /22</option>
+                            <option value="23">255.255.254.0 - /23</option>
+                            <option value="24" selected>255.255.255.0 - /24</option>
+                            <option value="25">255.255.255.128 - /25</option>
+                            <option value="26">255.255.255.192 - /26</option>
+                            <option value="27">255.255.255.224 - /27</option>
+                            <option value="28">255.255.255.240 - /28</option>
+                            <option value="29">255.255.255.248 - /29</option>
+                            <option value="30">255.255.255.252 - /30</option>
+                            <option value="31">255.255.255.254 - /31</option>
+                            <option value="32">255.255.255.255 - /32</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="calculateSubnet()">Calculate</button>
+                    <div id="subnetResult"></div>
+                </div>
+
+                <!-- Tab 2: IPv6 Calculator -->
+                <div id="ipv6CalcTab" class="tab-content">
+                    <h3 style="color: #069494; margin-bottom: 15px;">IPv6 Subnet Calculator</h3>
+                    <div class="form-group">
+                        <label for="ipv6Address">IPv6 Address</label>
+                        <input type="text" id="ipv6Address" placeholder="e.g., 2001:0db8:85a3::8a2e:0370:7334" value="2001:0db8:85a3::8a2e:0370:7334">
+                    </div>
+                    <div class="form-group">
+                        <label for="ipv6Prefix">Prefix Length</label>
+                        <select id="ipv6Prefix">
+                            <option value="0">/0</option>
+                            <option value="1">/1</option>
+                            <option value="2">/2</option>
+                            <option value="3">/3</option>
+                            <option value="4">/4</option>
+                            <option value="5">/5</option>
+                            <option value="6">/6</option>
+                            <option value="7">/7</option>
+                            <option value="8">/8</option>
+                            <option value="9">/9</option>
+                            <option value="10">/10</option>
+                            <option value="11">/11</option>
+                            <option value="12">/12</option>
+                            <option value="13">/13</option>
+                            <option value="14">/14</option>
+                            <option value="15">/15</option>
+                            <option value="16">/16</option>
+                            <option value="17">/17</option>
+                            <option value="18">/18</option>
+                            <option value="19">/19</option>
+                            <option value="20">/20</option>
+                            <option value="21">/21</option>
+                            <option value="22">/22</option>
+                            <option value="23">/23</option>
+                            <option value="24">/24</option>
+                            <option value="25">/25</option>
+                            <option value="26">/26</option>
+                            <option value="27">/27</option>
+                            <option value="28">/28</option>
+                            <option value="29">/29</option>
+                            <option value="30">/30</option>
+                            <option value="31">/31</option>
+                            <option value="32">/32</option>
+                            <option value="33">/33</option>
+                            <option value="34">/34</option>
+                            <option value="35">/35</option>
+                            <option value="36">/36</option>
+                            <option value="37">/37</option>
+                            <option value="38">/38</option>
+                            <option value="39">/39</option>
+                            <option value="40">/40</option>
+                            <option value="41">/41</option>
+                            <option value="42">/42</option>
+                            <option value="43">/43</option>
+                            <option value="44">/44</option>
+                            <option value="45">/45</option>
+                            <option value="46">/46</option>
+                            <option value="47">/47</option>
+                            <option value="48">/48</option>
+                            <option value="49">/49</option>
+                            <option value="50">/50</option>
+                            <option value="51">/51</option>
+                            <option value="52">/52</option>
+                            <option value="53">/53</option>
+                            <option value="54">/54</option>
+                            <option value="55">/55</option>
+                            <option value="56">/56</option>
+                            <option value="57">/57</option>
+                            <option value="58">/58</option>
+                            <option value="59">/59</option>
+                            <option value="60">/60</option>
+                            <option value="61">/61</option>
+                            <option value="62">/62</option>
+                            <option value="63">/63</option>
+                            <option value="64" selected>/64</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="calculateIPv6Subnet()">Calculate</button>
+                    <div id="ipv6SubnetResult"></div>
+                </div>
+
+                <!-- Tab 3: IPv4 Overlap Check -->
+                <div id="ipv4RangesTab" class="tab-content">
+                    <h3 style="color: #069494; margin-bottom: 15px;">IPv4 Overlap Check</h3>
+                    <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">Visualize overlapping subnets based on longest prefix match priority. Longer prefix lengths (higher /number) take priority.</p>
+
+                    <div id="rangeInputsContainer">
+                        <!-- Range 1 (Green) -->
+                        <div class="range-input-group" data-range-id="1" style="margin-bottom: 15px; padding: 15px; border: 2px solid #18631a; border-radius: 8px; background-color: rgba(24, 99, 26, 0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="color: #18631a; margin: 0;">Range 1 (Green)</h4>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeIp1">IP Address</label>
+                                    <input type="text" id="rangeIp1" placeholder="e.g., 10.0.0.0" value="10.0.0.0" style="border-color: #18631a;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeCidr1">CIDR</label>
+                                    <select id="rangeCidr1" style="border-color: #18631a;">
+                                        <option value="8" selected>/8</option>
+                                        <option value="0">/0</option><option value="1">/1</option><option value="2">/2</option><option value="3">/3</option><option value="4">/4</option><option value="5">/5</option><option value="6">/6</option><option value="7">/7</option>
+                                        <option value="9">/9</option><option value="10">/10</option><option value="11">/11</option><option value="12">/12</option><option value="13">/13</option><option value="14">/14</option><option value="15">/15</option><option value="16">/16</option>
+                                        <option value="17">/17</option><option value="18">/18</option><option value="19">/19</option><option value="20">/20</option><option value="21">/21</option><option value="22">/22</option><option value="23">/23</option><option value="24">/24</option>
+                                        <option value="25">/25</option><option value="26">/26</option><option value="27">/27</option><option value="28">/28</option><option value="29">/29</option><option value="30">/30</option><option value="31">/31</option><option value="32">/32</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Range 2 (Blue) -->
+                        <div class="range-input-group" data-range-id="2" style="margin-bottom: 15px; padding: 15px; border: 2px solid #0b58a3; border-radius: 8px; background-color: rgba(11, 88, 163, 0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="color: #0b58a3; margin: 0;">Range 2 (Blue)</h4>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeIp2">IP Address</label>
+                                    <input type="text" id="rangeIp2" placeholder="e.g., 10.10.0.0" value="10.10.0.0" style="border-color: #0b58a3;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeCidr2">CIDR</label>
+                                    <select id="rangeCidr2" style="border-color: #0b58a3;">
+                                        <option value="16" selected>/16</option>
+                                        <option value="0">/0</option><option value="1">/1</option><option value="2">/2</option><option value="3">/3</option><option value="4">/4</option><option value="5">/5</option><option value="6">/6</option><option value="7">/7</option>
+                                        <option value="8">/8</option><option value="9">/9</option><option value="10">/10</option><option value="11">/11</option><option value="12">/12</option><option value="13">/13</option><option value="14">/14</option><option value="15">/15</option>
+                                        <option value="17">/17</option><option value="18">/18</option><option value="19">/19</option><option value="20">/20</option><option value="21">/21</option><option value="22">/22</option><option value="23">/23</option><option value="24">/24</option>
+                                        <option value="25">/25</option><option value="26">/26</option><option value="27">/27</option><option value="28">/28</option><option value="29">/29</option><option value="30">/30</option><option value="31">/31</option><option value="32">/32</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Range 3 (Purple) -->
+                        <div class="range-input-group" data-range-id="3" style="margin-bottom: 15px; padding: 15px; border: 2px solid #8e44ad; border-radius: 8px; background-color: rgba(142, 68, 173, 0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="color: #8e44ad; margin: 0;">Range 3 (Purple)</h4>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeIp3">IP Address</label>
+                                    <input type="text" id="rangeIp3" placeholder="e.g., 0.0.0.0" value="0.0.0.0" style="border-color: #8e44ad;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeCidr3">CIDR</label>
+                                    <select id="rangeCidr3" style="border-color: #8e44ad;">
+                                        <option value="0" selected>/0</option>
+                                        <option value="1">/1</option><option value="2">/2</option><option value="3">/3</option><option value="4">/4</option><option value="5">/5</option><option value="6">/6</option><option value="7">/7</option>
+                                        <option value="8">/8</option><option value="9">/9</option><option value="10">/10</option><option value="11">/11</option><option value="12">/12</option><option value="13">/13</option><option value="14">/14</option><option value="15">/15</option>
+                                        <option value="16">/16</option><option value="17">/17</option><option value="18">/18</option><option value="19">/19</option><option value="20">/20</option><option value="21">/21</option><option value="22">/22</option><option value="23">/23</option>
+                                        <option value="24">/24</option><option value="25">/25</option><option value="26">/26</option><option value="27">/27</option><option value="28">/28</option><option value="29">/29</option><option value="30">/30</option><option value="31">/31</option><option value="32">/32</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Range 4 (Orange) - Initially Hidden -->
+                        <div id="range4Container" class="range-input-group" data-range-id="4" style="display: none; margin-bottom: 15px; padding: 15px; border: 2px solid #f27038; border-radius: 8px; background-color: rgba(242, 112, 56, 0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="color: #f27038; margin: 0;">Range 4 (Orange)</h4>
+                                <button onclick="removeRange(4)" style="background: none; border: none; color: #f27038; font-size: 24px; cursor: pointer; padding: 0; line-height: 1;" title="Remove Range">&times;</button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeIp4">IP Address</label>
+                                    <input type="text" id="rangeIp4" placeholder="e.g., 192.168.0.0" value="" style="border-color: #f27038;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeCidr4">CIDR</label>
+                                    <select id="rangeCidr4" style="border-color: #f27038;">
+                                        <option value="24" selected>/24</option>
+                                        <option value="0">/0</option><option value="1">/1</option><option value="2">/2</option><option value="3">/3</option><option value="4">/4</option><option value="5">/5</option><option value="6">/6</option><option value="7">/7</option>
+                                        <option value="8">/8</option><option value="9">/9</option><option value="10">/10</option><option value="11">/11</option><option value="12">/12</option><option value="13">/13</option><option value="14">/14</option><option value="15">/15</option>
+                                        <option value="16">/16</option><option value="17">/17</option><option value="18">/18</option><option value="19">/19</option><option value="20">/20</option><option value="21">/21</option><option value="22">/22</option><option value="23">/23</option>
+                                        <option value="25">/25</option><option value="26">/26</option><option value="27">/27</option><option value="28">/28</option><option value="29">/29</option><option value="30">/30</option><option value="31">/31</option><option value="32">/32</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Range 5 (Yellow) - Initially Hidden -->
+                        <div id="range5Container" class="range-input-group" data-range-id="5" style="display: none; margin-bottom: 15px; padding: 15px; border: 2px solid #FFC107; border-radius: 8px; background-color: rgba(255, 193, 7, 0.1);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="color: #FFC107; margin: 0;">Range 5 (Yellow)</h4>
+                                <button onclick="removeRange(5)" style="background: none; border: none; color: #FFC107; font-size: 24px; cursor: pointer; padding: 0; line-height: 1;" title="Remove Range">&times;</button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeIp5">IP Address</label>
+                                    <input type="text" id="rangeIp5" placeholder="e.g., 172.16.0.0" value="" style="border-color: #FFC107;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="rangeCidr5">CIDR</label>
+                                    <select id="rangeCidr5" style="border-color: #FFC107;">
+                                        <option value="12" selected>/12</option>
+                                        <option value="0">/0</option><option value="1">/1</option><option value="2">/2</option><option value="3">/3</option><option value="4">/4</option><option value="5">/5</option><option value="6">/6</option><option value="7">/7</option>
+                                        <option value="8">/8</option><option value="9">/9</option><option value="10">/10</option><option value="11">/11</option><option value="13">/13</option><option value="14">/14</option><option value="15">/15</option><option value="16">/16</option>
+                                        <option value="17">/17</option><option value="18">/18</option><option value="19">/19</option><option value="20">/20</option><option value="21">/21</option><option value="22">/22</option><option value="23">/23</option><option value="24">/24</option>
+                                        <option value="25">/25</option><option value="26">/26</option><option value="27">/27</option><option value="28">/28</option><option value="29">/29</option><option value="30">/30</option><option value="31">/31</option><option value="32">/32</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="addRangeBtn" class="btn" onclick="addRange()" style="width: 100%; margin-bottom: 10px; background-color: #2d8659;">+ Add Range</button>
+                    <button class="btn" onclick="calculateOverlap()" style="width: 100%;">View Overlap</button>
+
+                    <div id="rangeResults" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlap Result Modal (Full View) -->
+    <div id="overlapResultModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 95%; width: 1400px;">
+            <div class="modal-header">
+                <h2>📊 Overlap Analysis Results</h2>
+                <button class="close-btn" onclick="closeModal('overlapResultModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="overlapResultContent"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+        async function calculateSubnet() {
+            const ip = document.getElementById('ipAddress').value.trim();
+            const cidr = parseInt(document.getElementById('cidrValue').value);
+            const resultDiv = document.getElementById('subnetResult');
+
+            if (!ip || isNaN(cidr) || cidr < 0 || cidr > 32) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter a valid IP address and CIDR (0-32)</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/subnet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip, cidr })
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    const r = data.result;
+                    resultDiv.innerHTML = `
+                        <div class="result-box">
+                            <h3 style="color: #069494; margin-bottom: 15px;">Subnet Information</h3>
+                            <div class="result-row">
+                                <span class="result-label">Network Address:</span>
+                                <span class="result-value" style="color: #0b58a3; font-weight: bold;">${r.network}${r.cidr}</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Usable IP Address Range:</span>
+                                <span class="result-value" style="color: #18631a; font-weight: bold;">${r.first_ip} - ${r.last_ip}</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Broadcast Address:</span>
+                                <span class="result-value" style="color: #f27038; font-weight: bold;">${r.broadcast}</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Subnet Mask:</span>
+                                <span class="result-value">${r.subnet_mask}</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Wildcard Mask:</span>
+                                <span class="result-value">${r.wildcard_mask}</span>
+                            </div>
+                            <div class="result-row">
+                                <span class="result-label">Total Usable Hosts:</span>
+                                <span class="result-value">${r.usable_hosts.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+            }
+        }
+
+        function calculateIPv6Subnet() {
+            const ipv6 = document.getElementById('ipv6Address').value.trim();
+            const prefix = parseInt(document.getElementById('ipv6Prefix').value);
+            const resultDiv = document.getElementById('ipv6SubnetResult');
+
+            if (!ipv6) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter an IPv6 address</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = `
+                <div class="result-box">
+                    <h3 style="color: #069494; margin-bottom: 15px;">IPv6 Subnet Information</h3>
+                    <div class="result-row">
+                        <span class="result-label">IPv6 Address:</span>
+                        <span class="result-value">${ipv6}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Prefix Length:</span>
+                        <span class="result-value">/${prefix}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Network:</span>
+                        <span class="result-value">${ipv6.split('::')[0]}::/${prefix}</span>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background-color: rgba(0, 255, 204, 0.1); border-left: 4px solid #069494; border-radius: 5px;">
+                        <div style="color: #069494; font-weight: bold; margin-bottom: 5px;">ℹ️ Note</div>
+                        <div style="color: #ccc; font-size: 14px;">Full IPv6 subnet calculation coming soon. This is a simplified view.</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function switchSubnetTab(tabName) {
+            document.getElementById('tabIpv4Calc').classList.remove('active');
+            document.getElementById('tabIpv6Calc').classList.remove('active');
+            document.getElementById('tabIpv4Ranges').classList.remove('active');
+            document.getElementById('ipv4CalcTab').classList.remove('active');
+            document.getElementById('ipv6CalcTab').classList.remove('active');
+            document.getElementById('ipv4RangesTab').classList.remove('active');
+
+            if (tabName === 'ipv4Calc') {
+                document.getElementById('tabIpv4Calc').classList.add('active');
+                document.getElementById('ipv4CalcTab').classList.add('active');
+            } else if (tabName === 'ipv6Calc') {
+                document.getElementById('tabIpv6Calc').classList.add('active');
+                document.getElementById('ipv6CalcTab').classList.add('active');
+            } else if (tabName === 'ipv4Ranges') {
+                document.getElementById('tabIpv4Ranges').classList.add('active');
+                document.getElementById('ipv4RangesTab').classList.add('active');
+            }
+        }
+
+        function addRange() {
+            const range4 = document.getElementById('range4Container');
+            const range5 = document.getElementById('range5Container');
+            const addBtn = document.getElementById('addRangeBtn');
+
+            if (range4.style.display === 'none') {
+                range4.style.display = 'block';
+            } else if (range5.style.display === 'none') {
+                range5.style.display = 'block';
+                addBtn.style.display = 'none';
+            }
+        }
+
+        function removeRange(rangeId) {
+            const rangeContainer = document.getElementById(`range${rangeId}Container`);
+            const addBtn = document.getElementById('addRangeBtn');
+
+            if (rangeContainer) {
+                rangeContainer.style.display = 'none';
+                document.getElementById(`rangeIp${rangeId}`).value = '';
+                addBtn.style.display = 'block';
+            }
+        }
+
+        function ipToInt(ip) {
+            return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+        }
+
+        function intToIp(int) {
+            return [(int >>> 24) & 0xFF, (int >>> 16) & 0xFF, (int >>> 8) & 0xFF, int & 0xFF].join('.');
+        }
+
+        async function calculateOverlap() {
+            const resultDiv = document.getElementById('overlapResultContent');
+            const ranges = [];
+            const errors = [];
+
+            const rangeColors = [
+                { name: 'Range 1', border: '#18631a' },
+                { name: 'Range 2', border: '#0b58a3' },
+                { name: 'Range 3', border: '#8e44ad' },
+                { name: 'Range 4', border: '#f27038' },
+                { name: 'Range 5', border: '#FFC107' }
+            ];
+
+            resultDiv.innerHTML = '<div style="color: #069494; padding: 20px; text-align: center;">Calculating...</div>';
+            openModal('overlapResultModal');
+
+            for (let i = 1; i <= 5; i++) {
+                const ipInput = document.getElementById(`rangeIp${i}`);
+                const cidrInput = document.getElementById(`rangeCidr${i}`);
+
+                if (ipInput && cidrInput && ipInput.value.trim()) {
+                    try {
+                        const response = await fetch('/api/subnet', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ip: ipInput.value.trim(), cidr: parseInt(cidrInput.value) })
+                        });
+
+                        if (!response.ok) {
+                            errors.push(`Range ${i}: Server returned error ${response.status}`);
+                            continue;
+                        }
+
+                        const data = await response.json();
+                        if (data.ok && data.result) {
+                            if (!data.result.network || !data.result.broadcast) {
+                                errors.push(`Range ${i}: Missing network or broadcast address in response`);
+                                continue;
+                            }
+                            ranges.push({
+                                id: i,
+                                ip: ipInput.value.trim(),
+                                cidr: parseInt(cidrInput.value),
+                                color: rangeColors[i - 1],
+                                networkStart: ipToInt(data.result.network),
+                                networkEnd: ipToInt(data.result.broadcast),
+                                result: data.result
+                            });
+                        } else {
+                            errors.push(`Range ${i}: ${data.error || 'Invalid response from server'}`);
+                        }
+                    } catch (error) {
+                        errors.push(`Range ${i}: ${error.message}`);
+                    }
+                }
+            }
+
+            if (ranges.length === 0) {
+                let errorHtml = '<div class="error-message">Unable to calculate ranges</div>';
+                if (errors.length > 0) {
+                    errorHtml += '<div style="background-color: rgba(192, 57, 43, 0.2); border: 2px solid #c0392b; border-radius: 8px; padding: 15px; margin-top: 15px;">';
+                    errorHtml += '<h4 style="color: #c0392b; margin-top: 0;">Errors:</h4>';
+                    errors.forEach(err => { errorHtml += `<div style="color: #ccc; margin-bottom: 5px;">• ${err}</div>`; });
+                    errorHtml += '</div>';
+                }
+                document.getElementById('overlapResultContent').innerHTML = errorHtml;
+                return;
+            }
+
+            ranges.sort((a, b) => b.cidr - a.cidr);
+
+            const segments = [];
+            const allPoints = new Set();
+            ranges.forEach(range => {
+                allPoints.add(range.networkStart);
+                allPoints.add(range.networkEnd + 1);
+            });
+
+            const sortedPoints = Array.from(allPoints).sort((a, b) => a - b);
+
+            for (let i = 0; i < sortedPoints.length - 1; i++) {
+                const segStart = sortedPoints[i];
+                const segEnd = sortedPoints[i + 1] - 1;
+                let owner = null;
+                for (const range of ranges) {
+                    if (segStart >= range.networkStart && segEnd <= range.networkEnd) {
+                        owner = range;
+                        break;
+                    }
+                }
+                if (owner) {
+                    segments.push({ start: segStart, end: segEnd, owner: owner });
+                }
+            }
+
+            let html = '<div style="background-color: #1a1a1a; border: 1px solid #555; border-radius: 8px; padding: 20px;">';
+            html += '<h3 style="color: #069494; margin-top: 0;">Overlap Visualization (Longest Prefix Match)</h3>';
+            html += '<div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">';
+            ranges.forEach(range => {
+                html += `<div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background-color: ${range.color.border}; border-radius: 3px;"></div>
+                    <span style="color: ${range.color.border}; font-weight: bold;">${range.color.name}: ${range.ip}/${range.cidr}</span>
+                </div>`;
+            });
+            html += '</div>';
+            html += '<div style="overflow-x: auto; white-space: nowrap; padding: 10px; background-color: #0d0d0d; border-radius: 5px;">';
+            segments.forEach((seg, idx) => {
+                const startIp = intToIp(seg.start);
+                const endIp = intToIp(seg.end);
+                const separator = idx < segments.length - 1 ? ' <span style="color: #555;">|</span> ' : '';
+                html += `<span style="color: ${seg.owner.color.border}; font-weight: bold; font-family: monospace;">${startIp} - ${endIp}</span>${separator}`;
+            });
+            html += '</div></div>';
+            resultDiv.innerHTML = html;
+        }
+</script>
