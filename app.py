@@ -618,42 +618,26 @@ async def api_ai_question(request: Request):
         return {"ok": False, "error": str(e)}
 
 
-# === Token usage storage (per-user, per-month, auto-resets) ===
-_TOKEN_USAGE_FILE = os.path.join(_APPTECH_ROOT, "user_profiles", "token_usage.json")
-
-def _load_token_usage() -> dict:
-    try:
-        if os.path.exists(_TOKEN_USAGE_FILE):
-            with open(_TOKEN_USAGE_FILE) as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return {}
-
-def _save_token_usage(data: dict):
-    try:
-        os.makedirs(os.path.dirname(_TOKEN_USAGE_FILE), exist_ok=True)
-        with open(_TOKEN_USAGE_FILE, "w") as f:
-            json.dump(data, f, indent=2)
-    except Exception:
-        pass
+# === Token usage — stored inside each user's profile ===
 
 def _add_tokens(username: str, tokens: dict):
     month_key = datetime.now().strftime("%Y-%m")
-    usage = _load_token_usage()
-    user_data = usage.setdefault(username, {})
-    month_data = user_data.setdefault(month_key, {"total": 0, "input": 0, "output": 0})
+    profile = _load_user(username)
+    if not profile:
+        return tokens
+    usage = profile.setdefault("token_usage", {})
+    month_data = usage.setdefault(month_key, {"total": 0, "input": 0, "output": 0})
     month_data["total"]  += tokens.get("total",  0)
     month_data["input"]  += tokens.get("input",  0)
     month_data["output"] += tokens.get("output", 0)
-    _save_token_usage(usage)
+    _save_user(profile)
     return month_data
 
 @app.get(f"{BASE_PREFIX}/api/token_usage")
 async def api_get_token_usage(username: str = ""):
     month_key = datetime.now().strftime("%Y-%m")
-    usage = _load_token_usage()
-    month_data = usage.get(username, {}).get(month_key, {"total": 0, "input": 0, "output": 0})
+    profile = _load_user(username) if username else None
+    month_data = (profile or {}).get("token_usage", {}).get(month_key, {"total": 0, "input": 0, "output": 0})
     return {"ok": True, "month": month_key, "usage": month_data}
 
 
