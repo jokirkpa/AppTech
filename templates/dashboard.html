@@ -1200,7 +1200,7 @@
             <p id="headerUsername" style="font-size:13px; color:#777; white-space:nowrap;"></p>
         </div>
         <div class="header-center">
-            <button class="header-settings-btn" id="tzBtn" onclick="window.open(window._tzUrl||'/techzone','_blank')">&#127758; TechZone</button>
+            <button class="header-settings-btn" id="tzBtn" onclick="window.open(window._tzUrl||'/tools','_blank')">&#127758; Download Tools</button>
         </div>
         <div class="header-right">
             <button class="header-settings-btn" onclick="hcOpenSettingsFromHeader()">&#9881;&#65039; User Settings</button>
@@ -1345,7 +1345,6 @@
                 </div>
                 <div class="tool-signature">By: jokirkpa</div>
             </div>
-
 
             <!-- Test 1 -->
             <div class="tool-card" data-tool-id="testTool1Modal" onclick="loadAndOpenTool('test1.html', 'testTool1Modal')" style="background: linear-gradient(135deg, #1a4a2e 0%, #0d2d1a 100%); border-color: #2d8659;">
@@ -1646,6 +1645,7 @@
                 <div class="tool-description">Test tool 30</div>
                 <div class="tool-signature">By: system</div>
             </div>
+
         </div>
         </div><!-- /tool-sidebar -->
         <div class="tool-resize-handle" id="toolResizeHandle"></div>
@@ -1685,7 +1685,7 @@
                     <!-- Logout -->
                     <div style="margin-top:16px; border-top:1px solid #1b3b6f; padding-top:14px;">
                         <button onclick="window.location.href='/'" style="padding:7px 16px; background:#333; border:1px solid #555; border-radius:5px; color:#aaa; font-size:12px; cursor:pointer;">⏏ Log out</button>
-                        <a id="tzLink" href="#" style="margin-left:14px; color:#069494; font-size:12px; text-decoration:none;" target="_blank">↗ My TechZone</a>
+                        <a id="tzLink" href="#" style="margin-left:14px; color:#069494; font-size:12px; text-decoration:none;" target="_blank">↗ My Download Tools</a>
                     </div>
                 </div>
                 <!-- hcUserSettings, hcDebugConsole, hcCredentialsPanel are relocated here at runtime -->
@@ -4314,6 +4314,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 const data = await resp.json();
                 if (data.ok && data.profile) {
                     _profileCache = data.profile;
+                    if (_profileCache.activeTab) _activeTabId = _profileCache.activeTab;
                 } else {
                     _profileCache = defaultProfile;
                 }
@@ -4452,9 +4453,12 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
         function renderCategoryTabs(cats) {
             const bar = document.getElementById('categoryTabs');
             if (!bar) return;
-            // Preserve active tab if still valid
+            // Preserve active tab if still valid; fall back to misc if the tab was deleted
             const ids = new Set(cats.map(c => c.id));
-            if (!ids.has(_activeTabId)) _activeTabId = 'misc';
+            if (!ids.has(_activeTabId)) {
+                _activeTabId = 'misc';
+                if (_profileCache) _profileCache.activeTab = 'misc';
+            }
 
             bar.innerHTML = '';
             cats.slice(0, 8).forEach(cat => {
@@ -4476,6 +4480,10 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 t.classList.toggle('active', t.dataset.catId === catId);
             });
             applyTabFilter();
+            if (_profileCache) {
+                _profileCache.activeTab = catId;
+                scheduleSave();
+            }
         }
 
         function applyTabFilter() {
@@ -4600,6 +4608,8 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                     saveCategories(loadCategories().filter(c => c.id !== cat.id));
                     renderCategoryAdmin();
                     renderGroupedGrid();
+                    // Always land on Miscellaneous so the user can see the moved tools
+                    setActiveTab('misc');
                 });
 
                 // Drag-to-reorder: handle is the drag source, row is the drop target.
@@ -4771,9 +4781,8 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 alert('Maximum of 8 categories reached.');
                 return;
             }
-            const fresh = { id: uid(), name: 'New Category', color: '#2d7a9e' };
-            const miscIdx = cats.findIndex(c => c.id === 'misc');
-            if (miscIdx >= 0) cats.splice(miscIdx, 0, fresh); else cats.push(fresh);
+            const fresh = { id: uid(), name: 'Category ' + (cats.length + 1), color: '#2d7a9e' };
+            cats.push(fresh);
             saveCategories(cats);
             renderCategoryAdmin();
             renderGroupedGrid();
@@ -5117,16 +5126,16 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
         const _pathParts = window.location.pathname.split('/').filter(Boolean);
         const _username = _pathParts[0] || '';
 
-        // Show username in header subtitle and wire TechZone button
+        // Show username in header subtitle and wire Download Tools button
         if (_username) {
             const el = document.getElementById('headerUsername');
             if (el) el.textContent = _username;
-            window._tzUrl = `/${_username}/techzone`;
+            window._tzUrl = `/${_username}/tools`;
         }
 
-        // Wire up TechZone link in User Settings
+        // Wire up Download Tools link in User Settings
         const tzLink = document.getElementById('tzLink');
-        if (tzLink && _username) tzLink.href = `/${_username}/techzone`;
+        if (tzLink && _username) tzLink.href = `/${_username}/tools`;
 
         function applyTools(enabledSet) {
             document.querySelectorAll('#toolGrid .tool-card').forEach(card => {
@@ -5140,13 +5149,20 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             try {
                 const res = await fetch(`/api/users/${encodeURIComponent(_username)}/tools`);
                 const data = await res.json();
-                applyTools(data.ok ? new Set(data.tools) : new Set());
-            } catch(e) { applyTools(new Set()); }
+                if (data.ok && data.tools && data.tools.length > 0) {
+                    applyTools(new Set(data.tools));
+                } else {
+                    // No tools saved yet — show everything so the dashboard isn't blank
+                    document.querySelectorAll('#toolGrid .tool-card').forEach(c => c.classList.remove('tool-hidden'));
+                }
+            } catch(e) {
+                document.querySelectorAll('#toolGrid .tool-card').forEach(c => c.classList.remove('tool-hidden'));
+            }
         }
 
         loadUserTools();
 
-        // Expose so TechZone redirect can trigger a refresh on focus
+        // Expose so Download Tools redirect can trigger a refresh on focus
         window.addEventListener('focus', loadUserTools);
 
         // Profile management in User Settings
@@ -5187,12 +5203,18 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
         // ========== DYNAMIC TOOL LOADER ==========
         // Loads tool HTML + JS from /applications/<name> on first open,
         // then caches it so subsequent opens are instant.
+        const _toolsInFlight = new Set();
+
         async function loadAndOpenTool(toolFile, modalId) {
             // Already loaded — just open it
             if (document.getElementById(modalId)) {
                 openModal(modalId);
                 return;
             }
+
+            // Prevent concurrent loads of the same tool (rapid double-click / fast switching)
+            if (_toolsInFlight.has(modalId)) return;
+            _toolsInFlight.add(modalId);
 
             try {
                 const response = await fetch(`/applications/${toolFile}`);
@@ -5203,6 +5225,14 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 // literals, whereas innerHTML truncates the script at the first such tag.
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
+
+                // Inject style tags (DOMParser places them in <head>, not <body>)
+                doc.querySelectorAll('style').forEach(s => {
+                    const newStyle = document.createElement('style');
+                    newStyle.textContent = s.textContent;
+                    document.head.appendChild(newStyle);
+                    s.remove();
+                });
 
                 // Execute all script tags (DOMParser never runs them automatically)
                 doc.querySelectorAll('script').forEach(s => {
@@ -5225,6 +5255,8 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             } catch (err) {
                 console.error('Failed to load tool:', err);
                 alert('Could not load tool: ' + err.message);
+            } finally {
+                _toolsInFlight.delete(modalId);
             }
         }
 

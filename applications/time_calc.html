@@ -619,7 +619,13 @@
                 applyTimezoneSelectionHighlight();
             }
 
-            target.textContent = `${display} ${mainTimezoneAbbr}`;
+            const tzParts = new Intl.DateTimeFormat('en-US', {
+                timeZone: mainTimezoneId,
+                timeZoneName: 'short'
+            }).formatToParts(now);
+            const actualAbbr = tzParts.find(p => p.type === 'timeZoneName')?.value || mainTimezoneAbbr;
+
+            target.textContent = `${display} ${actualAbbr}`;
         }
 
         function startTimezoneCurrentTimeTicker() {
@@ -731,9 +737,10 @@
             document.getElementById('tfdHour').value = hour;
             document.getElementById('tfdMinute').value = now.getMinutes();
             document.getElementById('tfdSecond').value = now.getSeconds();
-            document.getElementById('tfdAmPm').value = ampm;
 
             setTimeFromDateClockMode('12');
+
+            document.getElementById('tfdAmPm').value = ampm;
         }
 
         function syncTimeFromDateFromPicker() {

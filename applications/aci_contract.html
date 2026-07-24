@@ -1969,18 +1969,20 @@
             }
         }
         
-        // Initialize zoning rule tables on page load
-        updateAciZoningTables();
-
         // ==========================================
         // Local AI Trainer
         // ==========================================
         let hcInterval = null;
         let hcCurrentQuestion = null;
         let hcCurrentAnswer = null;
-        // Register open-hook: resets ACI tool state each time the modal opens
+        // Register open-hook: resets ACI tool state and initializes settings each time the modal opens
         window._toolOnOpen = window._toolOnOpen || {};
         window._toolOnOpen['aciContractModal'] = function() {
+            // Initialize dashboard-level settings (DOMContentLoaded won't fire for dynamically loaded scripts)
+            if (typeof loadUserSettings === 'function') loadUserSettings();
+            if (typeof loadCircuitCredentialsList === 'function') loadCircuitCredentialsList();
+            if (typeof updateAskModeUI === 'function') updateAskModeUI();
+
             aciFilterCount = 1;
             const allEntries = document.querySelectorAll('.aci-filter-entry');
             allEntries.forEach((entry, index) => { if (index > 0) entry.remove(); });
@@ -2004,13 +2006,7 @@
             updateAciFieldStates('P2C');
             updateAciReversePortFilter();
             updateAciArrowVisibility();
+            updateAciZoningTables();
             setTimeout(() => { updateAciVisual(); updateAciPcTags(); }, 350);
         };
-
-        // Load user settings on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            loadUserSettings();
-            loadCircuitCredentialsList();
-            updateAskModeUI(); // Initialize UI based on default selection
-        });
 </script>

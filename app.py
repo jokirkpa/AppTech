@@ -151,8 +151,8 @@ async def login_page():
     return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "login.html"))
 
 
-@app.get(f"{BASE_PREFIX}/techzone", include_in_schema=False)
-async def techzone_redirect():
+@app.get(f"{BASE_PREFIX}/tools", include_in_schema=False)
+async def tools_redirect():
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/", status_code=302)
 
@@ -1121,12 +1121,15 @@ async def api_save_user_profile(username: str, request: Request):
         profile = _load_user(username.lower())
         if not profile:
             return {"ok": False, "error": "User not found"}
-        profile["dashboard_profile"] = {
+        dp = {
             "categories": data.get("categories", [{"id": "misc", "name": "Miscellaneous", "color": "#2d5aa0"}]),
             "assignments": data.get("assignments", {}),
             "order": data.get("order", []),
             "columns": data.get("columns", 3),
         }
+        if "activeTab" in data:
+            dp["activeTab"] = data["activeTab"]
+        profile["dashboard_profile"] = dp
         _save_user(profile)
         return {"ok": True}
     except Exception as e:
@@ -1136,7 +1139,7 @@ async def api_save_user_profile(username: str, request: Request):
 # === User Profile Management ===
 _RESERVED_USERNAMES = {
     "api", "static", "applications", "docs", "openapi.json",
-    "techzone", "favicon.ico", "robots.txt",
+    "tools", "favicon.ico", "robots.txt",
 }
 _USERNAME_RE = re.compile(r'^[a-zA-Z0-9_-]{2,32}$')
 
@@ -1259,7 +1262,7 @@ async def api_list_users():
 
 
 # === Per-user frontend routes (must be last — path params match anything) ===
-_RESERVED_PATH_PREFIXES = {"api", "static", "applications", "docs", "techzone", "openapi.json"}
+_RESERVED_PATH_PREFIXES = {"api", "static", "applications", "docs", "tools", "openapi.json"}
 
 
 @app.get(f"{BASE_PREFIX}/{{username}}", include_in_schema=False)
@@ -1270,12 +1273,12 @@ async def user_dashboard(username: str):
     return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "dashboard.html"))
 
 
-@app.get(f"{BASE_PREFIX}/{{username}}/techzone", include_in_schema=False)
-async def user_techzone(username: str):
+@app.get(f"{BASE_PREFIX}/{{username}}/tools", include_in_schema=False)
+async def user_tools(username: str):
     if username in _RESERVED_PATH_PREFIXES or not _USERNAME_RE.match(username):
         from fastapi import HTTPException
         raise HTTPException(status_code=404)
-    return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "techzone.html"))
+    return FileResponse(os.path.join(_APPTECH_ROOT, "templates", "tools.html"))
 
 
 if __name__ == "__main__":
