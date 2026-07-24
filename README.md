@@ -102,17 +102,6 @@ Two uvicorn processes run behind nginx:
 
 nginx routes requests between them; the app itself runs at root `/`.
 
-### Running Locally
-
-```bash
-pip install -r requirements.txt
-playwright install chromium      # only needed for the Circuit AI feature
-
-bash start.sh
-```
-
-The app will be available at `http://localhost:7996`.
-
 ### User Profiles
 
 User accounts are stored as JSON files in `user_profiles/`. Passwords are hashed with PBKDF2-SHA256 (salted, 100,000 iterations). There is no session token or cookie — the username is stored in `localStorage` on the client and sent with API requests.
