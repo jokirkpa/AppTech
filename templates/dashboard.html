@@ -120,6 +120,8 @@
             gap: 20px;
             max-width: calc(var(--tool-cols, 3) * 300px);
             width: 100%;
+            opacity: 0;
+            transition: opacity 0.15s ease;
         }
 
         .tool-card {
@@ -1644,7 +1646,7 @@
                 <button class="close-btn" onclick="closeModal('userSettingsModal')">&times;</button>
             </div>
             <div class="modal-body" id="userSettingsModalBody">
-                <!-- hcUserSettings, hcDebugConsole, hcCredentialsPanel are relocated here at runtime;
+                <!-- hcUserSettings and hcDebugConsole are relocated here at runtime;
                      profileMgmtSection is appended last by the relocate() call below -->
                 <!-- Manage Profile section — moved to bottom of modal at runtime -->
                 <div id="profileMgmtSection" style="margin-bottom: 24px; padding: 20px; background: #0a1a30; border: 1px solid #1b3b6f; border-radius: 8px;">
@@ -1703,7 +1705,7 @@
             // 3. Move the remaining settings panel + credentials manager into the User Settings modal,
             //    then append Manage Profile last so it always sits at the bottom.
             if (settingsTarget) {
-                ['hcUserSettings', 'hcCredentialsPanel'].forEach(id => {
+                ['hcUserSettings'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el && el.parentElement !== settingsTarget) settingsTarget.appendChild(el);
                 });
@@ -1842,49 +1844,6 @@
                     <pre id="hcDebugConsoleBody" style="background-color: #0a0a0a; color: #c8e6c9; border: 1px solid #333; border-radius: 4px; padding: 10px; height: 380px; overflow: auto; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-word; margin: 0;">(no entries yet)</pre>
                 </div>
 
-                <!-- Credentials Management Panel (hidden by default) -->
-                <div id="hcCredentialsPanel" style="display: none; background-color: #1a1a1a; border: 2px solid #2d7a9e; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="color: #2d7a9e; margin: 0; font-size: 16px;">🔐 Manage Circuit Credentials</h3>
-                        <button class="btn" onclick="closeCredentialsPanel()" style="padding: 6px 12px; background-color: #555; font-size: 12px;">Close</button>
-                    </div>
-
-                    <!-- Saved Credentials List -->
-                    <div id="hcSavedCredsContainer" style="margin-bottom: 15px;">
-                        <div style="display: flex; gap: 10px; align-items: flex-end;">
-                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                                <label for="hcSavedCreds">Saved Credentials</label>
-                                <select id="hcSavedCreds" onchange="loadCircuitCredential()">
-                                    <option value="">-- Select to Edit/Delete --</option>
-                                </select>
-                            </div>
-                            <button class="btn" onclick="deleteCircuitCredential()" style="padding: 10px 15px; background-color: #aa0000; height: 42px;">🗑️ Delete</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="hcUsername">Circuit Username/Email</label>
-                        <input type="text" id="hcUsername" placeholder="your.email@company.com">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="hcPassword">Circuit Password</label>
-                        <input type="password" id="hcPassword" placeholder="Enter your Circuit password">
-                    </div>
-
-                    <!-- Save Credentials Option -->
-                    <div style="background-color: #2a2a2a; border: 1px solid #555; border-radius: 5px; padding: 12px; margin-top: 15px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <input type="checkbox" id="hcSaveCredentials" style="width: 18px; height: 18px; cursor: pointer;">
-                            <label for="hcSaveCredentials" style="cursor: pointer; margin: 0; color: #2d8659; font-weight: 600;">Save as new credential</label>
-                        </div>
-                        <div id="hcCredNameContainer" style="display: none;">
-                            <input type="text" id="hcCredName" placeholder="Enter a name for these credentials (e.g., 'Work Account')" style="width: 100%; padding: 8px; background-color: #1a1a1a; color: white; border: 1px solid #555; border-radius: 5px;">
-                        </div>
-                    </div>
-                    
-                    <button class="btn" onclick="saveNewCredential()" style="width: 100%; margin-top: 15px; background-color: #2d8659;">💾 Save Credential</button>
-                </div>
 
                 <!-- Ask Mode Tabs -->
                 <div style="display: flex; gap: 0; margin-bottom: 18px; border-bottom: 2px solid #333;">
@@ -1933,7 +1892,7 @@
                         <!-- Generate Questions file picker (shown when Generate Questions is selected) -->
                         <div id="hcQuizBotSection" style="display: none;">
                             <div class="form-group">
-                                <label for="hcQuizBotFile">Source File (from <code>circuit_logs/local_ai_training/source_files/</code>)</label>
+                                <label for="hcQuizBotFile">Source File</label>
                                 <div style="display: flex; gap: 8px; align-items: flex-start;">
                                     <div id="hcQuizBotFileList" style="flex: 1; max-height: 180px; overflow-y: auto; background: #1a1a1a; border: 1px solid #555; border-radius: 4px; padding: 4px 0; min-width: 0;">
                                         <div style="padding: 8px 12px; color: #888; font-size: 13px;">-- Loading files… --</div>
@@ -2075,7 +2034,6 @@
                 <!-- Utility Buttons -->
                 <div style="margin-top: 25px; padding-top: 15px; border-top: 2px solid #555;">
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn" onclick="openCircuitLogs()" style="flex: 1; background-color: #555;">📋 View Logs</button>
                         <button class="btn" onclick="closeCircuitBrowser()" style="flex: 1; background-color: #aa0000;">❌ Close Browser</button>
                     </div>
                 </div>
@@ -2102,42 +2060,6 @@
                     </div>
                 </div>
 
-                <!-- Log Viewer Section (hidden by default) -->
-                <div id="hcLogViewer" style="margin-top: 20px; display: none;">
-                    <div style="background-color: #1a1a1a; border: 2px solid #555; border-radius: 8px; padding: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h4 style="color: #2d7a9e; margin: 0;">📋 Question & Answer Logs</h4>
-                            <button class="btn" onclick="closeCircuitLogs()" style="padding: 6px 12px; background-color: #555;">Close</button>
-                        </div>
-                        
-                        <!-- Log File List -->
-                        <div id="hcLogFileList" style="margin-bottom: 20px;">
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                <label for="hcLogCategory" style="color: #aaa; font-size: 13px; margin: 0;">Category:</label>
-                                <select id="hcLogCategory" onchange="openCircuitLogs()" style="padding: 6px 10px; background-color: #2a2a2a; color: #fff; border: 1px solid #555; border-radius: 4px;">
-                                    <option value="circuit">Ask Circuit</option>
-                                    <option value="local-ai">Ask Local AI</option>
-                                    <option value="send-questions">Send Questions</option>
-                                </select>
-                            </div>
-                            <h5 style="color: #aaa; margin-bottom: 10px; font-size: 14px;">Available Log Files:</h5>
-                            <div id="hcLogFiles" style="max-height: 200px; overflow-y: auto;">
-                                <!-- Log files will be listed here -->
-                            </div>
-                        </div>
-
-                        <!-- Log Content Display -->
-                        <div id="hcLogContentDisplay" style="display: none;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <h5 style="color: #2d7a9e; margin: 0;">Log Contents</h5>
-                                <button class="btn" onclick="backToLogList()" style="padding: 4px 10px; background-color: #555; font-size: 12px;">← Back to List</button>
-                            </div>
-                            <div id="hcLogContent" style="max-height: 400px; overflow-y: auto; background-color: #0a0a0a; padding: 15px; border-radius: 5px;">
-                                <!-- Log content will be displayed here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -2191,7 +2113,7 @@
 
         // User Settings Functions
         function _settingsShowPanel(panelId) {
-            ['hcUserSettings','hcCredentialsPanel'].forEach(id => {
+            ['hcUserSettings'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = (id === panelId) ? 'block' : 'none';
             });
@@ -2204,20 +2126,12 @@
 
         function openUserSettings() {
             _settingsShowPanel('hcUserSettings');
-            loadCircuitCredentialsList(); // Refresh credentials list
         }
 
         function closeUserSettings() {
             closeModal('userSettingsModal');
         }
 
-        function manageCredentials() {
-            _settingsShowPanel('hcCredentialsPanel');
-        }
-
-        function closeCredentialsPanel() {
-            _settingsShowPanel('hcUserSettings');
-        }
 
         function saveUserSettings() {
             const settings = {
@@ -2796,12 +2710,6 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                         : '');
                 if (viewBtn) viewBtn.style.display = 'inline-block';
 
-                // Log a summary line into the training log
-                saveCircuitLog(
-                    `Generated ${data.added} questions → ${data.quiz_filename}`,
-                    `Saved ${data.total_in_file} questions (source: ${data.filename})`,
-                    'quiz-set', data.filename, 'training', data.model
-                );
             } catch (e) {
                 hideStudyingOverlay();
                 resultBox.style.display = 'block';
@@ -2926,21 +2834,18 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             const filename  = (document.getElementById('hcSQFile')     || {}).value || '';
             const hours     = parseInt((document.getElementById('hcSQHours')   || {}).value || '0');
             const minutes   = parseInt((document.getElementById('hcSQMinutes') || {}).value || '0');
-            const username  = (document.getElementById('hcUsername')   || {}).value || '';
-            const password  = (document.getElementById('hcPassword')   || {}).value || '';
             const useFollowUp = !!(document.getElementById('hcSQUseFollowUp') || {}).checked;
             const followUpPool = [1, 2, 3, 4, 5].map(n => (document.getElementById(`hcSettingsFollowUp${n}`) || {}).value || '');
             const followUp = useFollowUp ? followUpPool[Math.floor(Math.random() * followUpPool.length)] : '';
 
-            if (!filename)              { alert('Select a questions file first.');      return; }
-            if (hours + minutes === 0)  { alert('Set a session duration.');             return; }
-            if (!username || !password) { alert('Enter your Circuit credentials above (or load saved ones).'); return; }
+            if (!filename)             { alert('Select a questions file first.'); return; }
+            if (hours + minutes === 0) { alert('Set a session duration.');        return; }
 
             try {
                 const res  = await fetch('/api/send_questions/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filename, hours, minutes, follow_up: followUp, username, password }),
+                    body: JSON.stringify({ filename, hours, minutes, follow_up: followUp }),
                 });
                 const data = await res.json();
                 if (!data.ok) { alert(`Could not start: ${data.message || data.error}`); return; }
@@ -3114,7 +3019,6 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                     document.getElementById('hcAnswerText').textContent = result.answer;
                     document.getElementById('hcAnswerDisplay').style.display = 'block';
                     document.getElementById('hcRevealBtn').style.display = 'none';
-                    saveCircuitLog(prompt, result.answer, '', '', 'local-ai', model);
                 } else {
                     questionText.innerHTML = `<div style="color: #ff6666;">❌ Error: ${result.error}</div>`;
                 }
@@ -3139,17 +3043,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 return;
             }
 
-            // Get credentials from user settings or credentials panel
-            const username = document.getElementById('hcUsername').value;
-            const password = document.getElementById('hcPassword').value;
-
-            if (!username || !password) {
-                alert('Please configure your Circuit credentials in User Settings first');
-                openUserSettings();
-                return;
-            }
-
-            // Show loading state with animated dots; clear any previous Q/A first
+            // Show loading state
             hcCurrentQuestion = null;
             hcCurrentAnswer = null;
             document.getElementById('hcAnswerText').textContent = '';
@@ -3161,18 +3055,10 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             document.getElementById('hcRevealBtn').style.display = 'inline-block';
 
             try {
-                const response = await fetch('/api/circuit_question', {
+                const response = await fetch('/api/ai_chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password,
-                        question: question,
-                        technology: 'custom',
-                        difficulty: 'intermediate'
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: question })
                 });
 
                 const result = await response.json();
@@ -3180,26 +3066,18 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
 
                 if (result.ok) {
                     hcCurrentQuestion = question;
-                    hcCurrentAnswer = result.answer;
+                    hcCurrentAnswer = result.response;
 
                     questionText.innerHTML = `<strong>Q:</strong> ${question}`;
-                    document.getElementById('hcAnswerText').textContent = result.answer;
-                    // Auto-reveal the answer so the user can see it without an extra click
+                    document.getElementById('hcAnswerText').textContent = result.response;
                     document.getElementById('hcAnswerDisplay').style.display = 'block';
                     document.getElementById('hcRevealBtn').style.display = 'none';
-                    // Persist to today's log file (Circuit category)
-                    saveCircuitLog(question, result.answer, 'ask-question', '', 'circuit', '');
                 } else {
-                    let errHtml = `<div style="color: #ff6666;">❌ Error: ${result.error}</div>`;
-                    if (result.diagnostics && result.diagnostics.length) {
-                        errHtml += `<details style="margin-top:10px; color:#aaa; font-size:12px;"><summary>Page textareas (${result.textareas_found})</summary><pre style="white-space:pre-wrap;">${JSON.stringify(result.diagnostics, null, 2)}</pre></details>`;
-                    }
-                    questionText.innerHTML = errHtml;
+                    questionText.innerHTML = `<div style="color: #ff6666;">❌ Error: ${result.error}</div>`;
                 }
 
             } catch (error) {
                 stopGeneratingAnimation();
-                console.error('Circuit question error:', error);
                 questionText.innerHTML = `<div style="color: #ff6666;">❌ Error: ${error.message}</div>`;
             }
         }
@@ -3264,140 +3142,6 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             }
         }
 
-        async function saveCircuitLog(question, answer, technology, difficulty, category, model) {
-            try {
-                await fetch('/api/circuit_log', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        question: question,
-                        answer: answer,
-                        technology: technology,
-                        difficulty: difficulty,
-                        category: category || 'circuit',
-                        model: model || ''
-                    })
-                });
-            } catch (error) {
-                console.error('Error saving log:', error);
-                // Don't show error to user, just log it
-            }
-        }
-
-        async function openCircuitLogs() {
-            const logViewer = document.getElementById('hcLogViewer');
-            const logFileList = document.getElementById('hcLogFileList');
-            const logContentDisplay = document.getElementById('hcLogContentDisplay');
-            const categorySelect = document.getElementById('hcLogCategory');
-            const category = (categorySelect && categorySelect.value) || 'circuit';
-
-            // Hide question display, show log viewer
-            document.getElementById('hcQuestionDisplay').style.display = 'none';
-            logViewer.style.display = 'block';
-            logFileList.style.display = 'block';
-            logContentDisplay.style.display = 'none';
-
-            // Load log files for the selected category
-            try {
-                const response = await fetch(`/api/circuit_logs?category=${encodeURIComponent(category)}`);
-                const result = await response.json();
-
-                const logFilesDiv = document.getElementById('hcLogFiles');
-
-                if (result.ok && result.logs.length > 0) {
-                    let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
-                    result.logs.forEach(log => {
-                        html += `
-                            <div onclick="loadLogContent('${log.filename}', '${category}')"
-                                 style="padding: 12px; background-color: #2a2a2a; border: 1px solid #555; border-radius: 5px; cursor: pointer; transition: all 0.2s;"
-                                 onmouseover="this.style.backgroundColor='#3a3a3a'; this.style.borderColor='#2d7a9e'"
-                                 onmouseout="this.style.backgroundColor='#2a2a2a'; this.style.borderColor='#555'">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <div style="color: #2d7a9e; font-weight: bold; margin-bottom: 4px;">📅 ${log.date}</div>
-                                        <div style="color: #888; font-size: 12px;">Modified: ${log.modified}</div>
-                                    </div>
-                                    <div style="color: #2d7a9e; font-size: 20px;">→</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                    logFilesDiv.innerHTML = html;
-                } else {
-                    logFilesDiv.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No logs in this category yet.</div>';
-                }
-            } catch (error) {
-                document.getElementById('hcLogFiles').innerHTML = '<div style="color: #ff6666; padding: 20px;">Error loading logs: ' + error.message + '</div>';
-            }
-        }
-
-        async function loadLogContent(filename, category) {
-            const logFileList = document.getElementById('hcLogFileList');
-            const logContentDisplay = document.getElementById('hcLogContentDisplay');
-            const logContentDiv = document.getElementById('hcLogContent');
-            const cat = category || (document.getElementById('hcLogCategory') || {}).value || 'circuit';
-
-            try {
-                const response = await fetch(`/api/circuit_logs/${filename}?category=${encodeURIComponent(cat)}`);
-                const result = await response.json();
-
-                if (result.ok) {
-                    logFileList.style.display = 'none';
-                    logContentDisplay.style.display = 'block';
-
-                    let html = '';
-                    const entries = result.content.entries || [];
-                    
-                    if (entries.length === 0) {
-                        html = '<div style="color: #888; text-align: center; padding: 20px;">No entries in this log file.</div>';
-                    } else {
-                        entries.forEach((entry, index) => {
-                            html += `
-                                <div style="margin-bottom: 20px; padding: 15px; background-color: #1a1a1a; border-left: 4px solid #2d7a9e; border-radius: 5px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                        <div style="color: #2d7a9e; font-weight: bold;">Entry #${entries.length - index}</div>
-                                        <div style="color: #888; font-size: 12px;">${entry.timestamp}</div>
-                                    </div>
-                                    <div style="margin-bottom: 8px;">
-                                        <span style="color: #aaa; font-size: 12px;">Technology:</span>
-                                        <span style="color: #2d8659; font-weight: bold; margin-left: 8px;">${entry.technology}</span>
-                                        <span style="color: #aaa; font-size: 12px; margin-left: 15px;">Difficulty:</span>
-                                        <span style="color: #d67b28; font-weight: bold; margin-left: 8px;">${entry.difficulty}</span>
-                                    </div>
-                                    <div style="margin-bottom: 10px;">
-                                        <div style="color: #069494; font-weight: bold; margin-bottom: 5px;">❓ Question:</div>
-                                        <div style="color: #ccc; line-height: 1.6; padding-left: 10px;">${entry.question}</div>
-                                    </div>
-                                    <div>
-                                        <div style="color: #2d8659; font-weight: bold; margin-bottom: 5px;">💡 Answer:</div>
-                                        <div style="color: #ccc; line-height: 1.6; padding-left: 10px;">${entry.answer}</div>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    }
-
-                    logContentDiv.innerHTML = html;
-                } else {
-                    logContentDiv.innerHTML = '<div style="color: #ff6666; padding: 20px;">Error loading log content: ' + result.error + '</div>';
-                }
-            } catch (error) {
-                logContentDiv.innerHTML = '<div style="color: #ff6666; padding: 20px;">Error loading log content: ' + error.message + '</div>';
-            }
-        }
-
-        function backToLogList() {
-            document.getElementById('hcLogFileList').style.display = 'block';
-            document.getElementById('hcLogContentDisplay').style.display = 'none';
-        }
-
-        function closeCircuitLogs() {
-            document.getElementById('hcLogViewer').style.display = 'none';
-            document.getElementById('hcQuestionDisplay').style.display = 'block';
-        }
 
         function revealAnswer() {
             const answerDisplay = document.getElementById('hcAnswerDisplay');
@@ -3407,389 +3151,6 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             if (revealBtn) revealBtn.style.display = 'none';
         }
 
-        // Load saved credentials into both dropdown menus
-        async function loadCircuitCredentialsList() {
-            try {
-                const response = await fetch('/api/circuit_credentials');
-                const data = await response.json();
-                
-                // Load into credentials panel dropdown
-                const panelSelect = document.getElementById('hcSavedCreds');
-                if (panelSelect) {
-                    panelSelect.innerHTML = '<option value="">-- Select to Edit/Delete --</option>';
-                    
-                    if (data.credentials && data.credentials.length > 0) {
-                        data.credentials.forEach(cred => {
-                            const option = document.createElement('option');
-                            option.value = cred.name;
-                            option.textContent = cred.name;
-                            panelSelect.appendChild(option);
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading saved credentials:', error);
-            }
-        }
-
-        // Load default credential into username/password fields
-        async function loadDefaultCredential(credName) {
-            if (!credName) return;
-
-            try {
-                const response = await fetch(`/api/circuit_credentials/${encodeURIComponent(credName)}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('hcUsername').value = data.credential.username;
-                    document.getElementById('hcPassword').value = data.credential.password;
-                }
-            } catch (error) {
-                console.error('Error loading default credential:', error);
-            }
-        }
-
-        // Save new credential
-        async function saveNewCredential() {
-            const credName = document.getElementById('hcCredName').value.trim();
-            const username = document.getElementById('hcUsername').value.trim();
-            const password = document.getElementById('hcPassword').value.trim();
-
-            if (!credName) {
-                alert('Please enter a name for this credential');
-                return;
-            }
-
-            if (!username || !password) {
-                alert('Please enter username and password');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/circuit_credentials', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: credName,
-                        username: username,
-                        password: password
-                    })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    alert('Credential saved successfully!');
-                    
-                    // Clear the save checkbox and name input
-                    document.getElementById('hcSaveCredentials').checked = false;
-                    document.getElementById('hcCredNameContainer').style.display = 'none';
-                    document.getElementById('hcCredName').value = '';
-                    
-                    // Reload the credentials lists
-                    await loadCircuitCredentialsList();
-                    
-                    saveUserSettings();
-                } else {
-                    alert('Error saving credential: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error saving credentials:', error);
-                alert('Error saving credential.');
-            }
-        }
-
-        // Toggle credential name input visibility
-        document.addEventListener('DOMContentLoaded', function() {
-            const saveCheckbox = document.getElementById('hcSaveCredentials');
-            const credNameContainer = document.getElementById('hcCredNameContainer');
-            
-            if (saveCheckbox) {
-                saveCheckbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        credNameContainer.style.display = 'block';
-                        // Suggest a name based on username
-                        const username = document.getElementById('hcUsername').value;
-                        if (username && !document.getElementById('hcCredName').value) {
-                            document.getElementById('hcCredName').value = username.split('@')[0] + ' Account';
-                        }
-                    } else {
-                        credNameContainer.style.display = 'none';
-                        document.getElementById('hcCredName').value = '';
-                    }
-                });
-            }
-        });
-
-        // Load saved credentials list (backward compatibility)
-        async function loadSavedCredentialsList() {
-            await loadCircuitCredentialsList();
-        }
-
-        // Load selected credential into fields
-        async function loadCircuitCredential() {
-            const credName = document.getElementById('hcSavedCreds').value;
-            if (!credName) {
-                document.getElementById('hcUsername').value = '';
-                document.getElementById('hcPassword').value = '';
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/circuit_credentials/${encodeURIComponent(credName)}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('hcUsername').value = data.credential.username;
-                    document.getElementById('hcPassword').value = data.credential.password;
-                } else {
-                    alert('Error loading credentials: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error loading credential:', error);
-                alert('Error loading credentials.');
-            }
-        }
-
-        // Save credentials (called during getQuestionNow)
-        async function saveCircuitCredentialsIfNeeded() {
-            const saveCheckbox = document.getElementById('hcSaveCredentials');
-            const credName = document.getElementById('hcCredName').value.trim();
-            const username = document.getElementById('hcUsername').value.trim();
-            const password = document.getElementById('hcPassword').value.trim();
-
-            if (saveCheckbox && saveCheckbox.checked && credName && username && password) {
-                try {
-                    const response = await fetch('/api/circuit_credentials', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: credName,
-                            username: username,
-                            password: password
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        // Uncheck the save checkbox and hide name input
-                        saveCheckbox.checked = false;
-                        document.getElementById('hcCredNameContainer').style.display = 'none';
-                        document.getElementById('hcCredName').value = '';
-                        
-                        // Reload the credentials list
-                        await loadSavedCredentialsList();
-                        
-                        // Select the newly saved credential
-                        document.getElementById('hcSavedCreds').value = credName;
-                    }
-                } catch (error) {
-                    console.error('Error saving credentials:', error);
-                }
-            }
-        }
-
-        // Delete selected credential
-        async function deleteCircuitCredential() {
-            const credName = document.getElementById('hcSavedCreds').value;
-            if (!credName) {
-                alert('Please select a credential to delete.');
-                return;
-            }
-
-            if (!confirm(`Are you sure you want to delete the credential "${credName}"?`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/circuit_credentials/${encodeURIComponent(credName)}`, {
-                    method: 'DELETE'
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    // Clear the input fields
-                    document.getElementById('hcUsername').value = '';
-                    document.getElementById('hcPassword').value = '';
-                    
-                    // Reload the credentials list
-                    await loadSavedCredentialsList();
-                    
-                    alert('Credential deleted successfully.');
-                } else {
-                    alert('Error deleting credential: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error deleting credential:', error);
-                alert('Error deleting credential.');
-            }
-        }
-
-        // Debug: Find Circuit input field selectors
-        async function debugCircuitSelectors() {
-            const username = document.getElementById('hcUsername').value;
-            const password = document.getElementById('hcPassword').value;
-
-            if (!username || !password) {
-                alert('Please enter your Circuit credentials first');
-                return;
-            }
-
-            // Show loading message
-            const confirmed = confirm(
-                'DEBUG MODE:\n\n' +
-                'This will:\n' +
-                '1. Open a visible browser window (for 30 seconds)\n' +
-                '2. Login to Circuit with your credentials\n' +
-                '3. Scan the page for all input fields\n' +
-                '4. Show you a list of all found fields\n' +
-                '5. Take a screenshot\n\n' +
-                'You can manually inspect the page while it\'s open.\n\n' +
-                'Continue?'
-            );
-
-            if (!confirmed) return;
-
-            try {
-                alert('Starting debug mode... The browser will open and stay visible for 30 seconds. Check your screen!');
-
-                const response = await fetch('/api/circuit_debug', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.ok) {
-                    // Create a new window to display results
-                    const debugWindow = window.open('', 'Circuit Debug', 'width=1200,height=800');
-                    
-                    if (debugWindow) {
-                        debugWindow.document.write(`
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>Circuit Debug - Input Fields Found</title>
-                                <style>
-                                    body { 
-                                        font-family: monospace; 
-                                        padding: 20px; 
-                                        background: #1a1a1a; 
-                                        color: #ccc;
-                                    }
-                                    h1 { color: #2d7a9e; }
-                                    h2 { color: #069494; margin-top: 30px; }
-                                    .field { 
-                                        background: #2a2a2a; 
-                                        border: 1px solid #555; 
-                                        padding: 15px; 
-                                        margin: 10px 0; 
-                                        border-radius: 5px;
-                                    }
-                                    .visible { border-left: 4px solid #2d8659; }
-                                    .hidden { border-left: 4px solid #aa0000; opacity: 0.6; }
-                                    .attr { 
-                                        color: #E1BA0A; 
-                                        margin: 5px 0; 
-                                    }
-                                    .attr-name { color: #2d7a9e; }
-                                    .attr-value { color: #2d8659; }
-                                    code { 
-                                        background: #0a0a0a; 
-                                        padding: 2px 6px; 
-                                        border-radius: 3px;
-                                        color: #E1BA0A;
-                                    }
-                                    img { 
-                                        max-width: 100%; 
-                                        border: 2px solid #555; 
-                                        margin: 20px 0;
-                                    }
-                                    .copy-btn {
-                                        background: #2d7a9e;
-                                        color: white;
-                                        border: none;
-                                        padding: 5px 10px;
-                                        border-radius: 3px;
-                                        cursor: pointer;
-                                        margin-left: 10px;
-                                    }
-                                    .copy-btn:hover { background: #1a5a7a; }
-                                </style>
-                            </head>
-                            <body>
-                                <h1>🔍 Circuit Debug Results</h1>
-                                <p><strong>URL:</strong> ${result.url}</p>
-                                <p><strong>Total Input Fields Found:</strong> ${result.inputs_found}</p>
-                                
-                                <h2>📋 All Input Fields</h2>
-                                <p style="color: #888;">Look for fields with placeholders like "search", "ask", "message", "chat", etc.</p>
-                                
-                                ${result.inputs.map((field, index) => `
-                                    <div class="field ${field.visible ? 'visible' : 'hidden'}">
-                                        <strong>${field.type.toUpperCase()} #${field.index}</strong>
-                                        ${field.visible ? '<span style="color: #2d8659;">✓ VISIBLE</span>' : '<span style="color: #aa0000;">✗ Hidden</span>'}
-                                        <div style="margin-top: 10px;">
-                                            ${Object.keys(field.attributes).map(attr => `
-                                                <div class="attr">
-                                                    <span class="attr-name">${attr}:</span> 
-                                                    <span class="attr-value">"${field.attributes[attr]}"</span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                        ${field.visible && field.attributes.id ? `
-                                            <div style="margin-top: 10px;">
-                                                <strong>Suggested Selector:</strong> 
-                                                <code>#${field.attributes.id}</code>
-                                                <button class="copy-btn" onclick="navigator.clipboard.writeText('#${field.attributes.id}')">Copy</button>
-                                            </div>
-                                        ` : ''}
-                                        ${field.visible && field.attributes.placeholder ? `
-                                            <div style="margin-top: 5px;">
-                                                <strong>Or use:</strong> 
-                                                <code>${field.type}[placeholder="${field.attributes.placeholder}"]</code>
-                                                <button class="copy-btn" onclick="navigator.clipboard.writeText('${field.type}[placeholder=\\"${field.attributes.placeholder}\\"]')">Copy</button>
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                `).join('')}
-                                
-                                <h2>📸 Screenshot</h2>
-                                <img src="data:image/png;base64,${result.screenshot}" alt="Circuit Screenshot">
-                                
-                                <h2>💡 Next Steps</h2>
-                                <ol style="line-height: 1.8;">
-                                    <li>Look for <strong>visible</strong> input fields above (marked with ✓)</li>
-                                    <li>Find one with a placeholder containing "search", "ask", "ai", "chat", or "message"</li>
-                                    <li>Copy the suggested selector (click the Copy button)</li>
-                                    <li>Update app.py line ~540 to use that selector</li>
-                                    <li>Restart the AppTech server and try again</li>
-                                </ol>
-                            </body>
-                            </html>
-                        `);
-                        debugWindow.document.close();
-                    } else {
-                        alert('Could not open debug window. Results:\n\n' + JSON.stringify(result, null, 2));
-                    }
-                } else {
-                    alert('Debug failed: ' + result.error);
-                }
-
-            } catch (error) {
-                console.error('Debug error:', error);
-                alert('Error during debug: ' + error.message);
-            }
-        }
 
         // Close Circuit Browser
         async function closeCircuitBrowser() {
@@ -3882,13 +3243,11 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 return;
             }
             hcSetStatus(null, 'Opening…');
-            const username = (document.getElementById('hcUsername') || {}).value || '';
-            const password = (document.getElementById('hcPassword') || {}).value || '';
             try {
                 const res = await fetch('/api/circuit_open_browser', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password }),
+                    body: JSON.stringify({}),
                 });
                 const data = await res.json();
                 if (data.ok && data.refocused) {
@@ -4440,6 +3799,9 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 window._reattachSortHandlers();
             }
             refreshActiveToolHeader();
+
+            // Reveal grid now that colours and visibility are correct (prevents FOUC)
+            grid.style.opacity = '1';
         }
 
         /* ── Category management UI (inside hcUserSettings) ── */

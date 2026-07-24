@@ -313,179 +313,9 @@ async def api_json_pretty(request: Request):
         return {"ok": False, "error": str(e)}
 
 
-# === API: Circuit Logs ===
-LOG_CATEGORIES = {
-    "circuit":  "circuit_responses",
-    "local-ai": "local_ai_responses",
-}
+# (circuit_logs API removed — logs now live in user_profiles/<username>/quicker_chat_logs/)
 
 
-def _logs_root():
-    return os.path.join(os.path.dirname(__file__), "circuit_logs")
-
-
-def _resolve_logs_dir(category):
-    root = _logs_root()
-    if category and category in LOG_CATEGORIES:
-        return os.path.join(root, LOG_CATEGORIES[category])
-    return root
-
-
-@app.get(f"{BASE_PREFIX}/api/circuit_logs")
-async def get_circuit_logs(category: str = None):
-    try:
-        logs_dir = _resolve_logs_dir(category)
-        if not os.path.exists(logs_dir):
-            return {"ok": True, "logs": [], "category": category}
-        log_files = []
-        for filename in os.listdir(logs_dir):
-            if not filename.endswith(".json"):
-                continue
-            filepath = os.path.join(logs_dir, filename)
-            if not os.path.isfile(filepath):
-                continue
-            file_stat = os.stat(filepath)
-            log_files.append({
-                "filename": filename,
-                "date": filename.replace("circuit_log_", "").replace(".json", ""),
-                "size": file_stat.st_size,
-                "modified": datetime.fromtimestamp(file_stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
-            })
-        log_files.sort(key=lambda x: x["date"], reverse=True)
-        return {"ok": True, "logs": log_files, "category": category}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-@app.get(f"{BASE_PREFIX}/api/circuit_logs/{{filename}}")
-async def get_circuit_log_content(filename: str, category: str = None):
-    try:
-        if not filename.endswith(".json") or "/" in filename or "\\" in filename:
-            return {"ok": False, "error": "Invalid filename"}
-        logs_dir = _resolve_logs_dir(category)
-        filepath = os.path.join(logs_dir, filename)
-        if not os.path.exists(filepath):
-            return {"ok": False, "error": "Log file not found"}
-        with open(filepath, "r") as f:
-            log_content = json.load(f)
-        return {"ok": True, "content": log_content}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-@app.post(f"{BASE_PREFIX}/api/circuit_log")
-async def save_circuit_log(request: Request):
-    try:
-        data = await request.json() or {}
-        question = data.get("question", "")
-        answer = data.get("answer", "")
-        technology = data.get("technology", "")
-        difficulty = data.get("difficulty", "")
-        category = data.get("category", "circuit")
-        model = data.get("model", "")
-        if category not in LOG_CATEGORIES:
-            category = "circuit"
-        logs_dir = _resolve_logs_dir(category)
-        os.makedirs(logs_dir, exist_ok=True)
-        today = datetime.now().strftime("%Y-%m-%d")
-        log_filepath = os.path.join(logs_dir, f"circuit_log_{today}.json")
-        if os.path.exists(log_filepath):
-            with open(log_filepath, "r") as f:
-                log_data = json.load(f)
-        else:
-            log_data = {"date": today, "category": category, "entries": []}
-        log_data["entries"].append({
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "technology": technology,
-            "difficulty": difficulty,
-            "model": model,
-            "question": question,
-            "answer": answer,
-            "success": True,
-        })
-        with open(log_filepath, "w") as f:
-            json.dump(log_data, f, indent=2)
-        return {"ok": True, "message": "Log saved successfully", "category": category}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-# === API: Circuit Credentials ===
-def _creds_file():
-    return os.path.join(os.path.dirname(__file__), "circuit_credentials.json")
-
-
-@app.get(f"{BASE_PREFIX}/api/circuit_credentials")
-async def get_circuit_credentials():
-    try:
-        creds_file = _creds_file()
-        if not os.path.exists(creds_file):
-            return {"success": True, "credentials": []}
-        with open(creds_file, "r") as f:
-            creds_data = json.load(f)
-        return {"success": True, "credentials": [{"name": name} for name in creds_data]}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-@app.get(f"{BASE_PREFIX}/api/circuit_credentials/{{cred_name}}")
-async def get_circuit_credential(cred_name: str):
-    try:
-        creds_file = _creds_file()
-        if not os.path.exists(creds_file):
-            return {"success": False, "error": "No saved credentials found"}
-        with open(creds_file, "r") as f:
-            creds_data = json.load(f)
-        if cred_name not in creds_data:
-            return {"success": False, "error": "Credential not found"}
-        cred = creds_data[cred_name]
-        password = base64.b64decode(cred["password"]).decode("utf-8")
-        return {"success": True, "credential": {"username": cred["username"], "password": password}}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-@app.post(f"{BASE_PREFIX}/api/circuit_credentials")
-async def save_circuit_credential(request: Request):
-    try:
-        data = await request.json()
-        name = data.get("name", "").strip()
-        username = data.get("username", "").strip()
-        password = data.get("password", "").strip()
-        if not name or not username or not password:
-            return {"success": False, "error": "Name, username, and password are required"}
-        creds_file = _creds_file()
-        creds_data: dict = {}
-        if os.path.exists(creds_file):
-            with open(creds_file, "r") as f:
-                creds_data = json.load(f)
-        creds_data[name] = {
-            "username": username,
-            "password": base64.b64encode(password.encode("utf-8")).decode("utf-8"),
-        }
-        with open(creds_file, "w") as f:
-            json.dump(creds_data, f, indent=2)
-        return {"success": True, "message": "Credential saved successfully"}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-@app.delete(f"{BASE_PREFIX}/api/circuit_credentials/{{cred_name}}")
-async def delete_circuit_credential(cred_name: str):
-    try:
-        creds_file = _creds_file()
-        if not os.path.exists(creds_file):
-            return {"success": False, "error": "No saved credentials found"}
-        with open(creds_file, "r") as f:
-            creds_data = json.load(f)
-        if cred_name not in creds_data:
-            return {"success": False, "error": "Credential not found"}
-        del creds_data[cred_name]
-        with open(creds_file, "w") as f:
-            json.dump(creds_data, f, indent=2)
-        return {"success": True, "message": "Credential deleted successfully"}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
 
 
 # === Circuit AI question job (runs on CircuitWorker thread) ===
@@ -782,30 +612,6 @@ async def api_ai_question(request: Request):
         answer   = content.get("answer", "")
         if not question or not answer:
             return {"ok": False, "error": "AI returned an unexpected format"}
-        # Log the Q&A
-        try:
-            log_dir = os.path.join(os.path.dirname(__file__), "circuit_logs", "circuit_responses")
-            os.makedirs(log_dir, exist_ok=True)
-            today = datetime.now().strftime("%Y-%m-%d")
-            log_file = os.path.join(log_dir, f"circuit_log_{today}.json")
-            entry = {
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "technology": technology,
-                "difficulty": difficulty,
-                "question": question,
-                "answer": answer,
-                "success": True,
-            }
-            existing = []
-            if os.path.exists(log_file):
-                with open(log_file) as f:
-                    data_log = json.load(f)
-                    existing = data_log.get("entries", [])
-            existing.append(entry)
-            with open(log_file, "w") as f:
-                json.dump({"date": today, "entries": existing}, f, indent=2)
-        except Exception:
-            pass
         return {"ok": True, "question": question, "answer": answer,
                 "model": ai_result.get("model", ""), "tokens": ai_result.get("tokens_used", {})}
     except Exception as e:
@@ -813,7 +619,7 @@ async def api_ai_question(request: Request):
 
 
 # === Token usage storage (per-user, per-month, auto-resets) ===
-_TOKEN_USAGE_FILE = os.path.join(_APPTECH_ROOT, "circuit_logs", "token_usage.json")
+_TOKEN_USAGE_FILE = os.path.join(_APPTECH_ROOT, "user_profiles", "token_usage.json")
 
 def _load_token_usage() -> dict:
     try:
@@ -878,13 +684,16 @@ async def api_ai_chat(request: Request):
                 json=payload,
             )
         resp.raise_for_status()
-        result = resp.json()
-        tokens = result.get("tokens_used") or {}
+        result  = resp.json()
+        tokens  = result.get("tokens_used") or {}
+        ai_text = result.get("content", "")
+        model_name = result.get("model", "")
         month_total = _add_tokens(username, tokens) if username else tokens
+        _log_chat_entry(username, message, ai_text, model_name, tokens)
         return {
             "ok": True,
-            "response": result.get("content", ""),
-            "model": result.get("model", ""),
+            "response": ai_text,
+            "model": model_name,
             "tokens": tokens,
             "month_total": month_total,
         }
@@ -916,31 +725,6 @@ async def api_circuit_question(request: Request):
             lambda: _circuit_question_job(username, password, question),
             600,
         )
-        # Log Q&A to circuit_logs/circuit_responses/
-        try:
-            log_dir = os.path.join(os.path.dirname(__file__), "circuit_logs", "circuit_responses")
-            os.makedirs(log_dir, exist_ok=True)
-            today = datetime.now().strftime("%Y-%m-%d")
-            log_file = os.path.join(log_dir, f"circuit_log_{today}.json")
-            entry = {
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "technology": "ask-question",
-                "difficulty": "",
-                "model": "",
-                "question": question,
-                "answer": result.get("answer", result.get("error", "")),
-                "success": bool(result.get("ok", False)),
-            }
-            if os.path.exists(log_file):
-                with open(log_file, "r") as f:
-                    log_data = json.load(f)
-                log_data["entries"].append(entry)
-            else:
-                log_data = {"date": today, "category": "circuit", "entries": [entry]}
-            with open(log_file, "w") as f:
-                json.dump(log_data, f, indent=2)
-        except Exception as log_err:
-            print(f"[circuit log] Failed to write log: {log_err}")
         return result
     except Exception as e:
         return {"ok": False, "error": f"Error: {str(e)}"}
@@ -1311,8 +1095,20 @@ def _user_profiles_dir():
     return d
 
 
-def _user_profile_path(username: str):
-    return os.path.join(_user_profiles_dir(), f"{username}.json")
+def _user_dir(username: str) -> str:
+    d = os.path.join(_user_profiles_dir(), username)
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
+def _user_profile_path(username: str) -> str:
+    return os.path.join(_user_dir(username), f"{username}.json")
+
+
+def _user_chat_logs_dir(username: str) -> str:
+    d = os.path.join(_user_dir(username), "quicker_chat_logs")
+    os.makedirs(d, exist_ok=True)
+    return d
 
 
 def _hash_password(password: str) -> str:
@@ -1331,16 +1127,79 @@ def _verify_password(password: str, stored: str) -> bool:
 
 
 def _load_user(username: str):
-    path = _user_profile_path(username)
-    if not os.path.exists(path):
-        return None
-    with open(path) as f:
-        return json.load(f)
+    new_path = _user_profile_path(username)
+    if os.path.exists(new_path):
+        with open(new_path) as f:
+            return json.load(f)
+    # Migrate from legacy flat structure: user_profiles/<username>.json
+    legacy_path = os.path.join(_user_profiles_dir(), f"{username}.json")
+    if os.path.exists(legacy_path):
+        with open(legacy_path) as f:
+            data = json.load(f)
+        _save_user(data)          # writes to new folder path
+        os.remove(legacy_path)    # remove the old flat file
+        return data
+    return None
 
 
 def _save_user(profile: dict):
-    with open(_user_profile_path(profile["username"]), "w") as f:
+    path = _user_profile_path(profile["username"])
+    with open(path, "w") as f:
         json.dump(profile, f, indent=2)
+
+
+def _log_chat_entry(username: str, user_msg: str, ai_response: str, model: str, tokens: dict):
+    """Append a Q&A exchange to the user's daily Quicker AI chat log."""
+    if not username:
+        return
+    try:
+        today    = datetime.now().strftime("%Y-%m-%d")
+        now_time = datetime.now().strftime("%I:%M %p")
+        log_dir  = _user_chat_logs_dir(username)
+        log_file = os.path.join(log_dir, f"{today}.md")
+        daily_tokens_file = os.path.join(log_dir, "_daily_tokens.json")
+
+        # Accumulate daily token counts
+        daily = {}
+        if os.path.exists(daily_tokens_file):
+            with open(daily_tokens_file) as f:
+                daily = json.load(f)
+        day = daily.setdefault(today, {"total": 0, "input": 0, "output": 0})
+        day["total"]  += tokens.get("total", 0)
+        day["input"]  += tokens.get("input", 0)
+        day["output"] += tokens.get("output", 0)
+        with open(daily_tokens_file, "w") as f:
+            json.dump(daily, f, indent=2)
+
+        # Preserve existing conversation entries (everything after the header block)
+        existing = ""
+        if os.path.exists(log_file):
+            with open(log_file) as f:
+                content = f.read()
+            # Split on first "---" separator to skip the regenerated header
+            parts = content.split("---\n", 1)
+            if len(parts) > 1:
+                existing = "---\n" + parts[1]
+
+        # Build refreshed header
+        header = (
+            f"# Quicker AI — {today}\n\n"
+            f"**Total tokens today:** {day['total']:,}  "
+            f"({day['input']:,} in / {day['output']:,} out)\n\n"
+        )
+
+        # Build new entry
+        entry = (
+            f"---\n\n"
+            f"**{now_time}** | {model}\n\n"
+            f"**You:** {user_msg}\n\n"
+            f"**Quicker AI:** {ai_response}\n\n"
+        )
+
+        with open(log_file, "w") as f:
+            f.write(header + existing + entry)
+    except Exception:
+        pass
 
 
 @app.post(f"{BASE_PREFIX}/api/users/create")
@@ -1434,9 +1293,11 @@ async def api_list_users():
     try:
         d = _user_profiles_dir()
         users = []
-        for f in os.listdir(d):
-            if f.endswith(".json"):
-                users.append(f[:-5])
+        for entry in os.scandir(d):
+            if entry.is_dir():
+                profile = os.path.join(entry.path, f"{entry.name}.json")
+                if os.path.exists(profile):
+                    users.append(entry.name)
         return {"ok": True, "users": sorted(users)}
     except Exception as e:
         return {"ok": False, "error": str(e)}
