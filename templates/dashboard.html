@@ -834,7 +834,7 @@
             box-sizing: border-box;
         }
 
-        /* Tool hidden via Techzone */
+        /* Tool hidden via Download Tools */
         .tool-hidden { display: none !important; }
         .tab-hidden  { display: none !important; }
 
@@ -1661,34 +1661,33 @@
                 <button class="close-btn" onclick="closeModal('userSettingsModal')">&times;</button>
             </div>
             <div class="modal-body" id="userSettingsModalBody">
-                <!-- Profile Management section (always first) -->
+                <!-- hcUserSettings, hcDebugConsole, hcCredentialsPanel are relocated here at runtime;
+                     profileMgmtSection is appended last by the relocate() call below -->
+                <!-- Manage Profile section — moved to bottom of modal at runtime -->
                 <div id="profileMgmtSection" style="margin-bottom: 24px; padding: 20px; background: #0a1a30; border: 1px solid #1b3b6f; border-radius: 8px;">
-                    <h3 style="color:#069494; margin-bottom:16px; font-size:15px;">👤 Profile Management</h3>
+                    <h3 style="color:#069494; margin-bottom:16px; font-size:15px;">👤 Manage Profile</h3>
 
-                    <!-- Create new profile -->
-                    <div style="margin-bottom:18px;">
-                        <div style="font-size:12px; color:#8fb3c8; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Create Profile</div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end;">
+                    <!-- Change Password -->
+                    <div>
+                        <div style="font-size:12px; color:#8fb3c8; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Change Password</div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
                             <div>
-                                <label style="font-size:11px; color:#778; display:block; margin-bottom:4px;">Username</label>
-                                <input type="text" id="profNewUser" placeholder="username" style="width:100%; padding:8px 10px; background:#061235; border:1px solid #1b3b6f; border-radius:5px; color:#e6edf3; font-size:13px;">
+                                <label style="font-size:11px; color:#778; display:block; margin-bottom:4px;">Current Password</label>
+                                <input type="password" id="profCurrentPass" placeholder="••••••••" style="width:100%; padding:8px 10px; background:#061235; border:1px solid #1b3b6f; border-radius:5px; color:#e6edf3; font-size:13px;">
                             </div>
                             <div>
-                                <label style="font-size:11px; color:#778; display:block; margin-bottom:4px;">Password</label>
-                                <input type="password" id="profNewPass" placeholder="••••••••" style="width:100%; padding:8px 10px; background:#061235; border:1px solid #1b3b6f; border-radius:5px; color:#e6edf3; font-size:13px;">
+                                <label style="font-size:11px; color:#778; display:block; margin-bottom:4px;">New Password</label>
+                                <input type="password" id="profNewPassChange" placeholder="••••••••" style="width:100%; padding:8px 10px; background:#061235; border:1px solid #1b3b6f; border-radius:5px; color:#e6edf3; font-size:13px;">
                             </div>
-                            <button onclick="profCreate()" style="padding:8px 16px; background:#069494; border:none; border-radius:5px; color:#fff; font-size:13px; cursor:pointer; white-space:nowrap;">Create</button>
+                            <div>
+                                <label style="font-size:11px; color:#778; display:block; margin-bottom:4px;">Confirm New Password</label>
+                                <input type="password" id="profConfirmPass" placeholder="••••••••" style="width:100%; padding:8px 10px; background:#061235; border:1px solid #1b3b6f; border-radius:5px; color:#e6edf3; font-size:13px;">
+                            </div>
+                            <button onclick="profChangePassword()" style="padding:8px 16px; background:#069494; border:none; border-radius:5px; color:#fff; font-size:13px; cursor:pointer; align-self:flex-start; margin-top:4px;">Change Password</button>
+                            <div id="profChangePassMsg" style="font-size:12px; margin-top:2px; display:none;"></div>
                         </div>
-                        <div id="profCreateMsg" style="font-size:12px; margin-top:8px; display:none;"></div>
-                    </div>
-
-                    <!-- Logout -->
-                    <div style="margin-top:16px; border-top:1px solid #1b3b6f; padding-top:14px;">
-                        <button onclick="window.location.href='/'" style="padding:7px 16px; background:#333; border:1px solid #555; border-radius:5px; color:#aaa; font-size:12px; cursor:pointer;">⏏ Log out</button>
-                        <a id="tzLink" href="#" style="margin-left:14px; color:#069494; font-size:12px; text-decoration:none;" target="_blank">↗ My Download Tools</a>
                     </div>
                 </div>
-                <!-- hcUserSettings, hcDebugConsole, hcCredentialsPanel are relocated here at runtime -->
             </div>
         </div>
     </div>
@@ -1718,7 +1717,8 @@
                 aiHost.after(debug);
             }
 
-            // 3. Move the remaining settings panel + credentials manager into the User Settings modal.
+            // 3. Move the remaining settings panel + credentials manager into the User Settings modal,
+            //    then append Manage Profile last so it always sits at the bottom.
             if (settingsTarget) {
                 ['hcUserSettings', 'hcCredentialsPanel'].forEach(id => {
                     const el = document.getElementById(id);
@@ -1726,6 +1726,8 @@
                 });
                 const us = document.getElementById('hcUserSettings');
                 if (us) us.style.display = 'block';
+                const prof = document.getElementById('profileMgmtSection');
+                if (prof) settingsTarget.appendChild(prof);
             }
         }
         if (document.readyState === 'loading') {
@@ -1764,17 +1766,6 @@
 
                 <!-- User Settings Panel (hidden by default) -->
                 <div id="hcUserSettings" style="background-color: #1a1a1a; border: 2px solid #2d7a9e; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
-
-                    <!-- Credentials Selector -->
-                    <div class="form-group">
-                        <label for="hcSettingsCreds">Default Circuit Credentials</label>
-                        <div style="display: flex; gap: 10px; align-items: flex-end;">
-                            <select id="hcSettingsCreds" style="flex: 1;" onchange="saveUserSettings()">
-                                <option value="">-- Select Saved Credentials --</option>
-                            </select>
-                            <button class="btn" onclick="manageCredentials()" style="padding: 10px 15px; background-color: #2d7a9e; height: 42px;">Manage Credentials</button>
-                        </div>
-                    </div>
 
                     <!-- Display Settings -->
                     <div class="form-group">
@@ -2247,7 +2238,6 @@
 
         function saveUserSettings() {
             const settings = {
-                defaultCredential: document.getElementById('hcSettingsCreds').value,
                 defaultAIModel: document.getElementById('hcSettingsAIModel').value,
                 aiPromptTemplate: (document.getElementById('hcSettingsAIPrompt') || {}).value || '',
                 followUps: [1, 2, 3, 4, 5].map(n => (document.getElementById(`hcSettingsFollowUp${n}`) || {}).value || ''),
@@ -2260,7 +2250,6 @@
             const settingsStr = localStorage.getItem('helloCircuitSettings');
             if (settingsStr) {
                 const settings = JSON.parse(settingsStr);
-                document.getElementById('hcSettingsCreds').value = settings.defaultCredential || '';
                 const promptEl = document.getElementById('hcSettingsAIPrompt');
                 // Backward compat: prefer new single key, then study, then legacy
                 const initial = settings.aiPromptTemplate || settings.aiPromptStudy || '';
@@ -3232,61 +3221,6 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             }
         }
 
-        async function startHelloCircuit() {
-            const username = document.getElementById('hcUsername').value;
-            const password = document.getElementById('hcPassword').value;
-            const technology = document.getElementById('hcTechnology').value;
-            const frequency = document.getElementById('hcFrequency').value;
-            const difficulty = document.getElementById('hcDifficulty').value;
-
-            if (!username || !password) {
-                alert('Please configure your Circuit credentials in User Settings first');
-                openUserSettings();
-                return;
-            }
-
-            // Update status
-            const statusDiv = document.getElementById('hcStatus');
-            const statusIndicator = document.getElementById('hcStatusIndicator');
-            const statusText = document.getElementById('hcStatusText');
-            
-            statusDiv.style.display = 'block';
-            statusIndicator.textContent = 'ACTIVE';
-            statusIndicator.style.backgroundColor = '#2d8659';
-            statusIndicator.style.color = '#fff';
-            
-            const techText = technology === 'custom' ? document.getElementById('hcCustomTopic').value : technology;
-            statusText.innerHTML = `<strong>Training:</strong> ${techText} questions (${difficulty}) - Every ${frequency} minutes`;
-
-            // Enable/disable buttons
-            document.getElementById('hcStopBtn').disabled = false;
-
-            // Get first question immediately
-            getQuestionNow();
-
-            // Set up interval
-            if (hcInterval) clearInterval(hcInterval);
-            hcInterval = setInterval(getQuestionNow, frequency * 60 * 1000);
-        }
-
-        function stopHelloCircuit() {
-            if (hcInterval) {
-                clearInterval(hcInterval);
-                hcInterval = null;
-            }
-
-            const statusDiv = document.getElementById('hcStatus');
-            const statusIndicator = document.getElementById('hcStatusIndicator');
-            const statusText = document.getElementById('hcStatusText');
-            
-            statusIndicator.textContent = 'STOPPED';
-            statusIndicator.style.backgroundColor = '#aa0000';
-            statusIndicator.style.color = '#fff';
-            statusText.textContent = 'Training has been stopped';
-
-            document.getElementById('hcStopBtn').disabled = true;
-            document.getElementById('hcQuestionDisplay').style.display = 'none';
-        }
 
         async function getQuestionNow() {
             const username = document.getElementById('hcUsername').value;
@@ -3512,32 +3446,6 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 const response = await fetch('/api/circuit_credentials');
                 const data = await response.json();
                 
-                // Load into settings dropdown
-                const settingsSelect = document.getElementById('hcSettingsCreds');
-                if (settingsSelect) {
-                    settingsSelect.innerHTML = '<option value="">-- Select Saved Credentials --</option>';
-                    
-                    if (data.credentials && data.credentials.length > 0) {
-                        data.credentials.forEach(cred => {
-                            const option = document.createElement('option');
-                            option.value = cred.name;
-                            option.textContent = cred.name;
-                            settingsSelect.appendChild(option);
-                        });
-                    }
-                    
-                    // Load saved default
-                    const settingsStr = localStorage.getItem('helloCircuitSettings');
-                    if (settingsStr) {
-                        const settings = JSON.parse(settingsStr);
-                        if (settings.defaultCredential) {
-                            settingsSelect.value = settings.defaultCredential;
-                            // Auto-load the default credential
-                            await loadDefaultCredential(settings.defaultCredential);
-                        }
-                    }
-                }
-                
                 // Load into credentials panel dropdown
                 const panelSelect = document.getElementById('hcSavedCreds');
                 if (panelSelect) {
@@ -3615,8 +3523,6 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                     // Reload the credentials lists
                     await loadCircuitCredentialsList();
                     
-                    // Select the newly saved credential in settings
-                    document.getElementById('hcSettingsCreds').value = credName;
                     saveUserSettings();
                 } else {
                     alert('Error saving credential: ' + data.error);
@@ -3679,7 +3585,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             }
         }
 
-        // Save credentials (called during startHelloCircuit or getQuestionNow)
+        // Save credentials (called during getQuestionNow)
         async function saveCircuitCredentialsIfNeeded() {
             const saveCheckbox = document.getElementById('hcSaveCredentials');
             const credName = document.getElementById('hcCredName').value.trim();
@@ -3899,7 +3805,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                                     <li>Find one with a placeholder containing "search", "ask", "ai", "chat", or "message"</li>
                                     <li>Copy the suggested selector (click the Copy button)</li>
                                     <li>Update app.py line ~540 to use that selector</li>
-                                    <li>Restart your Flask server and try again</li>
+                                    <li>Restart the AppTech server and try again</li>
                                 </ol>
                             </body>
                             </html>
@@ -4700,19 +4606,6 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
            changes immediately; closing without Save restores the snapshot. */
         let _usSnapshot = null;
 
-        function _usReadCred() {
-            try {
-                const s = JSON.parse(localStorage.getItem('helloCircuitSettings') || '{}');
-                return s.defaultCredential || '';
-            } catch (e) { return ''; }
-        }
-        function _usWriteCred(val) {
-            try {
-                const s = JSON.parse(localStorage.getItem('helloCircuitSettings') || '{}');
-                s.defaultCredential = val || '';
-                localStorage.setItem('helloCircuitSettings', JSON.stringify(s));
-            } catch (e) {}
-        }
         function _usRestoreOne(k, v) {
             if (v === null) return;
             // For profile-based settings, this is now handled by snapshotUS/restoreUS
@@ -5168,6 +5061,48 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
         // Profile management in User Settings
         window._profUsername = _username;
 
+
+        window.profChangePassword = async function() {
+            const currentPass  = (document.getElementById('profCurrentPass').value || '');
+            const newPass      = (document.getElementById('profNewPassChange').value || '');
+            const confirmPass  = (document.getElementById('profConfirmPass').value || '');
+            const msgEl        = document.getElementById('profChangePassMsg');
+            msgEl.style.display = 'none';
+            if (!currentPass || !newPass || !confirmPass) {
+                msgEl.style.display = 'block'; msgEl.style.color = '#f88';
+                msgEl.textContent = 'All fields are required.'; return;
+            }
+            if (newPass !== confirmPass) {
+                msgEl.style.display = 'block'; msgEl.style.color = '#f88';
+                msgEl.textContent = 'New passwords do not match.'; return;
+            }
+            if (newPass.length < 4) {
+                msgEl.style.display = 'block'; msgEl.style.color = '#f88';
+                msgEl.textContent = 'New password must be at least 4 characters.'; return;
+            }
+            try {
+                const res = await fetch(`/api/users/${encodeURIComponent(_profUsername)}/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: currentPass, new_password: newPass })
+                });
+                const data = await res.json();
+                msgEl.style.display = 'block';
+                if (data.ok) {
+                    msgEl.style.color = '#4dd';
+                    msgEl.textContent = 'Password changed successfully.';
+                    document.getElementById('profCurrentPass').value = '';
+                    document.getElementById('profNewPassChange').value = '';
+                    document.getElementById('profConfirmPass').value = '';
+                } else {
+                    msgEl.style.color = '#f88';
+                    msgEl.textContent = data.error || 'Failed to change password.';
+                }
+            } catch(e) {
+                msgEl.style.display = 'block'; msgEl.style.color = '#f88';
+                msgEl.textContent = 'Server error. Please try again.';
+            }
+        };
 
         window.profCreate = async function() {
             const username = (document.getElementById('profNewUser').value || '').trim().toLowerCase();

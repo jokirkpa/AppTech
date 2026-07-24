@@ -2,7 +2,6 @@
   "username": "jokirkpa",
   "password": "519fe96bce3119be3edd5cead151e762:446e02f6901d94416b1d10cfb2f2e23cc44c075c083fb411fda1d350cbf2ad69",
   "tools": [
-    "portSpeedModal",
     "subnetModal",
     "tcpdumpModal",
     "timeCalcModal",
@@ -25,7 +24,8 @@
     "testTool10Modal",
     "testTool11Modal",
     "testTool12Modal",
-    "testTool13Modal"
+    "testTool13Modal",
+    "portSpeedModal"
   ],
   "created": "2026-07-23T11:09:08",
   "dashboard_profile": {

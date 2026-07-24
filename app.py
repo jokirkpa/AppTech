@@ -496,7 +496,7 @@ def _circuit_question_job(username, password, question):
 
     if circuit_browser is None or circuit_page is None:
         circuit_playwright = sync_playwright().start()
-        circuit_browser = circuit_playwright.chromium.launch(headless=False)
+        circuit_browser = circuit_playwright.chromium.launch(headless=True)
         circuit_context = circuit_browser.new_context()
         circuit_page = circuit_context.new_page()
         try:
@@ -748,7 +748,7 @@ async def api_circuit_question(request: Request):
         except ImportError:
             return {
                 "ok": False,
-                "error": "Playwright not installed. Run: pip install playwright && playwright install chromium",
+                "error": "Playwright not installed on the server. Contact the administrator.",
             }
         result = await asyncio.to_thread(
             circuit_worker.run,
@@ -804,7 +804,7 @@ def api_circuit_debug(data: _CredsRequest):
             return {"ok": False, "error": "Username and password are required"}
 
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             context = browser.new_context()
             page = context.new_page()
             try:
@@ -947,7 +947,7 @@ async def api_circuit_open_browser(request: Request):
 
         if not already_open:
             circuit_playwright = sync_playwright().start()
-            circuit_browser = circuit_playwright.chromium.launch(headless=False)
+            circuit_browser = circuit_playwright.chromium.launch(headless=True)
             circuit_context = circuit_browser.new_context()
             circuit_page = circuit_context.new_page()
             circuit_page.goto("https://circuit.cisco.com/app/home", timeout=30000)
@@ -1218,6 +1218,26 @@ async def api_users_login(request: Request):
         if not profile or not _verify_password(password, profile["password"]):
             return {"ok": False, "error": "Invalid username or password."}
         return {"ok": True, "username": username}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post(f"{BASE_PREFIX}/api/users/{{username}}/change-password")
+async def api_change_password(username: str, request: Request):
+    try:
+        data = await request.json()
+        current_password = data.get("current_password") or ""
+        new_password = data.get("new_password") or ""
+        if len(new_password) < 4:
+            return {"ok": False, "error": "Password must be at least 4 characters."}
+        profile = _load_user(username.lower())
+        if not profile:
+            return {"ok": False, "error": "User not found."}
+        if not _verify_password(current_password, profile["password"]):
+            return {"ok": False, "error": "Current password is incorrect."}
+        profile["password"] = _hash_password(new_password)
+        _save_user(profile)
+        return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
