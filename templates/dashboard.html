@@ -41,6 +41,9 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .header-left {
@@ -84,30 +87,6 @@
             background-color: #444;
             border-color: #666;
             color: #fff;
-        }
-
-        /* Footer Section */
-        .dashboard-footer {
-            background: linear-gradient(0deg, #061847 0%, #04132d 100%);
-            padding: 10px 40px;
-            border-top: 1px solid #1b3b6f;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-
-        .footer-center {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            justify-content: center;
-        }
-
-        .footer-right {
-            display: flex;
-            align-items: center;
         }
 
         /* Body Section - Tool Grid */
@@ -535,9 +514,9 @@
             border: 2px solid transparent;
             border-radius: 50%;
             cursor: pointer;
-            padding: 6px;
-            width: 52px;
-            height: 52px;
+            padding: 4px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -553,8 +532,8 @@
         }
 
         .circuit-btn img {
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
         }
 
         /* Circuit Side Panel */
@@ -597,12 +576,13 @@
 
         .circuit-panel-header {
             background: linear-gradient(135deg, #2d7a9e 0%, #1a5a7a 100%);
-            padding: 14px 16px;
-            display: flex;
+            padding: 10px 14px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            justify-content: space-between;
             border-bottom: 1px solid #069494;
             flex-shrink: 0;
+            gap: 8px;
         }
 
         .circuit-panel-header-left {
@@ -1201,9 +1181,12 @@
         </div>
         <div class="header-center">
             <button class="header-settings-btn" id="tzBtn" onclick="window.open(window._tzUrl||'/tools','_blank')">&#127758; Download Tools</button>
+            <button class="header-settings-btn" onclick="hcOpenSettingsFromHeader()">&#9881;&#65039; User Settings</button>
         </div>
         <div class="header-right">
-            <button class="header-settings-btn" onclick="hcOpenSettingsFromHeader()">&#9881;&#65039; User Settings</button>
+            <button class="circuit-btn" id="circuitToggleBtn" onclick="toggleCircuitPanel()" title="Ask Quicker AI">
+                <img src="/static/quicker_AI.png?v=1784864181" alt="Quicker AI" style="width:32px;height:32px;object-fit:contain;">
+            </button>
         </div>
     </div>
 
@@ -2175,7 +2158,7 @@
                 const d = '.'.repeat((dots % 3) + 1);
                 targetEl.innerHTML =
                     `<div style="color: #2d7a9e;">${base}<span style="display:inline-block; min-width: 24px; text-align:left;">${d}</span>` +
-                    `<br><small style="color: #888;">Circuit AI is thinking — this can take a while for longer questions.</small></div>`;
+                    `<br><small style="color: #888;">Quicker AI is thinking — this can take a moment.</small></div>`;
                 dots++;
             };
             render();
@@ -3173,7 +3156,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             questionDisplay.style.display = 'block';
             const _aqModeEl = document.getElementById('hcQDisplayMode');
             if (_aqModeEl) _aqModeEl.textContent = 'Ask A Question';
-            startGeneratingAnimation(questionText, '🤔 Asking Circuit AI');
+            startGeneratingAnimation(questionText, '🤔 Asking Quicker AI');
             answerDisplay.style.display = 'none';
             document.getElementById('hcRevealBtn').style.display = 'inline-block';
 
@@ -3223,58 +3206,43 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
 
 
         async function getQuestionNow() {
-            const username = document.getElementById('hcUsername').value;
-            const password = document.getElementById('hcPassword').value;
             const technology = document.getElementById('hcTechnology').value;
             const difficulty = document.getElementById('hcDifficulty').value;
             const questionDisplay = document.getElementById('hcQuestionDisplay');
             const questionText = document.getElementById('hcQuestionText');
             const answerDisplay = document.getElementById('hcAnswerDisplay');
-            
-            if (!username || !password) {
-                alert('Please configure your Circuit credentials in User Settings first');
-                openUserSettings();
-                return;
-            }
 
-            // Show loading state with animated dots
+            // Show loading state
             questionDisplay.style.display = 'block';
-            startGeneratingAnimation(questionText, '🤔 Connecting to Cisco Circuit AI');
+            startGeneratingAnimation(questionText, '🤔 Asking Quicker AI');
             answerDisplay.style.display = 'none';
             document.getElementById('hcRevealBtn').style.display = 'inline-block';
 
             try {
-                // Generate a topic-specific question prompt for Circuit AI
-                const techText = technology === 'custom' ? document.getElementById('hcCustomTopic').value : technology;
-                
+                const techText = technology === 'custom'
+                    ? document.getElementById('hcCustomTopic').value
+                    : technology;
+
                 const questionPrompts = {
-                    routing: `Explain a ${difficulty} level concept about routing protocols like BGP, OSPF, or EIGRP`,
-                    switching: `Provide a ${difficulty} level question about switching technologies and VLANs`,
-                    aci: `Generate a ${difficulty} level question about Cisco ACI (Application Centric Infrastructure)`,
-                    datacenter: `Ask a ${difficulty} level question about data center networking technologies`,
-                    security: `Create a ${difficulty} level network security question`,
-                    wireless: `Provide a ${difficulty} level wireless networking question`,
-                    sdwan: `Generate a ${difficulty} level SD-WAN question`,
-                    automation: `Ask a ${difficulty} level question about network automation and programmability`,
-                    troubleshooting: `Create a ${difficulty} level network troubleshooting scenario`,
-                    general: `Generate a ${difficulty} level general networking question`
+                    routing:         `Generate a ${difficulty} level question and answer about routing protocols such as BGP, OSPF, or EIGRP`,
+                    switching:       `Generate a ${difficulty} level question and answer about switching technologies and VLANs`,
+                    aci:             `Generate a ${difficulty} level question and answer about Cisco ACI (Application Centric Infrastructure)`,
+                    datacenter:      `Generate a ${difficulty} level question and answer about data center networking technologies`,
+                    security:        `Generate a ${difficulty} level question and answer about network security`,
+                    wireless:        `Generate a ${difficulty} level question and answer about wireless networking`,
+                    sdwan:           `Generate a ${difficulty} level question and answer about SD-WAN`,
+                    automation:      `Generate a ${difficulty} level question and answer about network automation and programmability`,
+                    troubleshooting: `Generate a ${difficulty} level network troubleshooting scenario with a question and answer`,
+                    general:         `Generate a ${difficulty} level general networking question and answer`
                 };
 
-                const prompt = questionPrompts[technology] || `Generate a ${difficulty} level networking question about ${techText}`;
+                const prompt = questionPrompts[technology]
+                    || `Generate a ${difficulty} level networking question and answer about ${techText}`;
 
-                // Call backend API
-                const response = await fetch('/api/circuit_question', {
+                const response = await fetch('/api/ai_question', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password,
-                        question: prompt,
-                        technology: technology,
-                        difficulty: difficulty
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, technology, difficulty })
                 });
 
                 const result = await response.json();
@@ -3282,8 +3250,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
 
                 if (result.ok) {
                     hcCurrentQuestion = result.question;
-                    hcCurrentAnswer = result.answer;
-
+                    hcCurrentAnswer   = result.answer;
                     questionText.innerHTML = `<strong>Q:</strong> ${result.question}`;
                     document.getElementById('hcAnswerText').textContent = result.answer;
                 } else {
@@ -3292,7 +3259,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
 
             } catch (error) {
                 stopGeneratingAnimation();
-                console.error('Circuit question error:', error);
+                console.error('AI question error:', error);
                 questionText.innerHTML = `<div style="color: #ff6666;">❌ Error: ${error.message}</div>`;
             }
         }
@@ -3969,42 +3936,43 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
         }
     </script>
 
-    <!-- Footer -->
-    <div class="dashboard-footer">
-        <div style="width:52px;"></div>
-        <div class="footer-center">
-            <button id="hcConnectBtn" class="hc-ctrl-btn" onclick="hcConnectToCircuit()" title="Open Circuit in browser">🔗 Connect</button>
-            <button class="hc-ctrl-btn hc-ctrl-open" onclick="hcOpenBrowser()" title="Launch headless Circuit browser">🌐 Open Browser</button>
-            <button class="hc-ctrl-btn hc-ctrl-close" onclick="hcCloseBrowser()" title="Close Circuit browser">✕ Close Browser</button>
-            <button class="hc-ctrl-btn" onclick="hcRefreshStatus()" title="Refresh connection status">🔄 Status</button>
-            <span class="hc-status-badge"><span id="hcBrowserStatus" style="font-weight:600; color:#888;">Unknown</span></span>
-        </div>
-        <div class="footer-right">
-            <button class="circuit-btn" id="circuitToggleBtn" onclick="toggleCircuitPanel()" title="Ask Circuit">
-                <img src="/static/circuit.svg" alt="Circuit">
-            </button>
-        </div>
-    </div>
-
     <!-- Circuit Chat Side Panel -->
     <div class="circuit-panel" id="circuitPanel">
         <div class="circuit-resize-handle" id="circuitResizeHandle"></div>
         <div class="circuit-panel-header">
-            <div class="circuit-panel-header-left">
-                <img src="/static/circuit.svg" alt="Circuit">
-                <h3>Circuit</h3>
+            <!-- Left: logo + title -->
+            <div style="display:flex;align-items:center;gap:8px;">
+                <img src="/static/quicker_AI.png?v=1784864181" alt="Quicker AI" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;">
+                <h3 style="font-size:15px;color:#fff;font-weight:bold;white-space:nowrap;">Quicker AI</h3>
             </div>
-            <button class="circuit-panel-close" onclick="toggleCircuitPanel()" title="Close">&times;</button>
+            <!-- Center: token count -->
+            <span id="quickerAITokens" title="Tokens used this month"
+                style="font-size:11px;color:#6dcf00;white-space:nowrap;cursor:default;text-align:center;font-weight:600;">0 tokens</span>
+            <!-- Right: model select -->
+            <div style="display:flex;justify-content:flex-end;">
+                <select id="quickerAIModel" title="Select AI model"
+                    onchange="localStorage.setItem('quickerAIModel', this.value)"
+                    style="background:#1a1a2e;border:1px solid #2d5aa0;border-radius:4px;color:#aaa;font-size:11px;padding:3px 6px;cursor:pointer;max-width:130px;">
+                    <option value="gpt-4o">gpt-4o</option>
+                    <option value="claude-opus-4-8">claude-opus-4-8</option>
+                    <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>
+                    <option value="nova-pro">nova-pro</option>
+                    <option value="nova-lite">nova-lite</option>
+                    <option value="nova-micro">nova-micro</option>
+                    <option value="gpt-oss-120b">gpt-oss-120b</option>
+                    <option value="gpt-oss-20b">gpt-oss-20b</option>
+                </select>
+            </div>
         </div>
         <div class="circuit-messages" id="circuitMessages">
             <div class="chat-message assistant">
-                <div class="chat-bubble">Ask Circuit anything. Make sure the browser is connected using the footer controls first.</div>
-                <div class="chat-meta">Circuit</div>
+                <div class="chat-bubble">Ask Quicker AI anything about networking.</div>
+                <div class="chat-meta">Quicker AI</div>
             </div>
         </div>
         <div class="circuit-input-area">
             <div class="circuit-input-row">
-                <textarea id="circuitInput" placeholder="Ask Circuit..." rows="1"
+                <textarea id="circuitInput" placeholder="Ask Quicker AI..." rows="1"
                     onkeydown="circuitInputKeydown(event)"
                     oninput="autoResizeCircuitInput(this)"></textarea>
                 <button class="circuit-send-btn" id="circuitSendBtn" onclick="sendCircuitMessage()" title="Send">&#9658;</button>
@@ -4019,6 +3987,41 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
         let _isOpen = false;
         let _isWaiting = false;
 
+        // Restore last-used model from localStorage
+        (function() {
+            const saved = localStorage.getItem('quickerAIModel');
+            const sel = document.getElementById('quickerAIModel');
+            if (saved && sel) {
+                const opt = sel.querySelector(`option[value="${saved}"]`);
+                if (opt) sel.value = saved;
+            }
+        })();
+
+        function formatTokens(n) {
+            if (n >= 1e9)  return (n / 1e9).toFixed(n >= 10e9 ? 0 : 1).replace(/\.0$/, '') + 'B';
+            if (n >= 1e6)  return (n / 1e6).toFixed(n >= 10e6 ? 0 : 1).replace(/\.0$/, '') + 'M';
+            if (n >= 1e3)  return (n / 1e3).toFixed(n >= 10e3 ? 0 : 1).replace(/\.0$/, '') + 'K';
+            return String(n);
+        }
+
+        function updateTokenDisplay(usage) {
+            const el = document.getElementById('quickerAITokens');
+            if (!el || !usage) return;
+            const total = usage.total || 0;
+            el.textContent = formatTokens(total) + ' tokens';
+            el.title = `This month: ${total.toLocaleString()} total  (${(usage.input||0).toLocaleString()} in / ${(usage.output||0).toLocaleString()} out)`;
+        }
+
+        async function loadTokenUsage() {
+            try {
+                const u = (typeof _profUsername !== 'undefined' ? _profUsername : '') || '';
+                if (!u) return;
+                const resp = await fetch(`/api/token_usage?username=${encodeURIComponent(u)}`);
+                const data = await resp.json();
+                if (data.ok) updateTokenDisplay(data.usage);
+            } catch (e) {}
+        }
+
         window.toggleCircuitPanel = function() {
             _isOpen = !_isOpen;
             const panel = document.getElementById('circuitPanel');
@@ -4030,6 +4033,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
                 panel.classList.add('open');
                 btn.classList.add('active');
                 document.getElementById('circuitInput').focus();
+                loadTokenUsage();
             } else {
                 document.documentElement.style.setProperty('--cpw', '0px');
                 panel.classList.remove('open');
@@ -4090,60 +4094,34 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             const text = input.value.trim();
             if (!text) return;
 
-            // Check browser connection status from the footer badge
-            const statusEl = document.getElementById('hcBrowserStatus');
-            const status = statusEl ? statusEl.textContent.trim().toLowerCase() : '';
-            if (status !== 'connected') {
-                appendMessage('user', text);
-                input.value = '';
-                input.style.height = 'auto';
-                appendMessage('assistant', '⚠️ Please connect the browser first using the footer controls (Open Browser → wait for Connected status).');
-                return;
-            }
-
-            // Get credentials from the Local AI Trainer credentials panel
-            const username = (document.getElementById('hcUsername') || {}).value || '';
-            const password = (document.getElementById('hcPassword') || {}).value || '';
-            if (!username || !password) {
-                appendMessage('user', text);
-                input.value = '';
-                input.style.height = 'auto';
-                appendMessage('assistant', '⚠️ No Circuit credentials found. Open ⚙️ User Settings and load your saved credentials first.');
-                return;
-            }
-
             appendMessage('user', text);
             input.value = '';
             input.style.height = 'auto';
             _isWaiting = true;
             document.getElementById('circuitSendBtn').disabled = true;
 
-            // ── Pause Train Local AI for 30 s so it doesn't compete with this chat
-            fetch('/api/send_questions/pause', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ seconds: 30 })
-            }).catch(() => {}); // fire-and-forget
-
             const typingId = showTyping();
 
-            fetch('/api/circuit_question', {
+            const selectedModel = (document.getElementById('quickerAIModel') || {}).value || 'gpt-4o';
+            const _chatUsername = (typeof _profUsername !== 'undefined' ? _profUsername : '') || '';
+            fetch('/api/ai_chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, question: text })
+                body: JSON.stringify({ message: text, model: selectedModel, username: _chatUsername })
             })
             .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
             .then(data => {
                 removeTyping(typingId);
                 if (data.ok) {
-                    appendMessage('assistant', data.answer || data.response || JSON.stringify(data));
+                    appendMessage('assistant', data.response || '', data.model || '');
+                    updateTokenDisplay(data.month_total);
                 } else {
-                    appendMessage('assistant', '❌ ' + (data.error || 'Circuit returned an error.'));
+                    appendMessage('assistant', '❌ ' + (data.error || 'Quicker AI returned an error.'));
                 }
             })
             .catch(err => {
                 removeTyping(typingId);
-                appendMessage('assistant', '❌ Could not reach Circuit. (' + err + ')');
+                appendMessage('assistant', '❌ Could not reach Quicker AI. (' + err + ')');
             })
             .finally(() => {
                 _isWaiting = false;
@@ -4152,14 +4130,18 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             });
         };
 
-        function appendMessage(role, text) {
+        function appendMessage(role, text, model) {
             const container = document.getElementById('circuitMessages');
             const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
             const msg = document.createElement('div');
             msg.className = 'chat-message ' + role;
+            const label = role === 'user' ? 'You' : 'Quicker AI';
+            const modelTag = (role === 'assistant' && model)
+                ? ' <span style="color:#555;font-size:10px;">(' + escapeHtml(model) + ')</span>'
+                : '';
             msg.innerHTML =
                 '<div class="chat-bubble">' + escapeHtml(text) + '</div>' +
-                '<div class="chat-meta">' + (role === 'user' ? 'You' : 'Circuit') + ' &bull; ' + now + '</div>';
+                '<div class="chat-meta">' + label + modelTag + ' &bull; ' + now + '</div>';
             container.appendChild(msg);
             container.scrollTop = container.scrollHeight;
         }

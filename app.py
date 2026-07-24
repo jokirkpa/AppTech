@@ -731,7 +731,168 @@ def _circuit_question_job(username, password, question):
         return {"ok": False, "error": f"Circuit automation error: {str(inner_e)}"}
 
 
-# === API: Circuit Question ===
+# === API: Quicker AI Question (replaces Playwright/Circuit flow) ===
+_QUICKER_AI_URL   = "http://localhost:7120/sovct/api/v1/ai/chat"
+_QUICKER_AI_TOKEN = "b07d8bbcea5d349979e4d803112d22e0b644945a957d277b3428699b42470bec"
+_QUICKER_AI_SYSTEM = (
+    "You are a Cisco network engineering expert. "
+    "Generate a network engineering training question and a detailed answer. "
+    "Respond ONLY with valid JSON containing exactly two fields: "
+    "\"question\" (the question text) and \"answer\" (the detailed answer). "
+    "No markdown, no extra keys."
+)
+
+_QUICKER_AI_CHAT_SYSTEM = (
+    "You are a knowledgeable Cisco network engineering assistant. "
+    "Answer the user's questions conversationally and helpfully. "
+    "Keep responses concise unless the user asks for detail."
+)
+
+
+@app.post(f"{BASE_PREFIX}/api/ai_question")
+async def api_ai_question(request: Request):
+    try:
+        import httpx
+        data = await request.json() or {}
+        prompt = data.get("prompt", "")
+        technology = data.get("technology", "general")
+        difficulty = data.get("difficulty", "intermediate")
+        if not prompt:
+            return {"ok": False, "error": "Prompt is required"}
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                _QUICKER_AI_URL,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Internal-Token": _QUICKER_AI_TOKEN,
+                },
+                json={
+                    "messages": [
+                        {"role": "system", "content": _QUICKER_AI_SYSTEM},
+                        {"role": "user",   "content": prompt},
+                    ],
+                    "json_mode": True,
+                    "max_tokens": 600,
+                },
+            )
+        resp.raise_for_status()
+        ai_result = resp.json()
+        content = json.loads(ai_result.get("content", "{}"))
+        question = content.get("question", "")
+        answer   = content.get("answer", "")
+        if not question or not answer:
+            return {"ok": False, "error": "AI returned an unexpected format"}
+        # Log the Q&A
+        try:
+            log_dir = os.path.join(os.path.dirname(__file__), "circuit_logs", "circuit_responses")
+            os.makedirs(log_dir, exist_ok=True)
+            today = datetime.now().strftime("%Y-%m-%d")
+            log_file = os.path.join(log_dir, f"circuit_log_{today}.json")
+            entry = {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "technology": technology,
+                "difficulty": difficulty,
+                "question": question,
+                "answer": answer,
+                "success": True,
+            }
+            existing = []
+            if os.path.exists(log_file):
+                with open(log_file) as f:
+                    data_log = json.load(f)
+                    existing = data_log.get("entries", [])
+            existing.append(entry)
+            with open(log_file, "w") as f:
+                json.dump({"date": today, "entries": existing}, f, indent=2)
+        except Exception:
+            pass
+        return {"ok": True, "question": question, "answer": answer,
+                "model": ai_result.get("model", ""), "tokens": ai_result.get("tokens_used", {})}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# === Token usage storage (per-user, per-month, auto-resets) ===
+_TOKEN_USAGE_FILE = os.path.join(_APPTECH_ROOT, "circuit_logs", "token_usage.json")
+
+def _load_token_usage() -> dict:
+    try:
+        if os.path.exists(_TOKEN_USAGE_FILE):
+            with open(_TOKEN_USAGE_FILE) as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+def _save_token_usage(data: dict):
+    try:
+        os.makedirs(os.path.dirname(_TOKEN_USAGE_FILE), exist_ok=True)
+        with open(_TOKEN_USAGE_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
+def _add_tokens(username: str, tokens: dict):
+    month_key = datetime.now().strftime("%Y-%m")
+    usage = _load_token_usage()
+    user_data = usage.setdefault(username, {})
+    month_data = user_data.setdefault(month_key, {"total": 0, "input": 0, "output": 0})
+    month_data["total"]  += tokens.get("total",  0)
+    month_data["input"]  += tokens.get("input",  0)
+    month_data["output"] += tokens.get("output", 0)
+    _save_token_usage(usage)
+    return month_data
+
+@app.get(f"{BASE_PREFIX}/api/token_usage")
+async def api_get_token_usage(username: str = ""):
+    month_key = datetime.now().strftime("%Y-%m")
+    usage = _load_token_usage()
+    month_data = usage.get(username, {}).get(month_key, {"total": 0, "input": 0, "output": 0})
+    return {"ok": True, "month": month_key, "usage": month_data}
+
+
+# === API: Quicker AI free-form chat ===
+@app.post(f"{BASE_PREFIX}/api/ai_chat")
+async def api_ai_chat(request: Request):
+    try:
+        import httpx
+        data = await request.json() or {}
+        message  = data.get("message", "").strip()
+        model    = data.get("model") or None
+        username = data.get("username", "")
+        if not message:
+            return {"ok": False, "error": "Message is required"}
+        payload = {
+            "messages": [
+                {"role": "system", "content": _QUICKER_AI_CHAT_SYSTEM},
+                {"role": "user",   "content": message},
+            ],
+            "max_tokens": 600,
+        }
+        if model:
+            payload["model"] = model
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                _QUICKER_AI_URL,
+                headers={"Content-Type": "application/json", "X-Internal-Token": _QUICKER_AI_TOKEN},
+                json=payload,
+            )
+        resp.raise_for_status()
+        result = resp.json()
+        tokens = result.get("tokens_used") or {}
+        month_total = _add_tokens(username, tokens) if username else tokens
+        return {
+            "ok": True,
+            "response": result.get("content", ""),
+            "model": result.get("model", ""),
+            "tokens": tokens,
+            "month_total": month_total,
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# === API: Circuit Question (legacy — kept for compatibility) ===
 @app.post(f"{BASE_PREFIX}/api/circuit_question")
 async def api_circuit_question(request: Request):
     try:
