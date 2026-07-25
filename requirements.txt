@@ -1,6 +1,2 @@
 fastapi
 uvicorn[standard]
-playwright
-requests
-pypdf
-python-docx

@@ -61,7 +61,155 @@
                                 <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
                             </div>
                             <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Technology</span>
-                            <input type="text" id="bbvTechnology" placeholder='e.g. Data Center' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddField('technology','bbvTechnology',this.closest('.bbv-row'))">
+                            <select id="bbvTechnology" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
+                                <option value="">-- select --</option>
+                                <option value="Adaptive Security Appliance">Adaptive Security Appliance</option>
+                                <option value="AppDynamics">AppDynamics</option>
+                                <option value="AppDynamics SaaS Incident">AppDynamics SaaS Incident</option>
+                                <option value="Application Centric Infrastructure">Application Centric Infrastructure</option>
+                                <option value="Application Networking Services">Application Networking Services</option>
+                                <option value="ATM">ATM</option>
+                                <option value="Broadband Aggregation and DSL">Broadband Aggregation and DSL</option>
+                                <option value="Broadband Cable">Broadband Cable</option>
+                                <option value="Business Critical Services">Business Critical Services</option>
+                                <option value="Cisco Catalyst Center CATC">Cisco Catalyst Center CATC</option>
+                                <option value="Cisco Cloud Control">Cisco Cloud Control</option>
+                                <option value="Cisco IQ">Cisco IQ</option>
+                                <option value="Cisco Spaces">Cisco Spaces</option>
+                                <option value="Cisco Video">Cisco Video</option>
+                                <option value="Cloud and Hybrid Products">Cloud and Hybrid Products</option>
+                                <option value="Cloud and System Management">Cloud and System Management</option>
+                                <option value="CMCS-Compliance Management and Configuration Service-NCCM">CMCS-Compliance Management and Configuration Service-NCCM</option>
+                                <option value="Collaboration and Conferencing">Collaboration and Conferencing</option>
+                                <option value="Connected Analytics">Connected Analytics</option>
+                                <option value="Contact Center Software">Contact Center Software</option>
+                                <option value="CSS">CSS</option>
+                                <option value="CSS - Data Center - ACI / Nexus">CSS - Data Center - ACI / Nexus</option>
+                                <option value="CSS - Security - NGFW">CSS - Security - NGFW</option>
+                                <option value="CX Academy">CX Academy</option>
+                                <option value="Data Analytics Software">Data Analytics Software</option>
+                                <option value="Data Center AI Compute – (UCS Based Solutions)">Data Center AI Compute – (UCS Based Solutions)</option>
+                                <option value="Data Center and Storage Networking">Data Center and Storage Networking</option>
+                                <option value="Data Center Computing – (UCS Blade and Rack Mount Server Systems)">Data Center Computing – (UCS Blade and Rack Mount Server Systems)</option>
+                                <option value="Data Center Management and Automation">Data Center Management and Automation</option>
+                                <option value="Data Center Storage and Storage Area Networking (SAN)">Data Center Storage and Storage Area Networking (SAN)</option>
+                                <option value="Dial-Access">Dial-Access</option>
+                                <option value="Duty Manager Escalation">Duty Manager Escalation</option>
+                                <option value="Enterprise Platforms (Routing)">Enterprise Platforms (Routing)</option>
+                                <option value="Enterprise Routing Platforms">Enterprise Routing Platforms</option>
+                                <option value="Firewall">Firewall</option>
+                                <option value="Firewall Management">Firewall Management</option>
+                                <option value="Hardware">Hardware</option>
+                                <option value="HTOM Signature Engagement">HTOM Signature Engagement</option>
+                                <option value="Hyperfabric">Hyperfabric</option>
+                                <option value="Hypershield">Hypershield</option>
+                                <option value="IBM Networking">IBM Networking</option>
+                                <option value="Identity Services Engine (ISE) – 2.3 and Prior">Identity Services Engine (ISE) – 2.3 and Prior</option>
+                                <option value="Identity Services Engine (ISE) – 2.4">Identity Services Engine (ISE) – 2.4</option>
+                                <option value="Identity Services Engine (ISE) – 2.6 and Prior">Identity Services Engine (ISE) – 2.6 and Prior</option>
+                                <option value="Identity Services Engine (ISE) – 2.7">Identity Services Engine (ISE) – 2.7</option>
+                                <option value="Identity Services Engine (ISE) – 3.0 and Prior">Identity Services Engine (ISE) – 3.0 and Prior</option>
+                                <option value="Identity Services Engine (ISE) – 3.1">Identity Services Engine (ISE) – 3.1</option>
+                                <option value="Identity Services Engine (ISE) – 3.2">Identity Services Engine (ISE) – 3.2</option>
+                                <option value="Identity Services Engine (ISE) – 3.3">Identity Services Engine (ISE) – 3.3</option>
+                                <option value="Identity Services Engine (ISE) – 3.4">Identity Services Engine (ISE) – 3.4</option>
+                                <option value="Identity Services Engine (ISE) – 3.5">Identity Services Engine (ISE) – 3.5</option>
+                                <option value="IND-HARDWARE-LIASION">IND-HARDWARE-LIASION</option>
+                                <option value="Internet of Things (IOT)">Internet of Things (IOT)</option>
+                                <option value="LAN Switching">LAN Switching</option>
+                                <option value="Mobile Wireless">Mobile Wireless</option>
+                                <option value="Motific">Motific</option>
+                                <option value="Network Management CiscoWorks">Network Management CiscoWorks</option>
+                                <option value="Nexus Dashboard 4.x or above">Nexus Dashboard 4.x or above</option>
+                                <option value="NMS (Network Management Services)">NMS (Network Management Services)</option>
+                                <option value="Optical Networking">Optical Networking</option>
+                                <option value="Other">Other</option>
+                                <option value="Physical Security and Building Systems">Physical Security and Building Systems</option>
+                                <option value="Quality of Service (QoS) and Session Border Control (SBC)">Quality of Service (QoS) and Session Border Control (SBC)</option>
+                                <option value="Router and IOS Architecture">Router and IOS Architecture</option>
+                                <option value="Router and IOS-XE Architecture">Router and IOS-XE Architecture</option>
+                                <option value="SB - Cisco Business Dashboard">SB - Cisco Business Dashboard</option>
+                                <option value="SB - Cisco Business Series Routers (CBR)">SB - Cisco Business Series Routers (CBR)</option>
+                                <option value="SB - Cisco Business Series Switches (CBS)">SB - Cisco Business Series Switches (CBS)</option>
+                                <option value="SB - Cisco Business Series Wireless Access Points (CBW)">SB - Cisco Business Series Wireless Access Points (CBW)</option>
+                                <option value="SD-Routing">SD-Routing</option>
+                                <option value="SDWAN - Cisco-Hosted">SDWAN - Cisco-Hosted</option>
+                                <option value="SDWAN - On-Prem">SDWAN - On-Prem</option>
+                                <option value="Secure Network Analytics (Stealthwatch)">Secure Network Analytics (Stealthwatch)</option>
+                                <option value="Security - Access Control - AAA and Policy Management">Security - Access Control - AAA and Policy Management</option>
+                                <option value="Security - Email and Web">Security - Email and Web</option>
+                                <option value="Security - Management">Security - Management</option>
+                                <option value="Security - Network Firewalls and Intrusion Prevention Systems">Security - Network Firewalls and Intrusion Prevention Systems</option>
+                                <option value="Security - Network Protection">Security - Network Protection</option>
+                                <option value="Security - VPN and Mobility">Security - VPN and Mobility</option>
+                                <option value="Service Control and APA">Service Control and APA</option>
+                                <option value="Service Provider - Video Transmission">Service Provider - Video Transmission</option>
+                                <option value="Service Provider Access">Service Provider Access</option>
+                                <option value="Services as Code">Services as Code</option>
+                                <option value="Small Business Support Center">Small Business Support Center</option>
+                                <option value="Smart Services Capabilities">Smart Services Capabilities</option>
+                                <option value="Software Defined Wide Area Networking (SDWAN)">Software Defined Wide Area Networking (SDWAN)</option>
+                                <option value="Solution Support (SSPT - contract required)">Solution Support (SSPT - contract required)</option>
+                                <option value="Splunk Agent Observability">Splunk Agent Observability</option>
+                                <option value="Splunk Application Performance Monitoring">Splunk Application Performance Monitoring</option>
+                                <option value="Splunk Asset and Risk Intelligence">Splunk Asset and Risk Intelligence</option>
+                                <option value="Splunk Attack Analyzer">Splunk Attack Analyzer</option>
+                                <option value="Splunk Cloud">Splunk Cloud</option>
+                                <option value="Splunk Edge Hub">Splunk Edge Hub</option>
+                                <option value="Splunk Enterprise">Splunk Enterprise</option>
+                                <option value="Splunk Enterprise Security">Splunk Enterprise Security</option>
+                                <option value="Splunk Infrastructure Monitoring">Splunk Infrastructure Monitoring</option>
+                                <option value="Splunk IT Service Intelligence">Splunk IT Service Intelligence</option>
+                                <option value="Splunk Log Observer">Splunk Log Observer</option>
+                                <option value="Splunk On-Call">Splunk On-Call</option>
+                                <option value="Splunk Real User Monitoring">Splunk Real User Monitoring</option>
+                                <option value="Splunk SOAR">Splunk SOAR</option>
+                                <option value="Splunk SOAR Cloud">Splunk SOAR Cloud</option>
+                                <option value="Splunk Synthetic Monitoring">Splunk Synthetic Monitoring</option>
+                                <option value="Splunk TAC Escalation">Splunk TAC Escalation</option>
+                                <option value="Splunk Threat Intelligence Management">Splunk Threat Intelligence Management</option>
+                                <option value="Splunk User and Entity Behavior Analytics">Splunk User and Entity Behavior Analytics</option>
+                                <option value="Splunk User Behavior Analytics">Splunk User Behavior Analytics</option>
+                                <option value="SWL - AL">SWL - AL</option>
+                                <option value="SWL - Demo/Training for Licensing portals">SWL - Demo/Training for Licensing portals</option>
+                                <option value="SWL - L1 - Collaboration">SWL - L1 - Collaboration</option>
+                                <option value="SWL - L1 - Enterprise">SWL - L1 - Enterprise</option>
+                                <option value="SWL - L1 - Non tech specific">SWL - L1 - Non tech specific</option>
+                                <option value="SWL - L1 - Security">SWL - L1 - Security</option>
+                                <option value="SWL EATF">SWL EATF</option>
+                                <option value="SWL L2 Escalation - BW">SWL L2 Escalation - BW</option>
+                                <option value="SWL L2 Escalation - CDA">SWL L2 Escalation - CDA</option>
+                                <option value="SWL L2 Escalation - CL">SWL L2 Escalation - CL</option>
+                                <option value="SWL L2 Escalation - CLC">SWL L2 Escalation - CLC</option>
+                                <option value="SWL L2 Escalation - EAWS">SWL L2 Escalation - EAWS</option>
+                                <option value="SWL L2 Escalation - EDEL Issues">SWL L2 Escalation - EDEL Issues</option>
+                                <option value="SWL L2 Escalation - MYCE">SWL L2 Escalation - MYCE</option>
+                                <option value="SWL L2 Escalation - OP">SWL L2 Escalation - OP</option>
+                                <option value="SWL L2 Escalation - PNP">SWL L2 Escalation - PNP</option>
+                                <option value="SWL L2 Escalation - SA">SWL L2 Escalation - SA</option>
+                                <option value="SWL L2 Escalation - SAA">SWL L2 Escalation - SAA</option>
+                                <option value="SWL L2 Escalation - SER">SWL L2 Escalation - SER</option>
+                                <option value="SWL L2 Escalation - SL">SWL L2 Escalation - SL</option>
+                                <option value="SWL L2 Escalation - SLDI">SWL L2 Escalation - SLDI</option>
+                                <option value="SWL L2 Escalation - SLR">SWL L2 Escalation - SLR</option>
+                                <option value="SWL L2 Escalation - SWF">SWL L2 Escalation - SWF</option>
+                                <option value="SWL L2 Escalation - USKU">SWL L2 Escalation - USKU</option>
+                                <option value="SWL-LEM(NO collabs)">SWL-LEM(NO collabs)</option>
+                                <option value="Telemetry Broker">Telemetry Broker</option>
+                                <option value="Telepresence">Telepresence</option>
+                                <option value="ThousandEyes">ThousandEyes</option>
+                                <option value="Voice (IP Telephony and Unified Messaging)">Voice (IP Telephony and Unified Messaging)</option>
+                                <option value="Voice - Apps and Unity Connection">Voice - Apps and Unity Connection</option>
+                                <option value="Voice - Call Agents (Softswitch), SS7(ITP), BTS10200, PGW2200">Voice - Call Agents (Softswitch), SS7(ITP), BTS10200, PGW2200</option>
+                                <option value="Voice - Communications Manager">Voice - Communications Manager</option>
+                                <option value="Voice - Communications Manager Additional Apps and Plugins">Voice - Communications Manager Additional Apps and Plugins</option>
+                                <option value="Voice - Communications Manager Express (CME)">Voice - Communications Manager Express (CME)</option>
+                                <option value="Voice - Gateways, CUBE">Voice - Gateways, CUBE</option>
+                                <option value="Voice - Phones, Fax, Modems">Voice - Phones, Fax, Modems</option>
+                                <option value="WAN">WAN</option>
+                                <option value="Wireless">Wireless</option>
+                                <option value="XR-Routing-Platforms">XR-Routing-Platforms</option>
+                            </select>
                             <button class="btn" onclick="bbvAddField('technology','bbvTechnology',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
                         </div>
                         <!-- Sub-Technology -->
@@ -85,8 +233,25 @@
                                 <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
                             </div>
                             <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Resolution Code</span>
-                            <input type="text" id="bbvResolutioncode" placeholder='e.g. Software Upgrade' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddField('resolutioncode','bbvResolutioncode',this.closest('.bbv-row'))">
-                            <button class="btn" onclick="bbvAddField('resolutioncode','bbvResolutioncode',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                            <select id="bbvResolutioncode" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
+                                <option value="">-- select --</option>
+                                <option value="*">All</option>
+                                <option value="Content Delivered">Content Delivered</option>
+                                <option value="Customer Education">Customer Education</option>
+                                <option value="CUSTOMER_EDUCATION">CUSTOMER_EDUCATION</option>
+                                <option value="Hardware Replacement (RMA/SVO)">Hardware Replacement (RMA/SVO)</option>
+                                <option value="Hardware Upgrade - Existing Defect">Hardware Upgrade - Existing Defect</option>
+                                <option value="Hardware Upgrade - New Defect">Hardware Upgrade - New Defect</option>
+                                <option value="Software Upgrade - Existing Defect">Software Upgrade - Existing Defect</option>
+                                <option value="Software Upgrade - New Defect">Software Upgrade - New Defect</option>
+                            </select>
+                            <button class="btn" onclick="document.getElementById('bbvResolutioncode').value==='*' ? bbvAddAllResolutionCodes(this.closest('.bbv-row')) : bbvAddField('resolutioncode','bbvResolutioncode',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                        </div>
+                        <!-- Resolution Summary (always included) -->
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:6px 10px; background:#111; border:1px solid #2a2a2a; border-radius:5px;">
+                            <span style="color:#555; font-size:11px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">AUTO</span>
+                            <span style="color:#666; font-size:13px; font-family:monospace;">_exists_:resolutionsummary</span>
+                            <span style="color:#444; font-size:11px; font-style:italic; margin-left:auto;">always first in query</span>
                         </div>
                         <!-- Version -->
                         <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
@@ -457,6 +622,26 @@ explanation = one sentence summary of what was extracted`;
         bbvRefresh();
     };
 
+    // ── Add all resolution codes as OR filters ──────────────────────────────
+    const RESOLUTION_CODES = [
+        'Content Delivered',
+        'Customer Education',
+        'CUSTOMER_EDUCATION',
+        'Hardware Replacement (RMA/SVO)',
+        'Hardware Upgrade - Existing Defect',
+        'Hardware Upgrade - New Defect',
+        'Software Upgrade - Existing Defect',
+        'Software Upgrade - New Defect',
+    ];
+    window.bbvAddAllResolutionCodes = function (row) {
+        const bool = getActiveBool(row);
+        const grouped = '(' + RESOLUTION_CODES.map(c => c.includes(' ') ? `"${c}"` : c).join(' OR ') + ')';
+        bbvFilters.push({ bool, field: 'resolutioncode', value: grouped, id: Date.now() });
+        const sel = document.getElementById('bbvResolutioncode');
+        sel.selectedIndex = 0;
+        bbvRefresh();
+    };
+
     // ── Add custom string ───────────────────────────────────────────────────
     window.bbvAddCustom = function () {
         const inputEl = document.getElementById('bbvCustom');
@@ -484,14 +669,16 @@ explanation = one sentence summary of what was extracted`;
 
     // ── Build query string ──────────────────────────────────────────────────
     function buildQuery() {
-        if (!bbvFilters.length) return '';
-        return bbvFilters.map((f, i) => {
-            const needsQuotes = f.value.includes(' ') && !f.value.startsWith('"');
+        const base = '_exists_:resolutionsummary';
+        if (!bbvFilters.length) return base;
+        const rest = bbvFilters.map(f => {
+            const needsQuotes = f.value.includes(' ') && !f.value.startsWith('"') && !f.value.startsWith('(');
             const val = needsQuotes ? `"${f.value}"` : f.value;
             const term = f.field ? `${f.field}:${val}` : val;
-            const prefix = (i === 0 || !f.bool) ? '' : `${f.bool} `;
+            const prefix = f.bool ? `${f.bool} ` : 'AND ';
             return prefix + term;
         }).join(' ');
+        return base + ' ' + rest;
     }
 
     // ── Refresh UI ──────────────────────────────────────────────────────────
@@ -499,21 +686,25 @@ explanation = one sentence summary of what was extracted`;
         const query = buildQuery();
 
         // Update preview
-        document.getElementById('bbvQueryPreview').textContent = query || '— add filters above —';
+        document.getElementById('bbvQueryPreview').textContent = query;
 
         // Update active filters list
         const container = document.getElementById('bbvActiveFilters');
+        const staticChip = `<div class="bbv-filter-chip">
+            <span class="bbv-field-tag">_exists_:resolutionsummary</span>
+            <span style="color:#555; font-size:11px; font-style:italic; padding-left:6px;">auto</span>
+        </div>`;
         if (!bbvFilters.length) {
-            container.innerHTML = '<p style="color:#555; font-style:italic; font-size:13px; margin:0;">No filters added yet.</p>';
+            container.innerHTML = staticChip;
             return;
         }
-        container.innerHTML = bbvFilters.map((f, i) => {
-            const needsQuotes = f.value.includes(' ') && !f.value.startsWith('"');
+        container.innerHTML = staticChip + bbvFilters.map((f, i) => {
+            const needsQuotes = f.value.includes(' ') && !f.value.startsWith('"') && !f.value.startsWith('(');
             const val = needsQuotes ? `"${f.value}"` : f.value;
             const term = f.field ? `${f.field}:${val}` : val;
-            const boolTag = (i > 0 && f.bool)
+            const boolTag = f.bool
                 ? `<span class="bbv-bool-tag">${f.bool}</span>`
-                : '';
+                : `<span class="bbv-bool-tag">AND</span>`;
             return `<div class="bbv-filter-chip">
                 ${boolTag}
                 <span class="bbv-field-tag">${escapeHtml(term)}</span>
