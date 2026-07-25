@@ -451,62 +451,8 @@
     <div class="tz-toast" id="tzToast"></div>
 
     <script>
-    // ── Canonical tool list ──────────────────────────────────────
-    const TOOLS = [
-        { id: 'portSpeedModal',    name: 'Port Speed Calculator',  by: 'jokirkpa',
-          desc: 'Convert network speed units, and determine Rx/Tx load percentages for switch ports' },
-        { id: 'subnetModal',       name: 'Subnet Calculator',      by: 'jokirkpa',
-          desc: 'Calculate subnet details, and determine overlapping subnets' },
-        { id: 'tcpdumpModal',      name: 'TCPDUMP Builder',        by: 'jokirkpa',
-          desc: 'Build tcpdump commands with filters for interface, source, destination, protocol, and more' },
-        { id: 'timeCalcModal',     name: 'Time/Date Calculator',   by: 'jokirkpa',
-          desc: 'Calculate time/date differences, and timezone offsets' },
-        { id: 'hexToIpModal',      name: 'Hex Converter',          by: 'jokirkpa',
-          desc: 'Convert between hexadecimal and network addresses' },
-        { id: 'jsonPrettyModal',   name: 'Pretty Text',            by: 'jokirkpa',
-          desc: 'Format and beautify JSON and XML with proper indentation' },
-        { id: 'pingGraphModal',    name: 'Ping Graph',             by: 'jokirkpa',
-          desc: 'Visualize ping results with latency graphs and annotations for packet loss and TTL changes' },
-        { id: 'logAnalyzerModal',  name: 'Log Analyzer',           by: 'jokirkpa',
-          desc: 'Analyze logs with pattern detection and repeating message identification' },
-        { id: 'diffModal',         name: 'Diff Check',             by: 'jokirkpa',
-          desc: 'Compare two text blocks and highlight differences line-by-line' },
-        { id: 'aciContractModal',  name: 'ACI Contract Trainer',   by: 'jokirkpa',
-          desc: 'Visual representation of how contracts work in ACI' },
-        { id: 'columnSorterModal', name: 'Column Sorter',          by: 'jokirkpa',
-          desc: 'Paste columnar output, auto-detect columns, sort by any column asc/desc, and copy results' },
-        // ── Test tools (test1.html … test30.html) ──
-        { id: 'testTool1Modal',  name: 'Test 1',  by: 'system', desc: 'Test tool 1'  },
-        { id: 'testTool2Modal',  name: 'Test 2',  by: 'system', desc: 'Test tool 2'  },
-        { id: 'testTool3Modal',  name: 'Test 3',  by: 'system', desc: 'Test tool 3'  },
-        { id: 'testTool4Modal',  name: 'Test 4',  by: 'system', desc: 'Test tool 4'  },
-        { id: 'testTool5Modal',  name: 'Test 5',  by: 'system', desc: 'Test tool 5'  },
-        { id: 'testTool6Modal',  name: 'Test 6',  by: 'system', desc: 'Test tool 6'  },
-        { id: 'testTool7Modal',  name: 'Test 7',  by: 'system', desc: 'Test tool 7'  },
-        { id: 'testTool8Modal',  name: 'Test 8',  by: 'system', desc: 'Test tool 8'  },
-        { id: 'testTool9Modal',  name: 'Test 9',  by: 'system', desc: 'Test tool 9'  },
-        { id: 'testTool10Modal', name: 'Test 10', by: 'system', desc: 'Test tool 10' },
-        { id: 'testTool11Modal', name: 'Test 11', by: 'system', desc: 'Test tool 11' },
-        { id: 'testTool12Modal', name: 'Test 12', by: 'system', desc: 'Test tool 12' },
-        { id: 'testTool13Modal', name: 'Test 13', by: 'system', desc: 'Test tool 13' },
-        { id: 'testTool14Modal', name: 'Test 14', by: 'system', desc: 'Test tool 14' },
-        { id: 'testTool15Modal', name: 'Test 15', by: 'system', desc: 'Test tool 15' },
-        { id: 'testTool16Modal', name: 'Test 16', by: 'system', desc: 'Test tool 16' },
-        { id: 'testTool17Modal', name: 'Test 17', by: 'system', desc: 'Test tool 17' },
-        { id: 'testTool18Modal', name: 'Test 18', by: 'system', desc: 'Test tool 18' },
-        { id: 'testTool19Modal', name: 'Test 19', by: 'system', desc: 'Test tool 19' },
-        { id: 'testTool20Modal', name: 'Test 20', by: 'system', desc: 'Test tool 20' },
-        { id: 'testTool21Modal', name: 'Test 21', by: 'system', desc: 'Test tool 21' },
-        { id: 'testTool22Modal', name: 'Test 22', by: 'system', desc: 'Test tool 22' },
-        { id: 'testTool23Modal', name: 'Test 23', by: 'system', desc: 'Test tool 23' },
-        { id: 'testTool24Modal', name: 'Test 24', by: 'system', desc: 'Test tool 24' },
-        { id: 'testTool25Modal', name: 'Test 25', by: 'system', desc: 'Test tool 25' },
-        { id: 'testTool26Modal', name: 'Test 26', by: 'system', desc: 'Test tool 26' },
-        { id: 'testTool27Modal', name: 'Test 27', by: 'system', desc: 'Test tool 27' },
-        { id: 'testTool28Modal', name: 'Test 28', by: 'system', desc: 'Test tool 28' },
-        { id: 'testTool29Modal', name: 'Test 29', by: 'system', desc: 'Test tool 29' },
-        { id: 'testTool30Modal', name: 'Test 30', by: 'system', desc: 'Test tool 30' },
-    ];
+    // ── Tool list — populated dynamically from /api/tools/list ──
+    let TOOLS = [];
 
     // ── Extract username from URL ────────────────────────────────
     const _pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -540,6 +486,8 @@
         document.getElementById('activeCount').textContent = _enabledTools.size;
         document.getElementById('totalCount').textContent  = TOOLS.length;
     }
+
+
 
     async function saveTools() {
         if (!_username) return;
@@ -594,12 +542,30 @@
             return;
         }
         try {
-            const res  = await fetch(`/api/users/${encodeURIComponent(_username)}/tools`);
-            const data = await res.json();
-            if (data.ok) {
-                _enabledTools = new Set(data.tools);
+            // Load tool list and user's enabled tools in parallel
+            const [listRes, toolsRes] = await Promise.all([
+                fetch('/api/tools/list'),
+                fetch(`/api/users/${encodeURIComponent(_username)}/tools`)
+            ]);
+            const listData  = await listRes.json();
+            const toolsData = await toolsRes.json();
+
+            if (listData.ok) {
+                TOOLS = listData.tools.map(t => ({
+                    id:   t.id,
+                    name: t.name || t.file,
+                    by:   t.author || 'unknown',
+                    desc: t.description || '',
+                    file: t.file,
+                }));
             } else {
-                showError(data.error || 'Could not load tools.');
+                showError('Could not load tool list: ' + (listData.error || 'unknown error'));
+            }
+
+            if (toolsData.ok) {
+                _enabledTools = new Set(toolsData.tools);
+            } else {
+                showError(toolsData.error || 'Could not load enabled tools.');
             }
         } catch(e) {
             showError('Could not reach server.');

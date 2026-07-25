@@ -113,6 +113,33 @@ async def tools_redirect():
     return RedirectResponse(url="/", status_code=302)
 
 
+# === API: Tool Discovery ===
+@app.get(f"{BASE_PREFIX}/api/tools/list")
+async def api_tools_list():
+    apps_dir = os.path.join(_APPTECH_ROOT, "applications")
+    tools = []
+    try:
+        for fname in sorted(os.listdir(apps_dir)):
+            if not fname.endswith(".html"):
+                continue
+            fpath = os.path.join(apps_dir, fname)
+            try:
+                with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                    first_line = f.readline(1024)
+                import re as _re
+                m = _re.search(r'<!--\s*@tool\s+(\{.*?\})\s*-->', first_line)
+                if m:
+                    import json as _json
+                    meta = _json.loads(m.group(1))
+                    meta["file"] = fname
+                    tools.append(meta)
+            except Exception:
+                pass
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    return {"ok": True, "tools": tools}
+
+
 # === API: Quicker AI ===
 _QUICKER_AI_URL   = "http://localhost:7120/sovct/api/v1/ai/chat"
 _QUICKER_AI_TOKEN = "b07d8bbcea5d349979e4d803112d22e0b644945a957d277b3428699b42470bec"

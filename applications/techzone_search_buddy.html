@@ -1,0 +1,550 @@
+<!-- @tool {"id":"techzoneSearchBuddyModal","name":"Techzone Search Buddy","description":"Paste a GCI and generate optimized Topic Search query strings using boolean operators and fielded search","author":"jokirkpa"} -->
+<!-- Techzone Search Buddy -->
+<div id="techzoneSearchBuddyModal" class="modal-overlay">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:720px;">
+        <div class="modal-header">
+            <h2>🔍 Techzone Search Buddy</h2>
+            <button class="close-btn" onclick="closeModal('techzoneSearchBuddyModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Tabs -->
+            <div style="display:flex; border-bottom:2px solid #555; margin-bottom:20px;">
+                <button id="sbTabParseBtn" class="tab-btn active" onclick="sbSwitchTab('parse')">Parse GCI</button>
+                <button id="sbTabBuildBtn" class="tab-btn" onclick="sbSwitchTab('build')">Build by Values</button>
+            </div>
+
+            <!-- ── Tab 1: Parse GCI ────────────────────────────────── -->
+            <div id="sbTabParse" class="tab-content active">
+                <div class="form-group">
+                    <label for="gciInput" style="font-size:13px; color:#aaa; margin-bottom:6px; display:block;">Paste GCI</label>
+                    <textarea id="gciInput" rows="13"
+                        placeholder="Paste your Global Case Information (GCI) here..."
+                        style="font-family:monospace; font-size:12px; resize:vertical;"></textarea>
+                </div>
+                <div id="searchBuddyError" style="display:none; color:#ff6666; font-size:13px; margin-bottom:10px; padding:8px; background:rgba(255,102,102,0.1); border-left:3px solid #ff6666; border-radius:3px;"></div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" id="collectValuesBtn" onclick="collectGCIValues()" style="flex:2;">Collect Values</button>
+                    <button class="btn" onclick="clearGCIInput()" style="flex:1; background-color:#444;">Clear</button>
+                </div>
+            </div>
+
+            <!-- ── Tab 2: Build by Values ─────────────────────────── -->
+            <div id="sbTabBuild" class="tab-content">
+
+                <!-- Live query preview -->
+                <div style="margin-bottom:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Generated Query</span>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn" id="bbvCopyBtn" onclick="bbvCopyQuery()" style="padding:4px 12px; font-size:12px; background:#2a2a2a; border:1px solid #444;">📋 Copy</button>
+                            <button class="btn" onclick="bbvOpenInTopic()" style="padding:4px 12px; font-size:12px; background:#1a3a1a; border:1px solid #2d8659; color:#2d8659;">↗ Topic</button>
+                        </div>
+                    </div>
+                    <div style="background:#0d0d0d; border:1px solid #333; border-radius:5px; padding:10px 12px; min-height:36px;">
+                        <pre id="bbvQueryPreview" style="margin:0; font-family:monospace; font-size:12px; color:#00e5cc; white-space:pre-wrap; word-break:break-all;"></pre>
+                    </div>
+                </div>
+
+                <!-- Field rows -->
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Field Filters</div>
+
+                    <!-- Each field row: boolean buttons + label + input + Add -->
+                    <div id="bbvFieldRows">
+                        <!-- Technology -->
+                        <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+                            <div class="bbv-bool-group" data-row="technology">
+                                <button class="bbv-bool-btn bbv-active" data-val="" onclick="bbvSetBool(this)">—</button>
+                                <button class="bbv-bool-btn" data-val="AND" onclick="bbvSetBool(this)">AND</button>
+                                <button class="bbv-bool-btn" data-val="OR" onclick="bbvSetBool(this)">OR</button>
+                                <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
+                            </div>
+                            <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Technology</span>
+                            <input type="text" id="bbvTechnology" placeholder='e.g. Data Center' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddField('technology','bbvTechnology',this.closest('.bbv-row'))">
+                            <button class="btn" onclick="bbvAddField('technology','bbvTechnology',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                        </div>
+                        <!-- Sub-Technology -->
+                        <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+                            <div class="bbv-bool-group" data-row="subtech">
+                                <button class="bbv-bool-btn bbv-active" data-val="" onclick="bbvSetBool(this)">—</button>
+                                <button class="bbv-bool-btn" data-val="AND" onclick="bbvSetBool(this)">AND</button>
+                                <button class="bbv-bool-btn" data-val="OR" onclick="bbvSetBool(this)">OR</button>
+                                <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
+                            </div>
+                            <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Sub-Technology</span>
+                            <input type="text" id="bbvSubtech" placeholder='e.g. Nexus 9000 Series Switch' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddField('subtech','bbvSubtech',this.closest('.bbv-row'))">
+                            <button class="btn" onclick="bbvAddField('subtech','bbvSubtech',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                        </div>
+                        <!-- Resolution Code -->
+                        <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+                            <div class="bbv-bool-group" data-row="resolutioncode">
+                                <button class="bbv-bool-btn bbv-active" data-val="" onclick="bbvSetBool(this)">—</button>
+                                <button class="bbv-bool-btn" data-val="AND" onclick="bbvSetBool(this)">AND</button>
+                                <button class="bbv-bool-btn" data-val="OR" onclick="bbvSetBool(this)">OR</button>
+                                <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
+                            </div>
+                            <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Resolution Code</span>
+                            <input type="text" id="bbvResolutioncode" placeholder='e.g. Software Upgrade' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddField('resolutioncode','bbvResolutioncode',this.closest('.bbv-row'))">
+                            <button class="btn" onclick="bbvAddField('resolutioncode','bbvResolutioncode',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                        </div>
+                        <!-- Version -->
+                        <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+                            <div class="bbv-bool-group" data-row="swversion">
+                                <button class="bbv-bool-btn bbv-active" data-val="" onclick="bbvSetBool(this)">—</button>
+                                <button class="bbv-bool-btn" data-val="AND" onclick="bbvSetBool(this)">AND</button>
+                                <button class="bbv-bool-btn" data-val="OR" onclick="bbvSetBool(this)">OR</button>
+                                <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
+                            </div>
+                            <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Version</span>
+                            <input type="text" id="bbvSwversion" placeholder='e.g. 17.9* or 7.0(3)I7(6)' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddField('swversion','bbvSwversion',this.closest('.bbv-row'))">
+                            <button class="btn" onclick="bbvAddField('swversion','bbvSwversion',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                        </div>
+                        <!-- Status -->
+                        <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
+                            <div class="bbv-bool-group" data-row="status">
+                                <button class="bbv-bool-btn bbv-active" data-val="" onclick="bbvSetBool(this)">—</button>
+                                <button class="bbv-bool-btn" data-val="AND" onclick="bbvSetBool(this)">AND</button>
+                                <button class="bbv-bool-btn" data-val="OR" onclick="bbvSetBool(this)">OR</button>
+                                <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
+                            </div>
+                            <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Status</span>
+                            <select id="bbvStatus" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
+                                <option value="">-- select --</option>
+                                <option value="Open">Open</option>
+                                <option value="Closed">Closed</option>
+                                <option value="Customer Pending">Customer Pending</option>
+                                <option value="Cisco Pending">Cisco Pending</option>
+                            </select>
+                            <button class="btn" onclick="bbvAddField('status','bbvStatus',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                        </div>
+                    </div>
+
+                    <!-- Free text / custom string row -->
+                    <div style="border-top:1px solid #333; margin-top:12px; padding-top:12px;">
+                        <div style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Custom String</div>
+                        <div style="display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center;">
+                            <div class="bbv-bool-group" data-row="custom">
+                                <button class="bbv-bool-btn bbv-active" data-val="" onclick="bbvSetBool(this)">—</button>
+                                <button class="bbv-bool-btn" data-val="AND" onclick="bbvSetBool(this)">AND</button>
+                                <button class="bbv-bool-btn" data-val="OR" onclick="bbvSetBool(this)">OR</button>
+                                <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
+                            </div>
+                            <input type="text" id="bbvCustom" placeholder='e.g. "high cpu" OR nexus9000*' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddCustom()">
+                            <button class="btn" onclick="bbvAddCustom()" style="padding:6px 14px; font-size:13px;">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active filters list -->
+                <div style="border-top:1px solid #333; padding-top:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Active Filters</span>
+                        <button class="btn" onclick="bbvClearAll()" style="padding:3px 10px; font-size:11px; background:#aa0000; border:none;">Clear All</button>
+                    </div>
+                    <div id="bbvActiveFilters" style="min-height:36px;">
+                        <p style="color:#555; font-style:italic; font-size:13px; margin:0;">No filters added yet.</p>
+                    </div>
+                </div>
+
+            </div><!-- end tab 2 -->
+        </div>
+    </div>
+</div>
+
+<!-- Results Modal -->
+<div id="searchBuddyResultsModal" class="modal-overlay">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:820px;">
+        <div class="modal-header">
+            <h2>📋 Topic Search Queries</h2>
+            <button class="close-btn" onclick="closeModal('searchBuddyResultsModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="searchBuddyResults"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bbv-bool-group { display:flex; gap:3px; }
+.bbv-bool-btn {
+    padding:4px 8px; font-size:11px; font-weight:bold;
+    background:#2a2a2a; border:1px solid #444; border-radius:4px;
+    color:#888; cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}
+.bbv-bool-btn:hover { border-color:#069494; color:#069494; }
+.bbv-bool-btn.bbv-active { background:#069494; border-color:#069494; color:#fff; }
+.bbv-filter-chip {
+    display:flex; align-items:center; gap:8px;
+    background:#1a1a1a; border:1px solid #333; border-radius:5px;
+    padding:6px 10px; margin-bottom:6px; font-size:13px;
+}
+.bbv-filter-chip .bbv-bool-tag {
+    font-size:10px; font-weight:bold; padding:2px 7px;
+    border-radius:3px; background:#2d5aa0; color:#fff; flex-shrink:0;
+}
+.bbv-filter-chip .bbv-field-tag {
+    color:#069494; font-family:monospace; flex:1; word-break:break-all;
+}
+.bbv-remove-btn {
+    background:#aa0000; border:none; color:#fff; border-radius:4px;
+    padding:2px 8px; font-size:11px; cursor:pointer; flex-shrink:0;
+}
+.bbv-remove-btn:hover { background:#dd0000; }
+</style>
+
+<script>
+(function () {
+
+    // ── Regex pre-extraction ────────────────────────────────────────────────
+    function regexExtract(text) {
+        const bugs = [...new Set(
+            (text.match(/CSC[a-zA-Z]{2}\d{5}/gi) || []).map(b => b.toUpperCase())
+        )];
+
+        const srMatch = text.match(/(?:SR|Case)[^\d]*(\d{9,12})/i);
+        const sr = srMatch ? srMatch[1] : '';
+
+        // NX-OS: 7.0(3)I7(6), IOS-XE: 17.9.4a, IOS: 15.2(4)M, ACI: 4.2(5)
+        const versionMatches = text.match(
+            /\d+\.\d+[\(\d+\)]*[A-Za-z\d]*(?:\(\d+\)[A-Za-z\d]*)*/g
+        ) || [];
+        const version = versionMatches[0] || '';
+
+        // Hardware PIDs
+        const hwMatch = text.match(
+            /\b(N[39][Kk]-[A-Z0-9\-]+|WS-[A-Z0-9\-]+|ASR\d{4}[A-Z\-]*|ISR\d{4}[A-Z\-]*|AIR-[A-Z0-9\-]+|C[39]\d{3}[A-Z\-]*)\b/i
+        );
+        const hardware = hwMatch ? hwMatch[1].toUpperCase() : '';
+
+        // Priority
+        const priMatch = text.match(/[Pp]riority[^\d]*([1-4])/);
+        const priority = priMatch ? priMatch[1] : '';
+
+        return { bugs, sr, version, hardware, priority };
+    }
+
+    // ── Build Topic Search URL ──────────────────────────────────────────────
+    function topicUrl(query, sources) {
+        const repos = sources.map(s => `repos=${encodeURIComponent(s)}`).join('&');
+        const checks = sources.map(s => `checkedds=${encodeURIComponent(s)}`).join('&');
+        return `https://topic.cisco.com/results?queryText=${encodeURIComponent(query)}&${repos}&${checks}`;
+    }
+
+    // ── Copy helper ─────────────────────────────────────────────────────────
+    function sbCopy(text, btnId) {
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            const orig = btn.textContent;
+            btn.textContent = '✓ Copied';
+            btn.style.backgroundColor = '#18631a';
+            setTimeout(() => { btn.textContent = orig; btn.style.backgroundColor = ''; }, 2000);
+        }).catch(() => alert('Copy failed'));
+    }
+    window.sbCopy = sbCopy;
+
+    // ── Render results ──────────────────────────────────────────────────────
+    function renderResults(ai, regex) {
+        const bugs    = [...new Set([...(ai.bugs || []), ...regex.bugs])];
+        const version = ai.version || regex.version || '';
+        const hw      = regex.hardware || '';
+        const sr      = regex.sr || '';
+
+        // Enrich primary query with regex-found data if AI missed it
+        let primary = (ai.primary || '').trim();
+        if (bugs.length && !primary.includes('linkeddefects') && !primary.includes('CSC')) {
+            const bugStr = bugs.length === 1
+                ? `linkeddefects:${bugs[0]}`
+                : `linkeddefects:(${bugs.join(' OR ')})`;
+            primary = primary ? `${primary} AND ${bugStr}` : bugStr;
+        }
+        if (version && !primary.includes('version')) {
+            const maj = version.split(/[\.\(]/)[0] + '.' + (version.split(/[\.\(]/)[1] || '*');
+            primary = primary ? `${primary} AND majorversion:${maj}*` : `majorversion:${maj}*`;
+        }
+
+        const simple  = (ai.simple || '').trim();
+        const literal = (ai.literal || '').trim();
+        const explanation = (ai.explanation || '').trim();
+
+        // ── Build HTML ──────────────────────────────────────────────────────
+        let html = '';
+
+        // Extracted fields summary
+        const fieldRows = [
+            ['Technology',   ai.technology],
+            ['Sub-Tech',     ai.subtech],
+            ['Product',      ai.product],
+            ['Version',      version],
+            ['Hardware',     hw],
+            ['Bug IDs',      bugs.join(', ')],
+            ['SR Number',    sr],
+            ['Keywords',     (ai.keywords || []).join(', ')],
+        ].filter(([, v]) => v);
+
+        if (fieldRows.length) {
+            html += `<div style="background:#1a1a1a; border:1px solid #333; border-radius:6px; padding:14px; margin-bottom:18px;">
+                <div style="color:#aaa; font-size:11px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Extracted Fields</div>
+                <div style="display:grid; grid-template-columns:120px 1fr; gap:5px 12px; font-size:13px;">`;
+            for (const [label, val] of fieldRows) {
+                html += `<div style="color:#666; padding:3px 0;">${label}</div>
+                         <div style="color:#e0e0e0; padding:3px 0; word-break:break-word;">${escapeHtml(val)}</div>`;
+            }
+            html += '</div></div>';
+        }
+
+        if (explanation) {
+            html += `<div style="font-size:12px; color:#777; font-style:italic; margin-bottom:16px; padding:8px 12px; background:#111; border-radius:4px;">
+                ${escapeHtml(explanation)}</div>`;
+        }
+
+        // Search string cards
+        const cards = [];
+        if (primary) cards.push({ label: 'Primary Search',  tag: 'Advanced', color: '#069494', query: primary,  sources: ['c3','cdets','techzone'] });
+        if (simple)  cards.push({ label: 'Simple Fallback', tag: 'Simple',   color: '#2d7a9e', query: simple,   sources: ['c3','cdets','techzone'] });
+        if (literal) cards.push({ label: 'Literal Match',   tag: 'Literal',  color: '#8e44ad', query: literal,  sources: ['c3','cdets','techzone'] });
+
+        cards.forEach((card, i) => {
+            const copyId = `sbCopyBtn_${i}`;
+            html += `
+            <div style="background:#1a1a1a; border:1px solid #333; border-radius:6px; padding:14px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:#e0e0e0; font-size:14px; font-weight:bold;">${card.label}</span>
+                        <span style="font-size:10px; font-weight:bold; color:${card.color}; border:1px solid ${card.color}; border-radius:3px; padding:1px 6px;">${card.tag}</span>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button id="${copyId}" class="btn" onclick="sbCopy(${JSON.stringify(card.query)}, '${copyId}')"
+                            style="padding:5px 12px; font-size:12px; background:#2a2a2a; border:1px solid #444;">📋 Copy</button>
+                        <a href="${topicUrl(card.query, card.sources)}" target="_blank"
+                            style="padding:5px 12px; font-size:12px; background:#1a3a1a; border:1px solid #2d8659; border-radius:6px; color:#2d8659; text-decoration:none; display:flex; align-items:center;">
+                            ↗ Open in Topic
+                        </a>
+                    </div>
+                </div>
+                <div style="font-family:monospace; font-size:12px; color:#00e5cc; background:#0d0d0d; border:1px solid #222; border-radius:4px; padding:10px; word-break:break-all; line-height:1.6;">
+                    ${escapeHtml(card.query)}
+                </div>
+            </div>`;
+        });
+
+        if (!cards.length) {
+            html += `<div style="color:#888; text-align:center; padding:20px;">No search strings could be generated from this GCI.</div>`;
+        }
+
+        document.getElementById('searchBuddyResults').innerHTML = html;
+        openModal('searchBuddyResultsModal');
+    }
+
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // ── Main: collect values ────────────────────────────────────────────────
+    window.collectGCIValues = async function () {
+        const gci = document.getElementById('gciInput').value.trim();
+        const errEl = document.getElementById('searchBuddyError');
+        errEl.style.display = 'none';
+
+        if (!gci) {
+            errEl.textContent = 'Please paste a GCI before collecting values.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        const btn = document.getElementById('collectValuesBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Analyzing...';
+
+        // Run regex extraction immediately
+        const regex = regexExtract(gci);
+
+        const prompt =
+`Analyze this Cisco TAC case GCI. Extract fields and build Topic Search query strings for topic.cisco.com.
+
+Topic Search field names (lowercase): technology, subtech, product, swversion, majorversion, linkeddefects, problemcode, resolutioncode, component, severity, status
+Operators: AND OR NOT (uppercase), "phrase search", field:value, field:"multi word value", wildcard cat9* (trailing only)
+
+GCI:
+${gci.substring(0, 2800)}
+
+Return ONLY valid JSON, no markdown:
+{"technology":"","subtech":"","product":"","version":"","bugs":[],"keywords":[],"primary":"","simple":"","literal":"","explanation":""}
+
+primary = best fielded+Boolean string combining technology/subtech/product/version/keywords
+simple = 4-6 keyword fallback
+literal = exact error or syslog string copied verbatim if one exists, else ""
+explanation = one sentence summary of what was extracted`;
+
+        try {
+            const resp = await fetch('/api/ai_chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: prompt,
+                    username: (typeof window._profUsername !== 'undefined' ? window._profUsername : '') || ''
+                })
+            });
+
+            const data = await resp.json();
+            if (!data.ok) throw new Error(data.error || 'AI returned an error');
+
+            let ai = {};
+            try {
+                // Strip any accidental markdown fences
+                const clean = data.response.replace(/```[a-z]*\n?/gi, '').trim();
+                ai = JSON.parse(clean);
+            } catch {
+                // AI didn't return valid JSON — fall back to regex only
+                ai = { primary: regex.bugs.map(b => `linkeddefects:${b}`).join(' OR '), simple: regex.version || '', explanation: 'Could not parse AI response; showing regex results only.' };
+            }
+
+            renderResults(ai, regex);
+
+        } catch (err) {
+            errEl.textContent = `Error: ${err.message}`;
+            errEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Collect Values';
+        }
+    };
+
+    window.clearGCIInput = function () {
+        document.getElementById('gciInput').value = '';
+        const errEl = document.getElementById('searchBuddyError');
+        errEl.style.display = 'none';
+    };
+
+    // ── Tab switcher ────────────────────────────────────────────────────────
+    window.sbSwitchTab = function (tab) {
+        document.getElementById('sbTabParseBtn').classList.toggle('active', tab === 'parse');
+        document.getElementById('sbTabBuildBtn').classList.toggle('active', tab === 'build');
+        document.getElementById('sbTabParse').classList.toggle('active', tab === 'parse');
+        document.getElementById('sbTabBuild').classList.toggle('active', tab === 'build');
+    };
+
+})();
+
+// ── Build-by-Values module ───────────────────────────────────────────────────
+(function () {
+    let bbvFilters = [];   // {bool, field, value, id}
+
+    // ── Boolean button toggle ───────────────────────────────────────────────
+    window.bbvSetBool = function (btn) {
+        const group = btn.closest('.bbv-bool-group');
+        group.querySelectorAll('.bbv-bool-btn').forEach(b => b.classList.remove('bbv-active'));
+        btn.classList.add('bbv-active');
+    };
+
+    function getActiveBool(row) {
+        const active = row.querySelector('.bbv-bool-btn.bbv-active');
+        return active ? active.dataset.val : '';
+    }
+
+    // ── Add a named field ───────────────────────────────────────────────────
+    window.bbvAddField = function (fieldName, inputId, row) {
+        const inputEl = document.getElementById(inputId);
+        const val = (inputEl.value || inputEl.options?.[inputEl.selectedIndex]?.value || '').trim();
+        if (!val) { inputEl.focus(); return; }
+        const bool = getActiveBool(row);
+        bbvFilters.push({ bool, field: fieldName, value: val, id: Date.now() });
+        inputEl.value = '';
+        if (inputEl.tagName === 'SELECT') inputEl.selectedIndex = 0;
+        bbvRefresh();
+    };
+
+    // ── Add custom string ───────────────────────────────────────────────────
+    window.bbvAddCustom = function () {
+        const inputEl = document.getElementById('bbvCustom');
+        const val = inputEl.value.trim();
+        if (!val) { inputEl.focus(); return; }
+        const row = inputEl.closest('[data-row="custom"]')?.closest('div') ||
+                    document.querySelector('.bbv-bool-group[data-row="custom"]').parentElement;
+        const bool = getActiveBool(document.querySelector('.bbv-bool-group[data-row="custom"]').closest('div'));
+        bbvFilters.push({ bool, field: null, value: val, id: Date.now() });
+        inputEl.value = '';
+        bbvRefresh();
+    };
+
+    // ── Remove filter ───────────────────────────────────────────────────────
+    window.bbvRemove = function (id) {
+        bbvFilters = bbvFilters.filter(f => f.id !== id);
+        bbvRefresh();
+    };
+
+    // ── Clear all ───────────────────────────────────────────────────────────
+    window.bbvClearAll = function () {
+        bbvFilters = [];
+        bbvRefresh();
+    };
+
+    // ── Build query string ──────────────────────────────────────────────────
+    function buildQuery() {
+        if (!bbvFilters.length) return '';
+        return bbvFilters.map((f, i) => {
+            const needsQuotes = f.value.includes(' ') && !f.value.startsWith('"');
+            const val = needsQuotes ? `"${f.value}"` : f.value;
+            const term = f.field ? `${f.field}:${val}` : val;
+            const prefix = (i === 0 || !f.bool) ? '' : `${f.bool} `;
+            return prefix + term;
+        }).join(' ');
+    }
+
+    // ── Refresh UI ──────────────────────────────────────────────────────────
+    function bbvRefresh() {
+        const query = buildQuery();
+
+        // Update preview
+        document.getElementById('bbvQueryPreview').textContent = query || '— add filters above —';
+
+        // Update active filters list
+        const container = document.getElementById('bbvActiveFilters');
+        if (!bbvFilters.length) {
+            container.innerHTML = '<p style="color:#555; font-style:italic; font-size:13px; margin:0;">No filters added yet.</p>';
+            return;
+        }
+        container.innerHTML = bbvFilters.map((f, i) => {
+            const needsQuotes = f.value.includes(' ') && !f.value.startsWith('"');
+            const val = needsQuotes ? `"${f.value}"` : f.value;
+            const term = f.field ? `${f.field}:${val}` : val;
+            const boolTag = (i > 0 && f.bool)
+                ? `<span class="bbv-bool-tag">${f.bool}</span>`
+                : '';
+            return `<div class="bbv-filter-chip">
+                ${boolTag}
+                <span class="bbv-field-tag">${escapeHtml(term)}</span>
+                <button class="bbv-remove-btn" onclick="bbvRemove(${f.id})">Remove</button>
+            </div>`;
+        }).join('');
+    }
+
+    function escapeHtml(s) {
+        const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+    }
+
+    window.bbvCopyQuery = function () {
+        const q = buildQuery();
+        if (!q) return;
+        navigator.clipboard.writeText(q).then(() => {
+            const btn = document.getElementById('bbvCopyBtn');
+            const orig = btn.textContent;
+            btn.textContent = '✓ Copied';
+            btn.style.background = '#18631a';
+            setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
+        });
+    };
+
+    window.bbvOpenInTopic = function () {
+        const q = buildQuery();
+        if (!q) return;
+        const url = `https://topic.cisco.com/results?queryText=${encodeURIComponent(q)}&repos=c3&repos=cdets&repos=techzone&checkedds=c3&checkedds=cdets&checkedds=techzone`;
+        window.open(url, '_blank');
+    };
+
+    bbvRefresh();
+})();
+</script>
