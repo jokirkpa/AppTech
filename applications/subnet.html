@@ -290,8 +290,32 @@
     </div>
 
 <script>
-        async function calculateSubnet() {
-            const ip = document.getElementById('ipAddress').value.trim();
+        function subnetCalc(ip, cidr) {
+            const octets = ip.split('.').map(Number);
+            if (octets.length !== 4 || octets.some(o => isNaN(o) || o < 0 || o > 255))
+                throw new Error('Invalid IP address');
+            const intToIp = n => [(n>>>24)&0xFF,(n>>>16)&0xFF,(n>>>8)&0xFF,n&0xFF].join('.');
+            const ipInt      = ((octets[0]<<24)|(octets[1]<<16)|(octets[2]<<8)|octets[3])>>>0;
+            const maskInt    = cidr === 0 ? 0 : ((0xFFFFFFFF << (32 - cidr)) >>> 0);
+            const networkInt = (ipInt & maskInt) >>> 0;
+            const wildInt    = (~maskInt) >>> 0;
+            const bcastInt   = (networkInt | wildInt) >>> 0;
+            const totalHosts = Math.pow(2, 32 - cidr);
+            return {
+                network:      intToIp(networkInt),
+                subnet_mask:  intToIp(maskInt),
+                wildcard_mask: intToIp(wildInt),
+                broadcast:    intToIp(bcastInt),
+                first_ip:     intToIp((networkInt + 1) >>> 0),
+                last_ip:      intToIp((bcastInt - 1) >>> 0),
+                total_hosts:  totalHosts,
+                usable_hosts: totalHosts > 2 ? totalHosts - 2 : 0,
+                cidr:         `/${cidr}`,
+            };
+        }
+
+        function calculateSubnet() {
+            const ip   = document.getElementById('ipAddress').value.trim();
             const cidr = parseInt(document.getElementById('cidrValue').value);
             const resultDiv = document.getElementById('subnetResult');
 
@@ -301,48 +325,36 @@
             }
 
             try {
-                const response = await fetch('/api/subnet', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ip, cidr })
-                });
-
-                const data = await response.json();
-
-                if (data.ok) {
-                    const r = data.result;
-                    resultDiv.innerHTML = `
-                        <div class="result-box">
-                            <h3 style="color: #069494; margin-bottom: 15px;">Subnet Information</h3>
-                            <div class="result-row">
-                                <span class="result-label">Network Address:</span>
-                                <span class="result-value" style="color: #0b58a3; font-weight: bold;">${r.network}${r.cidr}</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Usable IP Address Range:</span>
-                                <span class="result-value" style="color: #18631a; font-weight: bold;">${r.first_ip} - ${r.last_ip}</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Broadcast Address:</span>
-                                <span class="result-value" style="color: #f27038; font-weight: bold;">${r.broadcast}</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Subnet Mask:</span>
-                                <span class="result-value">${r.subnet_mask}</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Wildcard Mask:</span>
-                                <span class="result-value">${r.wildcard_mask}</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Total Usable Hosts:</span>
-                                <span class="result-value">${r.usable_hosts.toLocaleString()}</span>
-                            </div>
+                const r = subnetCalc(ip, cidr);
+                resultDiv.innerHTML = `
+                    <div class="result-box">
+                        <h3 style="color: #069494; margin-bottom: 15px;">Subnet Information</h3>
+                        <div class="result-row">
+                            <span class="result-label">Network Address:</span>
+                            <span class="result-value" style="color: #0b58a3; font-weight: bold;">${r.network}${r.cidr}</span>
                         </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
-                }
+                        <div class="result-row">
+                            <span class="result-label">Usable IP Address Range:</span>
+                            <span class="result-value" style="color: #18631a; font-weight: bold;">${r.first_ip} - ${r.last_ip}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Broadcast Address:</span>
+                            <span class="result-value" style="color: #f27038; font-weight: bold;">${r.broadcast}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Subnet Mask:</span>
+                            <span class="result-value">${r.subnet_mask}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Wildcard Mask:</span>
+                            <span class="result-value">${r.wildcard_mask}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Total Usable Hosts:</span>
+                            <span class="result-value">${r.usable_hosts.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
             } catch (error) {
                 resultDiv.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
             }
@@ -433,7 +445,7 @@
             return [(int >>> 24) & 0xFF, (int >>> 16) & 0xFF, (int >>> 8) & 0xFF, int & 0xFF].join('.');
         }
 
-        async function calculateOverlap() {
+        function calculateOverlap() {
             const resultDiv = document.getElementById('overlapResultContent');
             const ranges = [];
             const errors = [];
@@ -450,40 +462,21 @@
             openModal('overlapResultModal');
 
             for (let i = 1; i <= 5; i++) {
-                const ipInput = document.getElementById(`rangeIp${i}`);
+                const ipInput   = document.getElementById(`rangeIp${i}`);
                 const cidrInput = document.getElementById(`rangeCidr${i}`);
 
                 if (ipInput && cidrInput && ipInput.value.trim()) {
                     try {
-                        const response = await fetch('/api/subnet', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ip: ipInput.value.trim(), cidr: parseInt(cidrInput.value) })
+                        const result = subnetCalc(ipInput.value.trim(), parseInt(cidrInput.value));
+                        ranges.push({
+                            id: i,
+                            ip: ipInput.value.trim(),
+                            cidr: parseInt(cidrInput.value),
+                            color: rangeColors[i - 1],
+                            networkStart: ipToInt(result.network),
+                            networkEnd:   ipToInt(result.broadcast),
+                            result
                         });
-
-                        if (!response.ok) {
-                            errors.push(`Range ${i}: Server returned error ${response.status}`);
-                            continue;
-                        }
-
-                        const data = await response.json();
-                        if (data.ok && data.result) {
-                            if (!data.result.network || !data.result.broadcast) {
-                                errors.push(`Range ${i}: Missing network or broadcast address in response`);
-                                continue;
-                            }
-                            ranges.push({
-                                id: i,
-                                ip: ipInput.value.trim(),
-                                cidr: parseInt(cidrInput.value),
-                                color: rangeColors[i - 1],
-                                networkStart: ipToInt(data.result.network),
-                                networkEnd: ipToInt(data.result.broadcast),
-                                result: data.result
-                            });
-                        } else {
-                            errors.push(`Range ${i}: ${data.error || 'Invalid response from server'}`);
-                        }
                     } catch (error) {
                         errors.push(`Range ${i}: ${error.message}`);
                     }

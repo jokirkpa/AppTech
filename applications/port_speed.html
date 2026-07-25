@@ -1820,7 +1820,7 @@
         }
 
         // Port Load Calculator
-        async function calculatePortLoad() {
+        function calculatePortLoad() {
             const portSpeed = document.getElementById('portSpeed').value;
             const txLoad = parseInt(document.getElementById('txLoad').value);
             const rxLoad = parseInt(document.getElementById('rxLoad').value);
@@ -1830,54 +1830,46 @@
                 resultDiv.innerHTML = '<div class="error-message">TX Load must be between 0 and 255</div>';
                 return;
             }
-
             if (isNaN(rxLoad) || rxLoad < 0 || rxLoad > 255) {
                 resultDiv.innerHTML = '<div class="error-message">RX Load must be between 0 and 255</div>';
                 return;
             }
 
-            try {
-                const response = await fetch('/api/port_load', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ port_speed: portSpeed, tx_load: txLoad, rx_load: rxLoad })
-                });
+            const portSpeeds = {
+                "100M": 100, "1G": 1000, "10G": 10000, "25G": 25000,
+                "40G": 40000, "50G": 50000, "100G": 100000, "200G": 200000, "400G": 400000,
+            };
+            const speedMbps = portSpeeds[portSpeed] || 1000;
+            const txPct    = (txLoad / 255) * 100;
+            const rxPct    = (rxLoad / 255) * 100;
+            const txMbps   = speedMbps * (txLoad / 255);
+            const rxMbps   = speedMbps * (rxLoad / 255);
 
-                const data = await response.json();
-
-                if (data.ok) {
-                    const r = data.result;
-                    resultDiv.innerHTML = `
-                        <div class="result-box">
-                            <h3 style="color: #069494; margin-bottom: 15px;">Load Results</h3>
-                            <div class="result-row">
-                                <span class="result-label">Port Speed:</span>
-                                <span class="result-value">${r.port_speed} (${r.port_speed_mbps.toLocaleString()} Mbps)</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">TX Load:</span>
-                                <span class="result-value" style="color: #0b58a3; font-weight: bold;">${r.tx_load}/255 (${r.tx_percentage.toFixed(2)}%)</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">TX Speed:</span>
-                                <span class="result-value" style="color: #0b58a3; font-weight: bold;">${r.tx_speed_mbps.toFixed(2)} Mbps / ${r.tx_speed_gbps.toFixed(3)} Gbps</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">RX Load:</span>
-                                <span class="result-value" style="color: #18631a; font-weight: bold;">${r.rx_load}/255 (${r.rx_percentage.toFixed(2)}%)</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">RX Speed:</span>
-                                <span class="result-value" style="color: #18631a; font-weight: bold;">${r.rx_speed_mbps.toFixed(2)} Mbps / ${r.rx_speed_gbps.toFixed(3)} Gbps</span>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
-            }
+            resultDiv.innerHTML = `
+                <div class="result-box">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Load Results</h3>
+                    <div class="result-row">
+                        <span class="result-label">Port Speed:</span>
+                        <span class="result-value">${portSpeed} (${speedMbps.toLocaleString()} Mbps)</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">TX Load:</span>
+                        <span class="result-value" style="color: #0b58a3; font-weight: bold;">${txLoad}/255 (${txPct.toFixed(2)}%)</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">TX Speed:</span>
+                        <span class="result-value" style="color: #0b58a3; font-weight: bold;">${txMbps.toFixed(2)} Mbps / ${(txMbps/1000).toFixed(3)} Gbps</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">RX Load:</span>
+                        <span class="result-value" style="color: #18631a; font-weight: bold;">${rxLoad}/255 (${rxPct.toFixed(2)}%)</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">RX Speed:</span>
+                        <span class="result-value" style="color: #18631a; font-weight: bold;">${rxMbps.toFixed(2)} Mbps / ${(rxMbps/1000).toFixed(3)} Gbps</span>
+                    </div>
+                </div>
+            `;
         }
 
         // Clear Port Speed Results
@@ -1886,9 +1878,9 @@
         }
 
         // Port Speed Calculator
-        async function calculatePortSpeed() {
+        function calculatePortSpeed() {
             const speed = parseFloat(document.getElementById('speedValue').value);
-            const unit = document.getElementById('speedUnit').value;
+            const unit  = document.getElementById('speedUnit').value;
             const resultDiv = document.getElementById('portSpeedResult');
 
             if (isNaN(speed) || speed <= 0) {
@@ -1896,65 +1888,51 @@
                 return;
             }
 
-            try {
-                const response = await fetch('/api/port_speed', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ speed, unit })
-                });
+            const multipliers = { bps: 1, Kbps: 1e3, Mbps: 1e6, Gbps: 1e9, Tbps: 1e12 };
+            const bps = speed * (multipliers[unit] || 1);
 
-                const data = await response.json();
-
-                if (data.ok) {
-                    const r = data.result;
-                    resultDiv.innerHTML = `
-                        <div class="result-box">
-                            <h3 style="color: #069494; margin-bottom: 15px;">Conversions</h3>
-                            <div class="result-row">
-                                <span class="result-label">Bits per second:</span>
-                                <span class="result-value">${r.bps.toLocaleString()} bps</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Kilobits per second:</span>
-                                <span class="result-value">${r.Kbps.toLocaleString()} Kbps</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Megabits per second:</span>
-                                <span class="result-value">${r.Mbps.toLocaleString()} Mbps</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Gigabits per second:</span>
-                                <span class="result-value">${r.Gbps.toLocaleString()} Gbps</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Terabits per second:</span>
-                                <span class="result-value">${r.Tbps.toLocaleString()} Tbps</span>
-                            </div>
-                            <h3 style="color: #069494; margin: 20px 0 15px 0;">Bytes (per second)</h3>
-                            <div class="result-row">
-                                <span class="result-label">Bytes/sec:</span>
-                                <span class="result-value">${r.bytes_per_sec.toLocaleString()} B/s</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Kilobytes/sec:</span>
-                                <span class="result-value">${r.KB_per_sec.toLocaleString()} KB/s</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Megabytes/sec:</span>
-                                <span class="result-value">${r.MB_per_sec.toLocaleString()} MB/s</span>
-                            </div>
-                            <div class="result-row">
-                                <span class="result-label">Gigabytes/sec:</span>
-                                <span class="result-value">${r.GB_per_sec.toLocaleString()} GB/s</span>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
-            }
+            resultDiv.innerHTML = `
+                <div class="result-box">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Conversions</h3>
+                    <div class="result-row">
+                        <span class="result-label">Bits per second:</span>
+                        <span class="result-value">${bps.toLocaleString()} bps</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Kilobits per second:</span>
+                        <span class="result-value">${(bps/1e3).toLocaleString()} Kbps</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Megabits per second:</span>
+                        <span class="result-value">${(bps/1e6).toLocaleString()} Mbps</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Gigabits per second:</span>
+                        <span class="result-value">${(bps/1e9).toLocaleString()} Gbps</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Terabits per second:</span>
+                        <span class="result-value">${(bps/1e12).toLocaleString()} Tbps</span>
+                    </div>
+                    <h3 style="color: #069494; margin: 20px 0 15px 0;">Bytes (per second)</h3>
+                    <div class="result-row">
+                        <span class="result-label">Bytes/sec:</span>
+                        <span class="result-value">${(bps/8).toLocaleString()} B/s</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Kilobytes/sec:</span>
+                        <span class="result-value">${(bps/8e3).toLocaleString()} KB/s</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Megabytes/sec:</span>
+                        <span class="result-value">${(bps/8e6).toLocaleString()} MB/s</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Gigabytes/sec:</span>
+                        <span class="result-value">${(bps/8e9).toLocaleString()} GB/s</span>
+                    </div>
+                </div>
+            `;
         }
 
                 function switchPortSpeedTab(tabName) {

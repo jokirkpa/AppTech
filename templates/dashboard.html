@@ -528,9 +528,9 @@
 
         .circuit-btn:hover,
         .circuit-btn.active {
-            border-color: #069494;
-            background-color: rgba(6, 148, 148, 0.15);
-            box-shadow: 0 0 12px rgba(6, 148, 148, 0.4);
+            border-color: #E8B84B;
+            background-color: rgba(232, 184, 75, 0.15);
+            box-shadow: 0 0 12px rgba(232, 184, 75, 0.4);
         }
 
         .circuit-btn img {
@@ -546,8 +546,8 @@
             width: 25%;
             min-width: 220px;
             height: 100vh;
-            background-color: #1e2a35;
-            border-left: 2px solid #069494;
+            background-color: #1a1a1a;
+            border-left: 2px solid #E8B84B;
             display: flex;
             flex-direction: column;
             z-index: 900;
@@ -573,16 +573,16 @@
         }
         .circuit-resize-handle:hover,
         .circuit-resize-handle.dragging {
-            background: rgba(6, 148, 148, 0.45);
+            background: rgba(232, 184, 75, 0.45);
         }
 
         .circuit-panel-header {
-            background: linear-gradient(135deg, #2d7a9e 0%, #1a5a7a 100%);
+            background: linear-gradient(135deg, #2a2a2a 0%, #111111 100%);
             padding: 10px 14px;
             display: grid;
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            border-bottom: 1px solid #069494;
+            border-bottom: 1px solid #E8B84B;
             flex-shrink: 0;
             gap: 8px;
         }
@@ -634,11 +634,11 @@
         }
 
         .circuit-messages::-webkit-scrollbar-track {
-            background: #1e2a35;
+            background: #1a1a1a;
         }
 
         .circuit-messages::-webkit-scrollbar-thumb {
-            background: #069494;
+            background: #E8B84B;
             border-radius: 3px;
         }
 
@@ -669,16 +669,16 @@
         }
 
         .chat-message.user .chat-bubble {
-            background-color: #2d7a9e;
+            background-color: #2a2a2a;
             color: #fff;
             border-bottom-right-radius: 4px;
         }
 
         .chat-message.assistant .chat-bubble {
-            background-color: #263545;
-            color: #d8eaf0;
+            background-color: #1e1e1e;
+            color: #d8d8d8;
             border-bottom-left-radius: 4px;
-            border: 1px solid #2d5a6e;
+            border: 1px solid #333333;
         }
 
         .chat-meta {
@@ -690,17 +690,17 @@
             display: flex;
             gap: 5px;
             padding: 10px 13px;
-            background-color: #263545;
+            background-color: #1e1e1e;
             border-radius: 14px;
             border-bottom-left-radius: 4px;
-            border: 1px solid #2d5a6e;
+            border: 1px solid #333333;
             width: fit-content;
         }
 
         .chat-typing span {
             width: 7px;
             height: 7px;
-            background-color: #069494;
+            background-color: #E8B84B;
             border-radius: 50%;
             animation: typingBounce 1.2s infinite ease-in-out;
         }
@@ -716,8 +716,8 @@
         /* Input area */
         .circuit-input-area {
             padding: 12px;
-            border-top: 1px solid #2d4a5e;
-            background-color: #1a2530;
+            border-top: 1px solid #333333;
+            background-color: #111111;
             flex-shrink: 0;
         }
 
@@ -730,10 +730,10 @@
         .circuit-input-row textarea {
             flex: 1;
             padding: 9px 12px;
-            background-color: #263545;
-            border: 1px solid #3a5a6e;
+            background-color: #1e1e1e;
+            border: 1px solid #333333;
             border-radius: 10px;
-            color: #e0eef5;
+            color: #e0e0e0;
             font-size: 13px;
             font-family: Arial, sans-serif;
             resize: none;
@@ -746,20 +746,20 @@
 
         .circuit-input-row textarea:focus {
             outline: none;
-            border-color: #069494;
+            border-color: #E8B84B;
         }
 
         .circuit-input-row textarea::placeholder {
-            color: #556a7a;
+            color: #555555;
         }
 
         .circuit-send-btn {
             width: 38px;
             height: 38px;
-            background-color: #069494;
+            background-color: #E8B84B;
             border: none;
             border-radius: 10px;
-            color: white;
+            color: #111111;
             font-size: 18px;
             cursor: pointer;
             display: flex;
@@ -770,11 +770,11 @@
         }
 
         .circuit-send-btn:hover {
-            background-color: #04b8b8;
+            background-color: #f0c84e;
         }
 
         .circuit-send-btn:disabled {
-            background-color: #2d4a5e;
+            background-color: #2a2a2a;
             cursor: not-allowed;
         }
 
@@ -3311,7 +3311,7 @@ Now output ONLY the numbered list of {count} general, standalone questions. Each
             <div style="display:flex;justify-content:flex-end;">
                 <select id="quickerAIModel" title="Select AI model"
                     onchange="localStorage.setItem('quickerAIModel', this.value)"
-                    style="background:#1a1a2e;border:1px solid #2d5aa0;border-radius:4px;color:#aaa;font-size:11px;padding:3px 6px;cursor:pointer;max-width:130px;">
+                    style="background:#1e1e1e;border:1px solid #E8B84B;border-radius:4px;color:#aaa;font-size:11px;padding:3px 6px;cursor:pointer;max-width:130px;">
                     <option value="gpt-4o">gpt-4o</option>
                     <option value="claude-opus-4-8">claude-opus-4-8</option>
                     <option value="claude-sonnet-4-5">claude-sonnet-4-5</option>

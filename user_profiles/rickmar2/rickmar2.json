@@ -13,6 +13,14 @@
     ],
     "assignments": {},
     "order": [],
-    "columns": 3
+    "columns": 3,
+    "activeTab": "misc"
+  },
+  "token_usage": {
+    "2026-07": {
+      "total": 210,
+      "input": 41,
+      "output": 169
+    }
   }
 }

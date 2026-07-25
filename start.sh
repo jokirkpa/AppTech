@@ -5,11 +5,11 @@
 # WEB_APP_BASE_PREFIX is unset; app runs at root /
 
 # Backend: serves API, /docs, /openapi.json
-uvicorn app:app --host 0.0.0.0 --port 7997 &
+uvicorn console:app --host 0.0.0.0 --port 7997 &
 BACKEND_PID=$!
 
 # Frontend: serves dashboard HTML, static files, application tools
-uvicorn app:app --host 0.0.0.0 --port 7996 &
+uvicorn console:app --host 0.0.0.0 --port 7996 &
 FRONTEND_PID=$!
 
 echo "AppTech started"
