@@ -8,50 +8,60 @@
         </div>
         <div class="modal-body">
 
-            <!-- Tabs -->
-            <div style="display:flex; border-bottom:2px solid #555; margin-bottom:20px;">
-                <button id="sbTabParseBtn" class="tab-btn active" onclick="sbSwitchTab('parse')">Parse GCI</button>
-                <button id="sbTabBuildBtn" class="tab-btn" onclick="sbSwitchTab('build')">Build by Values</button>
-            </div>
-
-            <!-- ── Tab 1: Parse GCI ────────────────────────────────── -->
-            <div id="sbTabParse" class="tab-content active">
+            <!-- Screen 1: GCI Input -->
+            <div id="sbScreenGCI">
                 <div class="form-group">
-                    <label for="gciInput" style="font-size:13px; color:#aaa; margin-bottom:6px; display:block;">Paste GCI</label>
+                    <label style="font-size:13px; color:#aaa; margin-bottom:6px; display:block;">Paste GCI</label>
                     <textarea id="gciInput" rows="13"
                         placeholder="Paste your Global Case Information (GCI) here..."
                         style="font-family:monospace; font-size:12px; resize:vertical;"></textarea>
                 </div>
                 <div id="searchBuddyError" style="display:none; color:#ff6666; font-size:13px; margin-bottom:10px; padding:8px; background:rgba(255,102,102,0.1); border-left:3px solid #ff6666; border-radius:3px;"></div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn" id="collectValuesBtn" onclick="collectGCIValues()" style="flex:2;">Collect Values</button>
-                    <button class="btn" onclick="clearGCIInput()" style="flex:1; background-color:#444;">Clear</button>
+                    <button class="btn" id="collectValuesBtn" onclick="sbCollectValues()" style="flex:2;">Collect Values</button>
+                    <button class="btn" onclick="sbClearGCI()" style="flex:1; background-color:#444;">Clear</button>
                 </div>
             </div>
 
-            <!-- ── Tab 2: Build by Values ─────────────────────────── -->
-            <div id="sbTabBuild" class="tab-content">
+            <!-- Screen 2: Query Builder -->
+            <div id="sbScreenBuilder" style="display:none;">
 
-                <!-- Live query preview -->
+                <!-- Generated Query -->
                 <div style="margin-bottom:18px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <span style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Generated Query</span>
                         <div style="display:flex; gap:6px;">
-                            <button class="btn" id="bbvCopyBtn" onclick="bbvCopyQuery()" style="padding:4px 12px; font-size:12px; background:#2a2a2a; border:1px solid #444;">📋 Copy</button>
-                            <button class="btn" onclick="bbvOpenInTopic()" style="padding:4px 12px; font-size:12px; background:#1a3a1a; border:1px solid #2d8659; color:#2d8659;">↗ Topic</button>
+                            <button class="btn" id="sbCopyBtn" onclick="sbCopyQuery()" style="padding:4px 12px; font-size:12px; background:#2a2a2a; border:1px solid #444;">📋 Copy</button>
+                            <button class="btn" onclick="sbOpenInTopic()" style="padding:4px 12px; font-size:12px; background:#1a3a1a; border:1px solid #2d8659; color:#2d8659;">↗ Topic</button>
                         </div>
                     </div>
                     <div style="background:#0d0d0d; border:1px solid #333; border-radius:5px; padding:10px 12px; min-height:36px;">
-                        <pre id="bbvQueryPreview" style="margin:0; font-family:monospace; font-size:12px; color:#00e5cc; white-space:pre-wrap; word-break:break-all;"></pre>
+                        <pre id="sbQueryPreview" style="margin:0; font-family:monospace; font-size:12px; color:#00e5cc; white-space:pre-wrap; word-break:break-all;"></pre>
                     </div>
                 </div>
 
-                <!-- Field rows -->
+                <!-- Key Values -->
+                <div style="margin-bottom:18px;">
+                    <div style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Key Words</div>
+                    <div id="sbKeyValueList" style="display:flex; flex-wrap:wrap; gap:6px; min-height:32px;">
+                        <p style="color:#555; font-style:italic; font-size:13px; margin:0;">No keywords extracted.</p>
+                    </div>
+                    <div id="sbRemovedSection" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid #1e1e1e;">
+                        <div style="font-size:11px; color:#555; margin-bottom:5px; font-style:italic;">Removed (click to restore):</div>
+                        <div id="sbRemovedList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                    </div>
+                </div>
+
+                <!-- Filter Suggestions -->
+                <div id="sbFilterSuggestionsSection" style="margin-bottom:18px; display:none;">
+                    <div style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Filter Suggestions</div>
+                    <div id="sbFilterSuggestionsList" style="display:flex; flex-direction:column; gap:4px;"></div>
+                </div>
+
+                <!-- Field Filters -->
                 <div style="margin-bottom:14px;">
                     <div style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Field Filters</div>
-
-                    <!-- Each field row: boolean buttons + label + input + Add -->
-                    <div id="bbvFieldRows">
+                    <div id="sbFieldRows">
                         <!-- Technology -->
                         <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
                             <div class="bbv-bool-group" data-row="technology">
@@ -61,7 +71,7 @@
                                 <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
                             </div>
                             <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Technology</span>
-                            <select id="bbvTechnology" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
+                            <select id="sbTechnology" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
                                 <option value="">-- select --</option>
                                 <option value="Adaptive Security Appliance">Adaptive Security Appliance</option>
                                 <option value="AppDynamics">AppDynamics</option>
@@ -210,7 +220,7 @@
                                 <option value="Wireless">Wireless</option>
                                 <option value="XR-Routing-Platforms">XR-Routing-Platforms</option>
                             </select>
-                            <button class="btn" onclick="bbvAddField('technology','bbvTechnology',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                            <button class="btn" onclick="sbAddField('technology','sbTechnology',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
                         </div>
                         <!-- Sub-Technology -->
                         <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
@@ -221,8 +231,10 @@
                                 <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
                             </div>
                             <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Sub-Technology</span>
-                            <input type="text" id="bbvSubtech" placeholder='e.g. Nexus 9000 Series Switch' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddField('subtech','bbvSubtech',this.closest('.bbv-row'))">
-                            <button class="btn" onclick="bbvAddField('subtech','bbvSubtech',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                            <input type="text" id="sbSubtech" placeholder='e.g. Nexus 9000 Series Switch'
+                                style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;"
+                                onkeydown="if(event.key==='Enter')sbAddField('subtech','sbSubtech',this.closest('.bbv-row'))">
+                            <button class="btn" onclick="sbAddField('subtech','sbSubtech',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
                         </div>
                         <!-- Resolution Code -->
                         <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
@@ -233,7 +245,7 @@
                                 <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
                             </div>
                             <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Resolution Code</span>
-                            <select id="bbvResolutioncode" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
+                            <select id="sbResolutioncode" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
                                 <option value="">-- select --</option>
                                 <option value="*">All</option>
                                 <option value="Content Delivered">Content Delivered</option>
@@ -245,13 +257,7 @@
                                 <option value="Software Upgrade - Existing Defect">Software Upgrade - Existing Defect</option>
                                 <option value="Software Upgrade - New Defect">Software Upgrade - New Defect</option>
                             </select>
-                            <button class="btn" onclick="document.getElementById('bbvResolutioncode').value==='*' ? bbvAddAllResolutionCodes(this.closest('.bbv-row')) : bbvAddField('resolutioncode','bbvResolutioncode',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
-                        </div>
-                        <!-- Resolution Summary (always included) -->
-                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:6px 10px; background:#111; border:1px solid #2a2a2a; border-radius:5px;">
-                            <span style="color:#555; font-size:11px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">AUTO</span>
-                            <span style="color:#666; font-size:13px; font-family:monospace;">_exists_:resolutionsummary</span>
-                            <span style="color:#444; font-size:11px; font-style:italic; margin-left:auto;">always first in query</span>
+                            <button class="btn" onclick="document.getElementById('sbResolutioncode').value==='*' ? sbAddAllResolutionCodes(this.closest('.bbv-row')) : sbAddField('resolutioncode','sbResolutioncode',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
                         </div>
                         <!-- Version -->
                         <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
@@ -262,8 +268,10 @@
                                 <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
                             </div>
                             <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Version</span>
-                            <input type="text" id="bbvSwversion" placeholder='e.g. 17.9* or 7.0(3)I7(6)' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddField('swversion','bbvSwversion',this.closest('.bbv-row'))">
-                            <button class="btn" onclick="bbvAddField('swversion','bbvSwversion',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
+                            <input type="text" id="sbSwversion" placeholder='e.g. 17.9* or 7.0(3)I7(6)'
+                                style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;"
+                                onkeydown="if(event.key==='Enter')sbAddField('swversion','sbSwversion',this.closest('.bbv-row'))">
+                            <button class="btn" onclick="sbAddField('swversion','sbSwversion',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
                         </div>
                         <!-- Status -->
                         <div class="bbv-row" style="display:grid; grid-template-columns:auto 130px 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
@@ -274,58 +282,39 @@
                                 <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
                             </div>
                             <span style="color:#888; font-size:13px; text-align:right; padding-right:4px;">Status</span>
-                            <select id="bbvStatus" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
+                            <select id="sbStatus" style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;">
                                 <option value="">-- select --</option>
                                 <option value="Open">Open</option>
                                 <option value="Closed">Closed</option>
                                 <option value="Customer Pending">Customer Pending</option>
                                 <option value="Cisco Pending">Cisco Pending</option>
                             </select>
-                            <button class="btn" onclick="bbvAddField('status','bbvStatus',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
-                        </div>
-                    </div>
-
-                    <!-- Free text / custom string row -->
-                    <div style="border-top:1px solid #333; margin-top:12px; padding-top:12px;">
-                        <div style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Custom String</div>
-                        <div style="display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center;">
-                            <div class="bbv-bool-group" data-row="custom">
-                                <button class="bbv-bool-btn bbv-active" data-val="" onclick="bbvSetBool(this)">—</button>
-                                <button class="bbv-bool-btn" data-val="AND" onclick="bbvSetBool(this)">AND</button>
-                                <button class="bbv-bool-btn" data-val="OR" onclick="bbvSetBool(this)">OR</button>
-                                <button class="bbv-bool-btn" data-val="NOT" onclick="bbvSetBool(this)">NOT</button>
-                            </div>
-                            <input type="text" id="bbvCustom" placeholder='e.g. "high cpu" OR nexus9000*' style="padding:7px 10px; background:#1a1a1a; border:1px solid #444; border-radius:5px; color:#e0e0e0; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter')bbvAddCustom()">
-                            <button class="btn" onclick="bbvAddCustom()" style="padding:6px 14px; font-size:13px;">Add</button>
+                            <button class="btn" onclick="sbAddField('status','sbStatus',this.closest('.bbv-row'))" style="padding:6px 14px; font-size:13px;">Add</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Active filters list -->
-                <div style="border-top:1px solid #333; padding-top:12px;">
+                <!-- Active Filters -->
+                <div style="border-top:1px solid #333; padding-top:12px; margin-bottom:14px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                         <span style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Active Filters</span>
-                        <button class="btn" onclick="bbvClearAll()" style="padding:3px 10px; font-size:11px; background:#aa0000; border:none;">Clear All</button>
+                        <button class="btn" onclick="sbClearAllFilters()" style="padding:3px 10px; font-size:11px; background:#aa0000; border:none;">Clear All</button>
                     </div>
-                    <div id="bbvActiveFilters" style="min-height:36px;">
+                    <!-- Persistent _exists_:resolutionsummary toggle -->
+                    <div id="sbResExistsRow" class="bbv-filter-chip" onclick="sbToggleResExists()" title="Toggle: require a resolution summary in results" style="cursor:pointer; margin-bottom:6px; opacity:0.45; transition:opacity 0.15s;">
+                        <span id="sbResExistsBool" class="bbv-bool-tag" style="background:#2a2a2a; color:#555; border:1px solid #444;">OFF</span>
+                        <span id="sbResExistsLabel" class="bbv-field-tag" style="color:#555;">_exists_:resolutionsummary</span>
+                        <span style="color:#555; font-size:11px; font-style:italic; flex-shrink:0;">require resolution summary</span>
+                    </div>
+                    <div id="sbActiveFilters" style="min-height:36px;">
                         <p style="color:#555; font-style:italic; font-size:13px; margin:0;">No filters added yet.</p>
                     </div>
                 </div>
 
-            </div><!-- end tab 2 -->
-        </div>
-    </div>
-</div>
+                <!-- Back -->
+                <button class="btn" onclick="sbBackToGCI()" style="background:#2a2a2a; border:1px solid #555; font-size:12px; padding:6px 16px;">← Back to GCI</button>
+            </div>
 
-<!-- Results Modal -->
-<div id="searchBuddyResultsModal" class="modal-overlay">
-    <div class="modal" onclick="event.stopPropagation()" style="max-width:820px;">
-        <div class="modal-header">
-            <h2>📋 Topic Search Queries</h2>
-            <button class="close-btn" onclick="closeModal('searchBuddyResultsModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div id="searchBuddyResults"></div>
         </div>
     </div>
 </div>
@@ -356,249 +345,262 @@
     padding:2px 8px; font-size:11px; cursor:pointer; flex-shrink:0;
 }
 .bbv-remove-btn:hover { background:#dd0000; }
+.sb-kv-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#1a1a1a; border:1px solid #2a2a2a; border-radius:5px;
+    padding:5px 8px; font-size:12px;
+}
+.sb-kv-type {
+    font-size:10px; font-weight:bold; padding:2px 6px;
+    border-radius:3px; flex-shrink:0; text-transform:uppercase; letter-spacing:0.5px;
+}
+.sb-kv-term { font-family:monospace; color:#e0e0e0; }
+.sb-kv-remove {
+    background:none; border:none; color:#666; cursor:pointer;
+    font-size:14px; line-height:1; padding:0 2px; flex-shrink:0;
+}
+.sb-kv-remove:hover { color:#dd4444; }
+.sb-kv-readd {
+    background:#1a3a1a; border:1px solid #2d5929; color:#4caf50;
+    border-radius:3px; padding:2px 8px; font-size:11px; cursor:pointer; flex-shrink:0;
+}
+.sb-kv-readd:hover { background:#1f4a1f; }
+
+/* Filter suggestion items */
+.sb-suggestion-item {
+    display:flex; align-items:center; gap:8px;
+    padding:5px 8px; border-radius:4px; cursor:pointer;
+    background:#111; border:1px solid #222;
+    transition:border-color 0.15s;
+}
+.sb-suggestion-item:hover { border-color:#3a3a3a; }
+.sb-suggestion-item input[type="checkbox"] {
+    accent-color:#069494; cursor:pointer; width:14px; height:14px; flex-shrink:0;
+}
+.sb-suggestion-value { font-family:monospace; font-size:12px; color:#ccc; }
+
+/* Field type tags */
+.bbv-type-tag {
+    font-size:10px; font-weight:bold; padding:2px 6px;
+    border-radius:3px; flex-shrink:0; text-transform:uppercase; letter-spacing:0.5px;
+}
+.bbv-type-technology    { background:rgba(6,148,148,0.15);   color:#069494; border:1px solid rgba(6,148,148,0.35); }
+.bbv-type-subtech       { background:rgba(45,154,90,0.15);   color:#2da85a; border:1px solid rgba(45,154,90,0.35); }
+.bbv-type-resolutioncode{ background:rgba(204,119,0,0.15);   color:#cc7a00; border:1px solid rgba(204,119,0,0.35); }
+.bbv-type-swversion     { background:rgba(80,128,220,0.15);  color:#6090d4; border:1px solid rgba(80,128,220,0.35); }
+.bbv-type-status        { background:rgba(150,80,210,0.15);  color:#a06ad4; border:1px solid rgba(150,80,210,0.35); }
+.bbv-type-other         { background:rgba(150,150,150,0.15); color:#888;    border:1px solid rgba(150,150,150,0.35); }
 </style>
 
 <script>
 (function () {
 
-    // ── Regex pre-extraction ────────────────────────────────────────────────
-    function regexExtract(text) {
-        const bugs = [...new Set(
-            (text.match(/CSC[a-zA-Z]{2}\d{5}/gi) || []).map(b => b.toUpperCase())
-        )];
+    // ── State ────────────────────────────────────────────────────────────────
+    let sbKeyValues   = []; // {id, label, field, value, removed}
+    let sbFilters     = []; // {id, bool, field, value, fromSuggestion?}
+    let sbSuggestions = []; // {id, field, value, display, checked}
+    let sbResExists   = false; // _exists_:resolutionsummary toggle
 
-        const srMatch = text.match(/(?:SR|Case)[^\d]*(\d{9,12})/i);
-        const sr = srMatch ? srMatch[1] : '';
-
-        // NX-OS: 7.0(3)I7(6), IOS-XE: 17.9.4a, IOS: 15.2(4)M, ACI: 4.2(5)
-        const versionMatches = text.match(
-            /\d+\.\d+[\(\d+\)]*[A-Za-z\d]*(?:\(\d+\)[A-Za-z\d]*)*/g
-        ) || [];
-        const version = versionMatches[0] || '';
-
-        // Hardware PIDs
-        const hwMatch = text.match(
-            /\b(N[39][Kk]-[A-Z0-9\-]+|WS-[A-Z0-9\-]+|ASR\d{4}[A-Z\-]*|ISR\d{4}[A-Z\-]*|AIR-[A-Z0-9\-]+|C[39]\d{3}[A-Z\-]*)\b/i
-        );
-        const hardware = hwMatch ? hwMatch[1].toUpperCase() : '';
-
-        // Priority
-        const priMatch = text.match(/[Pp]riority[^\d]*([1-4])/);
-        const priority = priMatch ? priMatch[1] : '';
-
-        return { bugs, sr, version, hardware, priority };
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function escHtml(s) {
+        const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
     }
 
-    // ── Build Topic Search URL ──────────────────────────────────────────────
-    function topicUrl(query, sources) {
-        const repos = sources.map(s => `repos=${encodeURIComponent(s)}`).join('&');
-        const checks = sources.map(s => `checkedds=${encodeURIComponent(s)}`).join('&');
-        return `https://topic.cisco.com/results?queryText=${encodeURIComponent(query)}&${repos}&${checks}`;
+    function kvToTerm(kv) {
+        const needsQ = kv.value.includes(' ') && !kv.value.startsWith('"');
+        return needsQ ? `"${kv.value}"` : kv.value;
     }
 
-    // ── Copy helper ─────────────────────────────────────────────────────────
-    function sbCopy(text, btnId) {
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.getElementById(btnId);
-            if (!btn) return;
-            const orig = btn.textContent;
-            btn.textContent = '✓ Copied';
-            btn.style.backgroundColor = '#18631a';
-            setTimeout(() => { btn.textContent = orig; btn.style.backgroundColor = ''; }, 2000);
-        }).catch(() => alert('Copy failed'));
+    function stripPlural(kw) {
+        const words = kw.trim().split(/\s+/).filter(Boolean);
+        if (!words.length) return kw.trim();
+        const last = words[words.length - 1];
+        if (last.endsWith('s')) words[words.length - 1] = last.slice(0, -1);
+        return words.join(' ');
     }
-    window.sbCopy = sbCopy;
 
-    // ── Render results ──────────────────────────────────────────────────────
-    function renderResults(ai, regex) {
-        const bugs    = [...new Set([...(ai.bugs || []), ...regex.bugs])];
-        const version = ai.version || regex.version || '';
-        const hw      = regex.hardware || '';
-        const sr      = regex.sr || '';
+    function isJunkKeyword(kw) {
+        const w = kw.trim();
+        if (!w || w.length < 3) return true;
+        if (/^\d{1,3}(\.\d{1,3}){3}(\/\d+)?$/.test(w)) return true;           // IPv4
+        if (/^([0-9a-fA-F]{2}[:\-]){5}[0-9a-fA-F]{2}$/.test(w)) return true;  // MAC colon/dash
+        if (/^[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}$/.test(w)) return true; // MAC Cisco
+        const digits = w.replace(/[\s\-\+\(\)\.x]/g, '');
+        if (/^\d+$/.test(digits) && digits.length >= 7) return true;            // phone/DID/ext
+        if (/^\d+$/.test(w)) return true;                                        // pure number
+        if (/\d{4}[-\/]\d{2}[-\/]\d{2}/.test(w)) return true;                  // date
+        if (/\d{2}:\d{2}:\d{2}/.test(w)) return true;                           // time
+        if (/^[a-zA-Z0-9][\w\-]*(\.[a-zA-Z0-9][\w\-]*){2,}$/.test(w)) return true; // FQDN
+        if (/^\[.+\]/.test(w) || /^\+[\.!]/.test(w)) return true;              // route pattern
+        if (/^[A-Z0-9]{8,}$/.test(w) && /\d/.test(w) && /[A-Z]/.test(w)) return true; // serial
+        return false;
+    }
 
-        // Enrich primary query with regex-found data if AI missed it
-        let primary = (ai.primary || '').trim();
-        if (bugs.length && !primary.includes('linkeddefects') && !primary.includes('CSC')) {
-            const bugStr = bugs.length === 1
-                ? `linkeddefects:${bugs[0]}`
-                : `linkeddefects:(${bugs.join(' OR ')})`;
-            primary = primary ? `${primary} AND ${bugStr}` : bugStr;
-        }
-        if (version && !primary.includes('version')) {
-            const maj = version.split(/[\.\(]/)[0] + '.' + (version.split(/[\.\(]/)[1] || '*');
-            primary = primary ? `${primary} AND majorversion:${maj}*` : `majorversion:${maj}*`;
-        }
+    function fieldLabel(field) {
+        return { technology:'Technology', subtech:'Sub-Tech', resolutioncode:'Resolution', swversion:'Version', status:'Status' }[field] || field;
+    }
 
-        const simple  = (ai.simple || '').trim();
-        const literal = (ai.literal || '').trim();
-        const explanation = (ai.explanation || '').trim();
+    function fieldTypeClass(field) {
+        return 'bbv-type-' + (['technology','subtech','resolutioncode','swversion','status'].includes(field) ? field : 'other');
+    }
 
-        // ── Build HTML ──────────────────────────────────────────────────────
-        let html = '';
-
-        // Extracted fields summary
-        const fieldRows = [
-            ['Technology',   ai.technology],
-            ['Sub-Tech',     ai.subtech],
-            ['Product',      ai.product],
-            ['Version',      version],
-            ['Hardware',     hw],
-            ['Bug IDs',      bugs.join(', ')],
-            ['SR Number',    sr],
-            ['Keywords',     (ai.keywords || []).join(', ')],
-        ].filter(([, v]) => v);
-
-        if (fieldRows.length) {
-            html += `<div style="background:#1a1a1a; border:1px solid #333; border-radius:6px; padding:14px; margin-bottom:18px;">
-                <div style="color:#aaa; font-size:11px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Extracted Fields</div>
-                <div style="display:grid; grid-template-columns:120px 1fr; gap:5px 12px; font-size:13px;">`;
-            for (const [label, val] of fieldRows) {
-                html += `<div style="color:#666; padding:3px 0;">${label}</div>
-                         <div style="color:#e0e0e0; padding:3px 0; word-break:break-word;">${escapeHtml(val)}</div>`;
-            }
-            html += '</div></div>';
+    // ── Query builder ────────────────────────────────────────────────────────
+    function buildQuery() {
+        const active = sbKeyValues.filter(kv => !kv.removed);
+        let parts = [];
+        if (sbResExists) parts.push('_exists_:resolutionsummary');
+        if (active.length) {
+            const kwTerms = active.map(kv => kvToTerm(kv));
+            parts.push(`(${kwTerms.join(' OR ')})`);
         }
 
-        if (explanation) {
-            html += `<div style="font-size:12px; color:#777; font-style:italic; margin-bottom:16px; padding:8px 12px; background:#111; border-radius:4px;">
-                ${escapeHtml(explanation)}</div>`;
-        }
+        let result = parts.join(' AND ');
 
-        // Search string cards
-        const cards = [];
-        if (primary) cards.push({ label: 'Primary Search',  tag: 'Advanced', color: '#069494', query: primary,  sources: ['c3','cdets','techzone'] });
-        if (simple)  cards.push({ label: 'Simple Fallback', tag: 'Simple',   color: '#2d7a9e', query: simple,   sources: ['c3','cdets','techzone'] });
-        if (literal) cards.push({ label: 'Literal Match',   tag: 'Literal',  color: '#8e44ad', query: literal,  sources: ['c3','cdets','techzone'] });
-
-        cards.forEach((card, i) => {
-            const copyId = `sbCopyBtn_${i}`;
-            html += `
-            <div style="background:#1a1a1a; border:1px solid #333; border-radius:6px; padding:14px; margin-bottom:14px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:#e0e0e0; font-size:14px; font-weight:bold;">${card.label}</span>
-                        <span style="font-size:10px; font-weight:bold; color:${card.color}; border:1px solid ${card.color}; border-radius:3px; padding:1px 6px;">${card.tag}</span>
-                    </div>
-                    <div style="display:flex; gap:6px;">
-                        <button id="${copyId}" class="btn" onclick="sbCopy(${JSON.stringify(card.query)}, '${copyId}')"
-                            style="padding:5px 12px; font-size:12px; background:#2a2a2a; border:1px solid #444;">📋 Copy</button>
-                        <a href="${topicUrl(card.query, card.sources)}" target="_blank"
-                            style="padding:5px 12px; font-size:12px; background:#1a3a1a; border:1px solid #2d8659; border-radius:6px; color:#2d8659; text-decoration:none; display:flex; align-items:center;">
-                            ↗ Open in Topic
-                        </a>
-                    </div>
-                </div>
-                <div style="font-family:monospace; font-size:12px; color:#00e5cc; background:#0d0d0d; border:1px solid #222; border-radius:4px; padding:10px; word-break:break-all; line-height:1.6;">
-                    ${escapeHtml(card.query)}
-                </div>
-            </div>`;
+        sbFilters.forEach(f => {
+            const needsQ = f.value.includes(' ') && !f.value.startsWith('"') && !f.value.startsWith('(');
+            const val = needsQ ? `"${f.value}"` : f.value;
+            const term = `${f.field}:${val}`;
+            const prefix = f.bool || 'AND';
+            result = result ? `${result} ${prefix} ${term}` : term;
         });
 
-        if (!cards.length) {
-            html += `<div style="color:#888; text-align:center; padding:20px;">No search strings could be generated from this GCI.</div>`;
+        return result;
+    }
+
+    // ── Refresh UI ───────────────────────────────────────────────────────────
+    function sbRefresh() {
+        document.getElementById('sbQueryPreview').textContent = buildQuery();
+        renderKeyValues();
+        renderSuggestions();
+        renderResExists();
+        renderFilters();
+    }
+
+    function renderResExists() {
+        const row   = document.getElementById('sbResExistsRow');
+        const bool  = document.getElementById('sbResExistsBool');
+        const label = document.getElementById('sbResExistsLabel');
+        if (sbResExists) {
+            row.style.opacity = '1';
+            bool.textContent = 'AND';
+            bool.style.background = '#069494'; bool.style.color = '#fff'; bool.style.border = '1px solid #069494';
+            label.style.color = '#069494';
+        } else {
+            row.style.opacity = '0.45';
+            bool.textContent = 'OFF';
+            bool.style.background = '#2a2a2a'; bool.style.color = '#555'; bool.style.border = '1px solid #444';
+            label.style.color = '#555';
+        }
+    }
+
+    window.sbToggleResExists = function () {
+        sbResExists = !sbResExists;
+        sbRefresh();
+    };
+
+    // ── Key values rendering ─────────────────────────────────────────────────
+    const KV_COLORS = { keyword: '#069494' };
+
+    function renderKeyValues() {
+        const active  = sbKeyValues.filter(kv => !kv.removed);
+        const removed = sbKeyValues.filter(kv =>  kv.removed);
+
+        const listEl = document.getElementById('sbKeyValueList');
+        if (!active.length) {
+            listEl.innerHTML = '<p style="color:#555; font-style:italic; font-size:13px; margin:0;">No key values extracted.</p>';
+        } else {
+            listEl.innerHTML = active.map(kv => {
+                const term = kvToTerm(kv);
+                return `<div class="sb-kv-chip">
+                    <span class="sb-kv-term">${escHtml(term)}</span>
+                    <button class="sb-kv-remove" onclick="sbRemoveKV(${kv.id})" title="Remove">×</button>
+                </div>`;
+            }).join('');
         }
 
-        document.getElementById('searchBuddyResults').innerHTML = html;
-        openModal('searchBuddyResultsModal');
+        const removedSection = document.getElementById('sbRemovedSection');
+        const removedList    = document.getElementById('sbRemovedList');
+        if (!removed.length) {
+            removedSection.style.display = 'none';
+        } else {
+            removedSection.style.display = 'block';
+            removedList.innerHTML = removed.map(kv => {
+                const term = kvToTerm(kv);
+                return `<div class="sb-kv-chip" style="opacity:0.5;">
+                    <span class="sb-kv-term" style="color:#888;">${escHtml(term)}</span>
+                    <button class="sb-kv-readd" onclick="sbAddBackKV(${kv.id})">+ Add back</button>
+                </div>`;
+            }).join('');
+        }
     }
 
-    function escapeHtml(str) {
-        const d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
+    window.sbRemoveKV = function (id) {
+        const kv = sbKeyValues.find(k => k.id === id);
+        if (kv) { kv.removed = true; sbRefresh(); }
+    };
+    window.sbAddBackKV = function (id) {
+        const kv = sbKeyValues.find(k => k.id === id);
+        if (kv) { kv.removed = false; sbRefresh(); }
+    };
+
+    // ── Filter suggestions rendering ─────────────────────────────────────────
+    function renderSuggestions() {
+        const section = document.getElementById('sbFilterSuggestionsSection');
+        const list    = document.getElementById('sbFilterSuggestionsList');
+        if (!sbSuggestions.length) { section.style.display = 'none'; return; }
+        section.style.display = 'block';
+        list.innerHTML = sbSuggestions.map(s =>
+            `<label class="sb-suggestion-item">
+                <input type="checkbox" class="sb-suggestion-checkbox"
+                    ${s.checked ? 'checked' : ''}
+                    onchange="sbToggleSuggestion(${s.id}, this.checked)">
+                <span class="bbv-type-tag ${fieldTypeClass(s.field)}">${fieldLabel(s.field)}</span>
+                <span class="sb-suggestion-value">${escHtml(s.display)}</span>
+            </label>`
+        ).join('');
     }
 
-    // ── Main: collect values ────────────────────────────────────────────────
-    window.collectGCIValues = async function () {
-        const gci = document.getElementById('gciInput').value.trim();
-        const errEl = document.getElementById('searchBuddyError');
-        errEl.style.display = 'none';
+    window.sbToggleSuggestion = function (id, checked) {
+        const s = sbSuggestions.find(x => x.id === id);
+        if (!s) return;
+        s.checked = checked;
+        if (checked) {
+            sbFilters.push({ bool: 'AND', field: s.field, value: s.value, id: Date.now(), fromSuggestion: s.id });
+        } else {
+            sbFilters = sbFilters.filter(f => f.fromSuggestion !== s.id);
+        }
+        sbRefresh();
+    };
 
-        if (!gci) {
-            errEl.textContent = 'Please paste a GCI before collecting values.';
-            errEl.style.display = 'block';
+    // ── Field filter rendering ───────────────────────────────────────────────
+    function renderFilters() {
+        const container = document.getElementById('sbActiveFilters');
+
+        if (!sbFilters.length) {
+            container.innerHTML = '<p style="color:#555; font-style:italic; font-size:13px; margin:0;">No filters added yet.</p>';
             return;
         }
 
-        const btn = document.getElementById('collectValuesBtn');
-        btn.disabled = true;
-        btn.textContent = '⏳ Analyzing...';
+        let html = sbFilters.map(f => {
+            const needsQ = f.value.includes(' ') && !f.value.startsWith('"') && !f.value.startsWith('(');
+            const val  = needsQ ? `"${f.value}"` : f.value;
+            const term = `${f.field}:${val}`;
+            const boolTag = f.bool
+                ? `<span class="bbv-bool-tag">${f.bool}</span>`
+                : `<span class="bbv-bool-tag">AND</span>`;
+            const typeTag = `<span class="bbv-type-tag ${fieldTypeClass(f.field)}">${fieldLabel(f.field)}</span>`;
+            return `<div class="bbv-filter-chip">
+                ${boolTag}
+                <span class="bbv-field-tag">${escHtml(term)}</span>
+                ${typeTag}
+                <button class="bbv-remove-btn" onclick="sbRemoveFilter(${f.id})">Remove</button>
+            </div>`;
+        }).join('');
 
-        // Run regex extraction immediately
-        const regex = regexExtract(gci);
+        container.innerHTML = html;
+    }
 
-        const prompt =
-`Analyze this Cisco TAC case GCI. Extract fields and build Topic Search query strings for topic.cisco.com.
-
-Topic Search field names (lowercase): technology, subtech, product, swversion, majorversion, linkeddefects, problemcode, resolutioncode, component, severity, status
-Operators: AND OR NOT (uppercase), "phrase search", field:value, field:"multi word value", wildcard cat9* (trailing only)
-
-GCI:
-${gci.substring(0, 2800)}
-
-Return ONLY valid JSON, no markdown:
-{"technology":"","subtech":"","product":"","version":"","bugs":[],"keywords":[],"primary":"","simple":"","literal":"","explanation":""}
-
-primary = best fielded+Boolean string combining technology/subtech/product/version/keywords
-simple = 4-6 keyword fallback
-literal = exact error or syslog string copied verbatim if one exists, else ""
-explanation = one sentence summary of what was extracted`;
-
-        try {
-            const resp = await fetch('/api/ai_chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: prompt,
-                    username: (typeof window._profUsername !== 'undefined' ? window._profUsername : '') || ''
-                })
-            });
-
-            const data = await resp.json();
-            if (!data.ok) throw new Error(data.error || 'AI returned an error');
-
-            let ai = {};
-            try {
-                // Strip any accidental markdown fences
-                const clean = data.response.replace(/```[a-z]*\n?/gi, '').trim();
-                ai = JSON.parse(clean);
-            } catch {
-                // AI didn't return valid JSON — fall back to regex only
-                ai = { primary: regex.bugs.map(b => `linkeddefects:${b}`).join(' OR '), simple: regex.version || '', explanation: 'Could not parse AI response; showing regex results only.' };
-            }
-
-            renderResults(ai, regex);
-
-        } catch (err) {
-            errEl.textContent = `Error: ${err.message}`;
-            errEl.style.display = 'block';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Collect Values';
-        }
-    };
-
-    window.clearGCIInput = function () {
-        document.getElementById('gciInput').value = '';
-        const errEl = document.getElementById('searchBuddyError');
-        errEl.style.display = 'none';
-    };
-
-    // ── Tab switcher ────────────────────────────────────────────────────────
-    window.sbSwitchTab = function (tab) {
-        document.getElementById('sbTabParseBtn').classList.toggle('active', tab === 'parse');
-        document.getElementById('sbTabBuildBtn').classList.toggle('active', tab === 'build');
-        document.getElementById('sbTabParse').classList.toggle('active', tab === 'parse');
-        document.getElementById('sbTabBuild').classList.toggle('active', tab === 'build');
-    };
-
-})();
-
-// ── Build-by-Values module ───────────────────────────────────────────────────
-(function () {
-    let bbvFilters = [];   // {bool, field, value, id}
-
-    // ── Boolean button toggle ───────────────────────────────────────────────
+    // ── Boolean button toggle ────────────────────────────────────────────────
     window.bbvSetBool = function (btn) {
         const group = btn.closest('.bbv-bool-group');
         group.querySelectorAll('.bbv-bool-btn').forEach(b => b.classList.remove('bbv-active'));
@@ -610,118 +612,58 @@ explanation = one sentence summary of what was extracted`;
         return active ? active.dataset.val : '';
     }
 
-    // ── Add a named field ───────────────────────────────────────────────────
-    window.bbvAddField = function (fieldName, inputId, row) {
+    // ── Add field filter ─────────────────────────────────────────────────────
+    window.sbAddField = function (fieldName, inputId, row) {
         const inputEl = document.getElementById(inputId);
-        const val = (inputEl.value || inputEl.options?.[inputEl.selectedIndex]?.value || '').trim();
+        const val = (inputEl.tagName === 'SELECT'
+            ? (inputEl.options[inputEl.selectedIndex]?.value || '')
+            : inputEl.value
+        ).trim();
         if (!val) { inputEl.focus(); return; }
         const bool = getActiveBool(row);
-        bbvFilters.push({ bool, field: fieldName, value: val, id: Date.now() });
+        sbFilters.push({ bool, field: fieldName, value: val, id: Date.now() });
         inputEl.value = '';
         if (inputEl.tagName === 'SELECT') inputEl.selectedIndex = 0;
-        bbvRefresh();
+        sbRefresh();
     };
 
-    // ── Add all resolution codes as OR filters ──────────────────────────────
     const RESOLUTION_CODES = [
-        'Content Delivered',
-        'Customer Education',
-        'CUSTOMER_EDUCATION',
-        'Hardware Replacement (RMA/SVO)',
-        'Hardware Upgrade - Existing Defect',
-        'Hardware Upgrade - New Defect',
-        'Software Upgrade - Existing Defect',
+        'Content Delivered','Customer Education','CUSTOMER_EDUCATION',
+        'Hardware Replacement (RMA/SVO)','Hardware Upgrade - Existing Defect',
+        'Hardware Upgrade - New Defect','Software Upgrade - Existing Defect',
         'Software Upgrade - New Defect',
     ];
-    window.bbvAddAllResolutionCodes = function (row) {
-        const bool = getActiveBool(row);
+    window.sbAddAllResolutionCodes = function (row) {
+        const bool    = getActiveBool(row);
         const grouped = '(' + RESOLUTION_CODES.map(c => c.includes(' ') ? `"${c}"` : c).join(' OR ') + ')';
-        bbvFilters.push({ bool, field: 'resolutioncode', value: grouped, id: Date.now() });
-        const sel = document.getElementById('bbvResolutioncode');
-        sel.selectedIndex = 0;
-        bbvRefresh();
+        sbFilters.push({ bool, field: 'resolutioncode', value: grouped, id: Date.now() });
+        document.getElementById('sbResolutioncode').selectedIndex = 0;
+        sbRefresh();
     };
 
-    // ── Add custom string ───────────────────────────────────────────────────
-    window.bbvAddCustom = function () {
-        const inputEl = document.getElementById('bbvCustom');
-        const val = inputEl.value.trim();
-        if (!val) { inputEl.focus(); return; }
-        const row = inputEl.closest('[data-row="custom"]')?.closest('div') ||
-                    document.querySelector('.bbv-bool-group[data-row="custom"]').parentElement;
-        const bool = getActiveBool(document.querySelector('.bbv-bool-group[data-row="custom"]').closest('div'));
-        bbvFilters.push({ bool, field: null, value: val, id: Date.now() });
-        inputEl.value = '';
-        bbvRefresh();
-    };
-
-    // ── Remove filter ───────────────────────────────────────────────────────
-    window.bbvRemove = function (id) {
-        bbvFilters = bbvFilters.filter(f => f.id !== id);
-        bbvRefresh();
-    };
-
-    // ── Clear all ───────────────────────────────────────────────────────────
-    window.bbvClearAll = function () {
-        bbvFilters = [];
-        bbvRefresh();
-    };
-
-    // ── Build query string ──────────────────────────────────────────────────
-    function buildQuery() {
-        const base = '_exists_:resolutionsummary';
-        if (!bbvFilters.length) return base;
-        const rest = bbvFilters.map(f => {
-            const needsQuotes = f.value.includes(' ') && !f.value.startsWith('"') && !f.value.startsWith('(');
-            const val = needsQuotes ? `"${f.value}"` : f.value;
-            const term = f.field ? `${f.field}:${val}` : val;
-            const prefix = f.bool ? `${f.bool} ` : 'AND ';
-            return prefix + term;
-        }).join(' ');
-        return base + ' ' + rest;
-    }
-
-    // ── Refresh UI ──────────────────────────────────────────────────────────
-    function bbvRefresh() {
-        const query = buildQuery();
-
-        // Update preview
-        document.getElementById('bbvQueryPreview').textContent = query;
-
-        // Update active filters list
-        const container = document.getElementById('bbvActiveFilters');
-        const staticChip = `<div class="bbv-filter-chip">
-            <span class="bbv-field-tag">_exists_:resolutionsummary</span>
-            <span style="color:#555; font-size:11px; font-style:italic; padding-left:6px;">auto</span>
-        </div>`;
-        if (!bbvFilters.length) {
-            container.innerHTML = staticChip;
-            return;
+    window.sbRemoveFilter = function (id) {
+        const f = sbFilters.find(fi => fi.id === id);
+        if (f && f.fromSuggestion != null) {
+            const s = sbSuggestions.find(x => x.id === f.fromSuggestion);
+            if (s) s.checked = false;
         }
-        container.innerHTML = staticChip + bbvFilters.map((f, i) => {
-            const needsQuotes = f.value.includes(' ') && !f.value.startsWith('"') && !f.value.startsWith('(');
-            const val = needsQuotes ? `"${f.value}"` : f.value;
-            const term = f.field ? `${f.field}:${val}` : val;
-            const boolTag = f.bool
-                ? `<span class="bbv-bool-tag">${f.bool}</span>`
-                : `<span class="bbv-bool-tag">AND</span>`;
-            return `<div class="bbv-filter-chip">
-                ${boolTag}
-                <span class="bbv-field-tag">${escapeHtml(term)}</span>
-                <button class="bbv-remove-btn" onclick="bbvRemove(${f.id})">Remove</button>
-            </div>`;
-        }).join('');
-    }
+        sbFilters = sbFilters.filter(fi => fi.id !== id);
+        sbRefresh();
+    };
 
-    function escapeHtml(s) {
-        const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
-    }
+    window.sbClearAllFilters = function () {
+        sbFilters   = [];
+        sbResExists = false;
+        sbSuggestions.forEach(s => s.checked = false);
+        sbRefresh();
+    };
 
-    window.bbvCopyQuery = function () {
+    // ── Copy / Open ──────────────────────────────────────────────────────────
+    window.sbCopyQuery = function () {
         const q = buildQuery();
         if (!q) return;
         navigator.clipboard.writeText(q).then(() => {
-            const btn = document.getElementById('bbvCopyBtn');
+            const btn = document.getElementById('sbCopyBtn');
             const orig = btn.textContent;
             btn.textContent = '✓ Copied';
             btn.style.background = '#18631a';
@@ -729,13 +671,145 @@ explanation = one sentence summary of what was extracted`;
         });
     };
 
-    window.bbvOpenInTopic = function () {
+    window.sbOpenInTopic = function () {
         const q = buildQuery();
         if (!q) return;
         const url = `https://topic.cisco.com/results?queryText=${encodeURIComponent(q)}&repos=c3&repos=cdets&repos=techzone&checkedds=c3&checkedds=cdets&checkedds=techzone`;
         window.open(url, '_blank');
     };
 
-    bbvRefresh();
+    // ── Screen transitions ───────────────────────────────────────────────────
+    function showBuilderScreen() {
+        document.getElementById('sbScreenGCI').style.display     = 'none';
+        document.getElementById('sbScreenBuilder').style.display = 'block';
+        sbRefresh();
+    }
+
+    window.sbBackToGCI = function () {
+        document.getElementById('sbScreenBuilder').style.display = 'none';
+        document.getElementById('sbScreenGCI').style.display     = 'block';
+        sbFilters     = [];
+        sbKeyValues   = [];
+        sbSuggestions = [];
+        sbResExists   = false;
+    };
+
+    // ── GCI clear ────────────────────────────────────────────────────────────
+    window.sbClearGCI = function () {
+        document.getElementById('gciInput').value = '';
+        const errEl = document.getElementById('searchBuddyError');
+        errEl.style.display = 'none';
+    };
+
+    // ── Build keyword items from AI ───────────────────────────────────────────
+    function buildKeyValues(ai) {
+        let id = Date.now();
+        const seen = new Set();
+        return (ai.keywords || [])
+            .map(k => {
+                if (!k || typeof k !== 'string') return null;
+                let words = k.trim().split(/\s+/).filter(Boolean);
+                if (!words.length) return null;
+                if (words.length > 2) words = words.slice(0, 2); // enforce 2-word max
+                let kw = stripPlural(words.join(' '));
+                if (isJunkKeyword(kw)) return null;
+                const key = kw.toLowerCase();
+                if (seen.has(key)) return null;
+                seen.add(key);
+                return { id: id++, label: 'keyword', field: null, value: kw, removed: false };
+            })
+            .filter(Boolean);
+    }
+
+    // ── Build filter suggestions from AI ─────────────────────────────────────
+    function buildSuggestions(ai) {
+        let id = Date.now() + 5000;
+        const validFields = new Set(['swversion','technology','subtech','resolutioncode','status']);
+        return (ai.suggestions || [])
+            .filter(s => s && s.field && s.value && validFields.has(s.field))
+            .map(s => ({
+                id:      id++,
+                field:   s.field,
+                value:   String(s.value).trim(),
+                display: String(s.display || s.value).trim(),
+                checked: false
+            }));
+    }
+
+    // ── Main: Collect Values ─────────────────────────────────────────────────
+    window.sbCollectValues = async function () {
+        const gci   = document.getElementById('gciInput').value.trim();
+        const errEl = document.getElementById('searchBuddyError');
+        errEl.style.display = 'none';
+
+        if (!gci) {
+            errEl.textContent = 'Please paste a GCI before collecting values.';
+            errEl.style.display = 'block';
+            return;
+        }
+
+        const btn = document.getElementById('collectValuesBtn');
+        btn.disabled    = true;
+        btn.textContent = '⏳ Analyzing...';
+
+        const prompt =
+`Analyze this Cisco TAC case GCI and extract:
+1. 3-8 technical search keywords (1-2 words each)
+2. Specific filter suggestions based on values found in the GCI
+
+KEYWORD RULES — strictly follow:
+- 1 to 2 words per keyword only
+- Do NOT include: IP addresses, MAC addresses, hostnames, FQDNs, phone numbers, extension numbers, DIDs, route patterns (e.g. [2-9]XX), timestamps, serial numbers, customer names, or company names
+- Use specific technical terms: syslog IDs, error codes, feature names, failure modes, protocol names
+- Prefer unique specific terms over generic ones
+
+FILTER SUGGESTIONS — extract only when clearly present in the GCI:
+- swversion: exact software/firmware version strings verbatim from the GCI (e.g. "17.9.4a", "15.2(7)E4")
+- resolutioncode: pick ONE best fit from ONLY these values: "Content Delivered","Customer Education","Hardware Replacement (RMA/SVO)","Hardware Upgrade - Existing Defect","Hardware Upgrade - New Defect","Software Upgrade - Existing Defect","Software Upgrade - New Defect"
+- technology: Cisco technology area if clearly identifiable (e.g. "LAN Switching", "Wireless", "Voice - Communications Manager")
+
+Return ONLY valid JSON, no markdown:
+{"keywords":["dot1x","certificate error"],"suggestions":[{"field":"swversion","value":"17.9.4a","display":"17.9.4a"},{"field":"resolutioncode","value":"Software Upgrade - Existing Defect","display":"Software Upgrade - Existing Defect"}]}
+
+Omit a suggestion entry if not confident it applies.
+
+GCI:
+${gci.substring(0, 2800)}`;
+
+        try {
+            const resp = await fetch('/api/ai_chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message:  prompt,
+                    username: (typeof window._profUsername !== 'undefined' ? window._profUsername : '') || ''
+                })
+            });
+
+            const data = await resp.json();
+            if (!data.ok) throw new Error(data.error || 'AI returned an error');
+
+            let ai = {};
+            try {
+                const clean = data.response.replace(/```[a-z]*\n?/gi, '').trim();
+                ai = JSON.parse(clean);
+            } catch {
+                ai = {};
+            }
+
+            sbKeyValues   = buildKeyValues(ai);
+            sbSuggestions = buildSuggestions(ai);
+            sbFilters     = [];
+            showBuilderScreen();
+
+        } catch (err) {
+            errEl.textContent = `Error: ${err.message}`;
+            errEl.style.display = 'block';
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Collect Values';
+        }
+    };
+
 })();
 </script>

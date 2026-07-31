@@ -1,0 +1,27 @@
+INFO:     Started server process [2645738]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:7996 (Press CTRL+C to quit)
+INFO:     127.0.0.1:59360 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:58300 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:46540 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:46554 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     172.18.0.2:36496 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:50690 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:42420 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:60352 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:37056 - "GET /jokirkpa HTTP/1.1" 200 OK
+INFO:     172.18.0.2:37064 - "GET /static/quicker_AI.png?v=1784864181 HTTP/1.1" 304 Not Modified
+INFO:     172.18.0.2:39642 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:53572 - "GET /jokirkpa HTTP/1.1" 200 OK
+INFO:     172.18.0.2:53576 - "GET /static/quicker_AI.png?v=1784864181 HTTP/1.1" 304 Not Modified
+INFO:     172.18.0.2:49162 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:33944 - "GET /jokirkpa HTTP/1.1" 200 OK
+INFO:     172.18.0.2:33950 - "GET /static/quicker_AI.png?v=1784864181 HTTP/1.1" 304 Not Modified
+INFO:     172.18.0.2:55230 - "GET / HTTP/1.1" 200 OK
+INFO:     172.18.0.2:45232 - "GET /jokirkpa HTTP/1.1" 200 OK
+INFO:     172.18.0.2:45236 - "GET /static/quicker_AI.png?v=1784864181 HTTP/1.1" 304 Not Modified
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2645738]
