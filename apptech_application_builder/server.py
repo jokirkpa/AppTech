@@ -6,6 +6,7 @@ Zero dependencies: Python stdlib only.
 
 import json
 import os
+import re
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -38,6 +39,26 @@ MIME_TYPES = {
     ".ico":  "image/x-icon",
     ".svg":  "image/svg+xml",
 }
+
+# Matches the modal id every real AppTech tool uses as its root element,
+# regardless of attribute order: <div id="fooModal" class="modal-overlay"> etc.
+_MODAL_ID_RE = re.compile(
+    r'<div\s+(?:id="([^"]+)"\s+class="modal-overlay"'
+    r'|class="modal-overlay"\s+id="([^"]+)")'
+)
+_TOOL_MARKER_RE = re.compile(r'^<!--\s*@tool\s+\{.*?\}\s*-->\r?\n?', re.DOTALL)
+
+
+def _extract_modal_id(content: str, fallback: str) -> str:
+    m = _MODAL_ID_RE.search(content)
+    if m:
+        return m.group(1) or m.group(2)
+    return fallback
+
+
+def _strip_existing_marker(content: str) -> str:
+    return _TOOL_MARKER_RE.sub("", content, count=1)
+
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -153,9 +174,19 @@ class BuilderHandler(BaseHTTPRequestHandler):
             author      = str(payload.get("author", ""))
             content     = str(payload.get("content", ""))
 
+            # Embed the @tool marker AppTech's main dashboard needs to
+            # discover this tool (see console.py's /api/tools/list) and to
+            # open its modal by id (see dashboard.html's loadAndOpenTool).
+            content = _strip_existing_marker(content)
+            tool_id = _extract_modal_id(content, fallback=f"builderSlot{slot}Modal")
+            marker = "<!-- @tool " + json.dumps(
+                {"id": tool_id, "name": name, "description": description, "author": author},
+                ensure_ascii=False,
+            ) + " -->\n"
+
             # Write HTML file
             html_path = APPS_DIR / f"test{slot}.html"
-            html_path.write_text(content, encoding="utf-8")
+            html_path.write_text(marker + content, encoding="utf-8")
 
             # Update meta.json
             meta = {}

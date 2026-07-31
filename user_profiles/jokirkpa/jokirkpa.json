@@ -44,9 +44,9 @@
   },
   "token_usage": {
     "2026-07": {
-      "total": 9472,
-      "input": 7204,
-      "output": 2268
+      "total": 9656,
+      "input": 7248,
+      "output": 2408
     }
   }
 }
