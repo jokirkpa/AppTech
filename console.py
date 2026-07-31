@@ -141,8 +141,8 @@ async def api_tools_list():
 
 
 # === API: Quicker AI ===
-_QUICKER_AI_URL   = "http://localhost:7120/sovct/api/v1/ai/chat"
-_QUICKER_AI_TOKEN = "b07d8bbcea5d349979e4d803112d22e0b644945a957d277b3428699b42470bec"
+_QUICKER_AI_URL   = os.getenv("QUICKER_AI_URL", "http://localhost:7120/sovct/api/v1/ai/chat")
+_QUICKER_AI_TOKEN = os.getenv("QUICKER_AI_TOKEN", "")
 _QUICKER_AI_SYSTEM = (
     "You are a Cisco network engineering expert. "
     "Generate a network engineering training question and a detailed answer. "

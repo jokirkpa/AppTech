@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+*.pyo
+*.log
+.git
+.gitignore
+apptech_application_builder
+docker-compose.override.yml
+.env
+.env.*

@@ -4,6 +4,17 @@
 
 # WEB_APP_BASE_PREFIX is unset; app runs at root /
 
+# Load .env (QUICKER_AI_TOKEN, etc.) if present, without clobbering
+# variables already set in the environment (e.g. by docker-compose).
+if [ -f .env ]; then
+  while IFS='=' read -r key value; do
+    [[ -z "$key" || "$key" == \#* ]] && continue
+    if [ -z "${!key}" ]; then
+      export "$key=$value"
+    fi
+  done < .env
+fi
+
 # Backend: serves API, /docs, /openapi.json
 uvicorn console:app --host 0.0.0.0 --port 7997 --reload &
 BACKEND_PID=$!

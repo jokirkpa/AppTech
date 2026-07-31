@@ -1,0 +1,13 @@
+name: apptech-jokirkpa
+services:
+  apptech:
+    container_name: apptech-dev-jokirkpa
+    ports: !override
+      - "5556:7996"
+      - "5555:7997"
+    volumes:
+      - ".:/app:rw"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - QUICKER_AI_URL=http://host.docker.internal:7120/sovct/api/v1/ai/chat
