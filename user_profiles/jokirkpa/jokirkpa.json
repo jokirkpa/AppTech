@@ -26,7 +26,12 @@
     "testTool12Modal",
     "testTool13Modal",
     "portSpeedModal",
-    "techzoneSearchBuddyModal"
+    "techzoneSearchBuddyModal",
+    "testTool18Modal",
+    "testTool17Modal",
+    "testTool16Modal",
+    "testTool15Modal",
+    "testTool14Modal"
   ],
   "created": "2026-07-23T11:09:08",
   "dashboard_profile": {
@@ -44,9 +49,9 @@
   },
   "token_usage": {
     "2026-07": {
-      "total": 9656,
-      "input": 7248,
-      "output": 2408
+      "total": 10871,
+      "input": 8352,
+      "output": 2519
     }
   }
 }

@@ -254,14 +254,17 @@
             background: linear-gradient(135deg, #2d5aa0 0%, #1a3a6b 100%);
             padding: 20px 30px;
             border-radius: 10px 10px 0 0;
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
         }
 
         .modal-header h2 {
+            grid-column: 2;
+            grid-row: 1;
             font-size: 24px;
             color: white;
+            text-align: center;
         }
 
         .close-btn {
@@ -278,6 +281,9 @@
             justify-content: center;
             border-radius: 5px;
             transition: background-color 0.2s;
+            grid-column: 3;
+            grid-row: 1;
+            justify-self: end;
         }
 
         .close-btn:hover {
@@ -1068,7 +1074,9 @@
             justify-content: center;
             border-radius: 5px;
             transition: background-color 0.2s;
-            margin-right: 6px;
+            grid-column: 1;
+            grid-row: 1;
+            justify-self: start;
         }
         .tool-cat-btn:hover { background-color: rgba(255, 255, 255, 0.12); }
 
