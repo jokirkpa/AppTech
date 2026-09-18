@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppTech — Download Tools</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Header ───────────────────────────────────────────── */
+        .tz-header {
+            background-color: #222;
+            border-bottom: 2px solid #333;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .tz-header-left a {
+            background: #069494;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .tz-header-left a:hover { background: #07b0b0; }
+
+        .tz-header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .tz-header-center h1 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #069494;
+            letter-spacing: 2px;
+        }
+        .tz-header-center p {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .tz-header-right button {
+            background: #069494;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .tz-header-right button:hover { background: #07b0b0; }
+
+        /* ── Body ─────────────────────────────────────────────── */
+        .tz-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 36px 40px;
+            max-width: 860px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .tz-subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 24px;
+        }
+        .tz-subtitle span { color: #e8c030; font-weight: bold; }
+
+        /* ── Table ────────────────────────────────────────────── */
+        .tz-table { width: 100%; border-collapse: collapse; }
+        .tz-table thead tr { background-color: #2a2a2a; border-bottom: 2px solid #444; }
+        .tz-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+        }
+        .tz-table th.col-add { text-align: center; width: 80px; }
+        .tz-table tbody tr { border-bottom: 1px solid #2d2d2d; transition: background 0.15s; }
+        .tz-table tbody tr:hover { background-color: #222; }
+        .tz-table td { padding: 14px 16px; vertical-align: top; }
+        .tool-name { font-size: 15px; font-weight: bold; color: #fff; margin-bottom: 4px; }
+        .tool-desc { font-size: 12px; color: #999; line-height: 1.4; }
+        .tool-by   { font-size: 12px; color: #069494; }
+        .col-add   { text-align: center; vertical-align: middle; }
+
+        /* ── Checkbox ─────────────────────────────────────────── */
+        .tz-checkbox {
+            appearance: none; -webkit-appearance: none;
+            width: 20px; height: 20px;
+            border: 2px solid #555; border-radius: 5px;
+            background: #1a1a1a; cursor: pointer;
+            position: relative;
+            transition: border-color 0.2s, background 0.2s;
+            display: inline-block; vertical-align: middle;
+        }
+        .tz-checkbox:checked { background: #069494; border-color: #069494; }
+        .tz-checkbox:checked::after {
+            content: ''; position: absolute;
+            left: 4px; top: 1px; width: 8px; height: 12px;
+            border: 2px solid #fff; border-top: none; border-left: none;
+            transform: rotate(45deg);
+        }
+        .tz-checkbox:hover { border-color: #069494; }
+
+        /* ── Toast ────────────────────────────────────────────── */
+        .tz-toast {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #069494; color: #fff; font-size: 13px;
+            padding: 10px 22px; border-radius: 8px;
+            opacity: 0; transition: opacity 0.25s, transform 0.25s;
+            pointer-events: none; white-space: nowrap; z-index: 9999;
+        }
+        .tz-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Modal overlay ────────────────────────────────────── */
+        .tz-modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .tz-modal-overlay.open { display: flex; }
+
+        .tz-modal {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 10px;
+            width: 520px;
+            max-width: 95vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 16px 60px rgba(0,0,0,0.7);
+        }
+
+        .tz-modal-header {
+            background: linear-gradient(135deg, #069494 0%, #044f4f 100%);
+            padding: 16px 20px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .tz-modal-header h2 { font-size: 16px; color: #fff; font-weight: 700; }
+        .tz-modal-close {
+            background: none; border: none; color: rgba(255,255,255,0.7);
+            font-size: 22px; cursor: pointer; line-height: 1; padding: 0 2px;
+            transition: color 0.15s;
+        }
+        .tz-modal-close:hover { color: #fff; }
+
+        .tz-modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .tz-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #2a2a2a;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
+
+        /* ── Form fields (inside modal) ───────────────────────── */
+        .tz-field { margin-bottom: 18px; }
+        .tz-field label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #778;
+            margin-bottom: 6px;
+        }
+        .tz-field input[type="text"],
+        .tz-field textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+            resize: vertical;
+        }
+        .tz-field input[type="text"]:focus,
+        .tz-field textarea:focus { border-color: #069494; }
+
+        .tz-field .author-note {
+            font-size: 12px;
+            color: #556;
+            margin-top: 5px;
+        }
+        .tz-field .author-note span { color: #069494; }
+
+        /* ── File drop zone ───────────────────────────────────── */
+        .tz-dropzone {
+            border: 2px dashed #333;
+            border-radius: 8px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
+        }
+        .tz-dropzone:hover,
+        .tz-dropzone.drag-over { border-color: #069494; background: rgba(6,148,148,0.06); }
+        .tz-dropzone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+        .tz-dropzone .dz-icon { font-size: 28px; margin-bottom: 8px; }
+        .tz-dropzone .dz-label { font-size: 13px; color: #778; }
+        .tz-dropzone .dz-filename {
+            font-size: 13px; color: #069494; font-weight: 600;
+            margin-top: 6px; display: none;
+        }
+
+        /* ── Buttons ──────────────────────────────────────────── */
+        .btn-primary {
+            padding: 9px 20px; background: #069494; border: none;
+            border-radius: 6px; color: #fff; font-size: 13px;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-primary:hover { background: #07b0b0; }
+        .btn-primary:disabled {
+            background: #2a2a2a; color: #555; cursor: not-allowed;
+        }
+        .btn-secondary {
+            padding: 9px 20px; background: #2a2a2a; border: 1px solid #444;
+            border-radius: 6px; color: #aaa; font-size: 13px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-secondary:hover { background: #333; color: #e0e0e0; }
+        .btn-test {
+            padding: 9px 20px; background: #2d5aa0; border: none;
+            border-radius: 6px; color: #fff; font-size: 13px;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-test:hover { background: #3a6fc0; }
+        .btn-test:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
+
+        /* ── Validation state ─────────────────────────────────── */
+        .upload-status {
+            font-size: 12px; margin-top: 8px; display: none;
+        }
+        .upload-status.ok    { color: #4dd; }
+        .upload-status.error { color: #f88; }
+        .tested-badge {
+            display: none;
+            font-size: 11px; color: #4dd;
+            background: rgba(6,148,148,0.15);
+            border: 1px solid #069494;
+            border-radius: 4px; padding: 3px 8px;
+            align-self: center;
+        }
+
+        /* ── Preview modal ────────────────────────────────────── */
+        .tz-preview-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .tz-preview-overlay.open { display: flex; }
+        .tz-preview-modal {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            width: 900px;
+            max-width: 96vw;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.8);
+        }
+        .tz-preview-header {
+            background: linear-gradient(135deg, #2d5aa0 0%, #1a3a6b 100%);
+            padding: 14px 20px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .tz-preview-header h3 { font-size: 15px; color: #fff; font-weight: 700; }
+        .tz-preview-header .preview-badge {
+            font-size: 11px; background: rgba(255,255,255,0.15);
+            border-radius: 4px; padding: 3px 8px; color: rgba(255,255,255,0.8);
+        }
+        .tz-preview-body {
+            flex: 1;
+            overflow: hidden;
+            border-radius: 0 0 10px 10px;
+        }
+        .tz-preview-body iframe {
+            width: 100%; height: 100%; border: none;
+            background: #fff;
+        }
+        .tz-preview-footer {
+            padding: 14px 20px;
+            border-top: 1px solid #2a2a2a;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            background: #1e1e1e;
+            border-radius: 0 0 10px 10px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ──────────────────────────────────────────────── -->
+    <div class="tz-header" style="position:relative;">
+        <div class="tz-header-left">
+            <a id="backLink" href="/">&#8592; Dashboard</a>
+        </div>
+
+        <div class="tz-header-center">
+            <h1>AppTech Tools</h1>
+            <p>Manage tools on your dashboard</p>
+        </div>
+
+        <div class="tz-header-right">
+            <button onclick="openUploadModal()">&#8679; Upload Tool</button>
+        </div>
+    </div>
+
+    <!-- ── Body ────────────────────────────────────────────────── -->
+    <div class="tz-body">
+        <p class="tz-subtitle">
+            <span id="activeCount">0</span> of <span id="totalCount">0</span> tools active on your dashboard.
+            Changes save automatically.
+        </p>
+
+        <div id="tzError" style="display:none; background:rgba(180,30,30,.2); border:1px solid #a33; border-radius:6px; color:#f88; font-size:13px; padding:10px 14px; margin-bottom:16px;"></div>
+
+        <table class="tz-table">
+            <thead>
+                <tr>
+                    <th style="width:30%">Tool</th>
+                    <th>Description</th>
+                    <th style="width:110px">Author</th>
+                    <th class="col-add">On Dashboard</th>
+                </tr>
+            </thead>
+            <tbody id="toolTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- ── Upload Tool Modal ────────────────────────────────────── -->
+    <div class="tz-modal-overlay" id="uploadModal" onclick="if(event.target===this)closeUploadModal()">
+        <div class="tz-modal">
+            <div class="tz-modal-header">
+                <h2>&#8679; Upload Tool</h2>
+                <button class="tz-modal-close" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <div class="tz-modal-body">
+                <div class="tz-field">
+                    <label>Tool Name</label>
+                    <input type="text" id="uploadName" placeholder="e.g. BGP Route Checker">
+                </div>
+
+                <div class="tz-field">
+                    <label>Description</label>
+                    <textarea id="uploadDesc" rows="3" placeholder="What does this tool do?"></textarea>
+                </div>
+
+                <div class="tz-field">
+                    <label>Author</label>
+                    <input type="text" id="uploadAuthor" readonly
+                           style="background:#0a0a0a; color:#069494; border-color:#1b3b6f; cursor:default;">
+                    <div class="author-note">Auto-detected from your profile: <span id="uploadAuthorNote"></span></div>
+                </div>
+
+                <div class="tz-field">
+                    <label>Tool HTML File</label>
+                    <div class="tz-dropzone" id="dropzone">
+                        <input type="file" id="uploadFile" accept=".html,.htm" onchange="handleFileSelect(event)">
+                        <div class="dz-icon">📄</div>
+                        <div class="dz-label">Click to browse or drag &amp; drop your .html file here</div>
+                        <div class="dz-filename" id="dz-filename"></div>
+                    </div>
+                    <div class="upload-status" id="uploadStatus"></div>
+                </div>
+            </div>
+
+            <div class="tz-modal-footer" style="align-items:center;">
+                <span class="tested-badge" id="testedBadge">✓ Tested</span>
+                <button class="btn-secondary" onclick="closeUploadModal()">Cancel</button>
+                <button class="btn-test" id="testBtn" onclick="openPreview()" disabled>&#9654; Test</button>
+                <button class="btn-primary" id="addBtn" onclick="addToDownloadTools()" disabled>+ Add to Download Tools</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tool Preview Modal ────────────────────────────────────── -->
+    <div class="tz-preview-overlay" id="previewModal">
+        <div class="tz-preview-modal">
+            <div class="tz-preview-header">
+                <h3 id="previewTitle">Tool Preview</h3>
+                <span class="preview-badge">Preview Mode</span>
+            </div>
+            <div class="tz-preview-body">
+                <iframe id="previewFrame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+            </div>
+            <div class="tz-preview-footer">
+                <button class="btn-secondary" onclick="closePreview()">Close Preview</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tz-toast" id="tzToast"></div>
+
+    <script>
+    // ── Tool list — populated dynamically from /api/tools/list ──
+    let TOOLS = [];
+
+    // ── Extract username from URL ────────────────────────────────
+    const _pathParts = window.location.pathname.split('/').filter(Boolean);
+    const _username  = _pathParts[0] || '';
+
+    if (_username) {
+        document.getElementById('backLink').href = '/' + _username;
+        document.getElementById('uploadAuthor').value     = _username;
+        document.getElementById('uploadAuthorNote').textContent = _username;
+    }
+
+    // ── Tool list state ──────────────────────────────────────────
+    let _enabledTools = new Set();
+
+    let _toastTimer = null;
+    function showToast(msg) {
+        const t = document.getElementById('tzToast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('tzError');
+        el.textContent = msg;
+        el.style.display = msg ? 'block' : 'none';
+    }
+
+    function updateCount() {
+        document.getElementById('activeCount').textContent = _enabledTools.size;
+        document.getElementById('totalCount').textContent  = TOOLS.length;
+    }
+
+
+
+    async function saveTools() {
+        if (!_username) return;
+        try {
+            const res = await fetch(`/api/users/${encodeURIComponent(_username)}/tools`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tools: [..._enabledTools] })
+            });
+            const data = await res.json();
+            if (!data.ok) showError('Could not save: ' + (data.error || 'unknown error'));
+        } catch(e) {
+            showError('Save failed — check connection.');
+        }
+    }
+
+    function buildTable() {
+        const tbody = document.getElementById('toolTableBody');
+        tbody.innerHTML = '';
+        TOOLS.forEach(tool => {
+            const isEnabled = _enabledTools.has(tool.id);
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td><div class="tool-name">' + escHtml(tool.name) + '</div></td>'
+                + '<td><div class="tool-desc">' + escHtml(tool.desc) + '</div></td>'
+                + '<td class="tool-by">By: ' + escHtml(tool.by) + '</td>'
+                + '<td class="col-add">'
+                    + '<input type="checkbox" class="tz-checkbox" data-id="' + tool.id + '"'
+                    + (isEnabled ? ' checked' : '') + '>'
+                + '</td>';
+            tbody.appendChild(tr);
+        });
+        tbody.querySelectorAll('.tz-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                if (this.checked) {
+                    _enabledTools.add(this.dataset.id);
+                    showToast('Added to dashboard');
+                } else {
+                    _enabledTools.delete(this.dataset.id);
+                    showToast('Removed from dashboard');
+                }
+                updateCount();
+                saveTools();
+            });
+        });
+        updateCount();
+    }
+
+    async function init() {
+        if (!_username) {
+            showError('No user found in URL. Please log in first.');
+            return;
+        }
+        try {
+            // Load tool list and user's enabled tools in parallel
+            const [listRes, toolsRes] = await Promise.all([
+                fetch('/api/tools/list'),
+                fetch(`/api/users/${encodeURIComponent(_username)}/tools`)
+            ]);
+            const listData  = await listRes.json();
+            const toolsData = await toolsRes.json();
+
+            if (listData.ok) {
+                TOOLS = listData.tools.map(t => ({
+                    id:   t.id,
+                    name: t.name || t.file,
+                    by:   t.author || 'unknown',
+                    desc: t.description || '',
+                    file: t.file,
+                }));
+            } else {
+                showError('Could not load tool list: ' + (listData.error || 'unknown error'));
+            }
+
+            if (toolsData.ok) {
+                _enabledTools = new Set(toolsData.tools);
+            } else {
+                showError(toolsData.error || 'Could not load enabled tools.');
+            }
+        } catch(e) {
+            showError('Could not reach server.');
+        }
+        buildTable();
+    }
+
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── Upload Tool modal ────────────────────────────────────────
+    let _uploadedFileContent = null;
+    let _hasTested = false;
+
+    function openUploadModal() {
+        document.getElementById('uploadModal').classList.add('open');
+    }
+
+    function closeUploadModal() {
+        document.getElementById('uploadModal').classList.remove('open');
+    }
+
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const nameEl   = document.getElementById('dz-filename');
+        const statusEl = document.getElementById('uploadStatus');
+
+        if (!file.name.match(/\.html?$/i)) {
+            nameEl.style.display = 'none';
+            statusEl.className   = 'upload-status error';
+            statusEl.textContent = '✗ Only .html files are accepted.';
+            statusEl.style.display = 'block';
+            _uploadedFileContent = null;
+            _hasTested = false;
+            refreshUploadButtons();
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            _uploadedFileContent = e.target.result;
+            _hasTested = false;
+
+            nameEl.textContent     = '📄 ' + file.name;
+            nameEl.style.display   = 'block';
+            statusEl.className     = 'upload-status ok';
+            statusEl.textContent   = '✓ File loaded successfully (' + Math.round(file.size / 1024 * 10) / 10 + ' KB)';
+            statusEl.style.display = 'block';
+
+            document.getElementById('testedBadge').style.display = 'none';
+            refreshUploadButtons();
+        };
+        reader.readAsText(file);
+    }
+
+    // Drag-and-drop
+    const dropzone = document.getElementById('dropzone');
+    dropzone.addEventListener('dragover',  e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+    dropzone.addEventListener('dragleave', ()  => dropzone.classList.remove('drag-over'));
+    dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            document.getElementById('uploadFile').files = dt.files;
+            handleFileSelect({ target: { files: [file] } });
+        }
+    });
+
+    function refreshUploadButtons() {
+        const hasFile = !!_uploadedFileContent;
+        const hasName = !!document.getElementById('uploadName').value.trim();
+        document.getElementById('testBtn').disabled = !(hasFile && hasName);
+        document.getElementById('addBtn').disabled  = !(hasFile && hasName && _hasTested);
+    }
+
+    // Re-check button state when name changes
+    document.getElementById('uploadName').addEventListener('input', refreshUploadButtons);
+
+    // ── Preview modal ────────────────────────────────────────────
+    function openPreview() {
+        if (!_uploadedFileContent) return;
+
+        const toolName = document.getElementById('uploadName').value.trim() || 'Tool Preview';
+        document.getElementById('previewTitle').textContent = toolName + ' — Preview';
+
+        const frame = document.getElementById('previewFrame');
+        // Write the HTML directly into the iframe
+        frame.srcdoc = _uploadedFileContent;
+
+        document.getElementById('previewModal').classList.add('open');
+    }
+
+    function closePreview() {
+        document.getElementById('previewModal').classList.remove('open');
+        // Clear the iframe to stop any running scripts
+        document.getElementById('previewFrame').srcdoc = '';
+
+        // Mark as tested
+        _hasTested = true;
+        document.getElementById('testedBadge').style.display = 'inline-flex';
+        refreshUploadButtons();
+        showToast('Test complete — you can now add the tool');
+    }
+
+    // ── Add to Download Tools (stub — wired up later) ────────────
+    function addToDownloadTools() {
+        // TODO: upload file to server, register tool, refresh tool list
+        showToast('Coming soon — Add to Download Tools will be wired up next.');
+    }
+
+    init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!-- @tool {"id":"exampleToolModal","name":"🧪 Example Tool","description":"A starter template showing the AppTech tool contract — copy it to build your own","author":"you"} -->
+<!-- Example Tool — a fully-compliant starter you can copy and modify.
+     Everything a tool needs is here: the @tool marker (first line above),
+     the modal-overlay/modal/modal-header/modal-body structure, tabs, a
+     form-group + btn, a result-box, a close-btn, and an onOpen hook. -->
+<style>
+    /* Tool-specific styles go here. Prefix your classes to avoid collisions.
+       Do NOT redefine shared classes (.btn, .modal, .form-group, .tab-btn …)
+       — the dashboard already provides them. */
+    .ex-hint { color: #888; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .ex-swap-note { color: #069494; font-size: 12px; margin-top: 10px; }
+</style>
+
+<!-- Root element: id MUST match the "id" in the @tool marker above. -->
+<div id="exampleToolModal" class="modal-overlay">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2>🧪 Example Tool</h2>
+            <button class="close-btn" onclick="closeModal('exampleToolModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Tabs -->
+            <div style="display: flex; border-bottom: 2px solid #555; margin-bottom: 20px;">
+                <button id="exTabConvert" class="tab-btn active" onclick="exSwitchTab('convert')">Data Rate</button>
+                <button id="exTabAbout" class="tab-btn" onclick="exSwitchTab('about')">About</button>
+            </div>
+
+            <!-- Tab 1: a tiny data-rate converter -->
+            <div id="exConvertTab" class="tab-content active">
+                <p class="ex-hint">
+                    Enter a value in megabits per second (Mbps) to see it converted.
+                    This demonstrates a form input, a button, and a result box.
+                </p>
+                <div class="form-group">
+                    <label for="exMbps">Speed (Mbps)</label>
+                    <input type="number" id="exMbps" placeholder="e.g., 1000" value="1000" oninput="exConvert()">
+                </div>
+                <button class="btn" onclick="exConvert()">Convert</button>
+                <div id="exResult"></div>
+            </div>
+
+            <!-- Tab 2: about -->
+            <div id="exAboutTab" class="tab-content">
+                <p class="ex-hint">
+                    This file is a template. Copy it, rename the file, and change the
+                    <code>@tool</code> marker's <b>id</b> / <b>name</b> / <b>description</b>
+                    plus the matching <code>modal-overlay</code> id. Then build your idea
+                    inside the modal body.
+                </p>
+                <p class="ex-swap-note">
+                    When it works here, upload this same .html file on apptech.cisco.com →
+                    Download Tools → Upload Tool. No changes needed.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tool logic. Keep names unique-ish (prefix them) so multiple tools loaded
+    // into the same page don't clash.
+    function exSwitchTab(tab) {
+        document.getElementById('exTabConvert').classList.toggle('active', tab === 'convert');
+        document.getElementById('exTabAbout').classList.toggle('active', tab === 'about');
+        document.getElementById('exConvertTab').classList.toggle('active', tab === 'convert');
+        document.getElementById('exAboutTab').classList.toggle('active', tab === 'about');
+    }
+
+    function exConvert() {
+        const mbps = parseFloat(document.getElementById('exMbps').value);
+        const box = document.getElementById('exResult');
+        if (isNaN(mbps)) {
+            box.innerHTML = '<div class="error-message">Please enter a number.</div>';
+            return;
+        }
+        const gbps = mbps / 1000;
+        const mbytes = mbps / 8;          // megabytes per second
+        const gbph = (gbps * 3600) / 8;   // gigabytes transferred per hour
+        box.innerHTML =
+            '<div class="result-box">' +
+                '<div class="result-row"><span class="result-label">Gbps</span>' +
+                    '<span class="result-value">' + gbps.toFixed(3) + '</span></div>' +
+                '<div class="result-row"><span class="result-label">MB/s</span>' +
+                    '<span class="result-value">' + mbytes.toFixed(2) + '</span></div>' +
+                '<div class="result-row"><span class="result-label">GB / hour</span>' +
+                    '<span class="result-value">' + gbph.toFixed(2) + '</span></div>' +
+            '</div>';
+    }
+
+    // Optional open-hook: runs every time this tool is opened from a card.
+    // Use it to reset state or compute an initial result.
+    window._toolOnOpen = window._toolOnOpen || {};
+    window._toolOnOpen['exampleToolModal'] = function() {
+        exSwitchTab('convert');
+        exConvert();
+    };
+</script>

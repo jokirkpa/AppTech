@@ -1,0 +1,256 @@
+<!-- @tool {"id":"jsonPrettyModal","name":"Pretty Text","description":"Format and beautify JSON and XML with proper indentation","author":"jokirkpa"} -->
+<!-- Json Pretty Tool -->
+    <!-- Pretty Text Modal -->
+    <div id="jsonPrettyModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>📋 Pretty Text</h2>
+                <button class="close-btn" onclick="closeModal('jsonPrettyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div style="display: flex; border-bottom: 2px solid #555; margin-bottom: 20px;">
+                    <button id="tabJsonPretty" class="tab-btn active" onclick="switchPrettyTab('json')">JSON Pretty</button>
+                    <button id="tabXmlPretty" class="tab-btn" onclick="switchPrettyTab('xml')">XML Pretty</button>
+                </div>
+
+                <!-- JSON Tab -->
+                <div id="jsonPrettyTab" class="tab-content active">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Format JSON</h3>
+                    <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">Paste your JSON below and format it with proper indentation</p>
+                    
+                    <div class="form-group">
+                        <label for="jsonInput">JSON Input</label>
+                        <textarea id="jsonInput" placeholder='{"key": "value", "array": [1,2,3]}'></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn" onclick="formatJson()" style="flex: 1;">Format JSON</button>
+                        <button class="btn" onclick="copyToClipboard('jsonOutput')" style="flex: 1; background-color: #2d9a5a;">Copy Result</button>
+                        <button class="btn" onclick="clearJson()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+
+                    <div id="jsonPrettyResult"></div>
+                </div>
+
+                <!-- XML Tab -->
+                <div id="xmlPrettyTab" class="tab-content">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Format XML</h3>
+                    <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">Paste your XML below and format it with proper indentation</p>
+                    
+                    <div class="form-group">
+                        <label for="xmlInput">XML Input</label>
+                        <textarea id="xmlInput" placeholder='<root><item>value</item></root>'></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn" onclick="formatXml()" style="flex: 1;">Format Pretty</button>
+                        <button class="btn" onclick="formatXmlExtraPretty()" style="flex: 1; background-color: #2d6aa0;">Extra Pretty</button>
+                        <button class="btn" onclick="copyToClipboard('xmlOutput')" style="flex: 1; background-color: #2d9a5a;">Copy Result</button>
+                        <button class="btn" onclick="clearXml()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+
+                    <div id="xmlPrettyResult"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+        function switchPrettyTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('#jsonPrettyModal .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#jsonPrettyModal .tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'json') {
+                document.getElementById('tabJsonPretty').classList.add('active');
+                document.getElementById('jsonPrettyTab').classList.add('active');
+            } else if (tab === 'xml') {
+                document.getElementById('tabXmlPretty').classList.add('active');
+                document.getElementById('xmlPrettyTab').classList.add('active');
+            }
+        }
+
+        function formatJson() {
+            const jsonInput = document.getElementById('jsonInput').value.trim();
+            const indent = 2;
+            const resultDiv = document.getElementById('jsonPrettyResult');
+
+            if (!jsonInput) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter JSON to format</div>';
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(jsonInput);
+                const formatted = JSON.stringify(parsed, null, indent);
+                
+                resultDiv.innerHTML = `
+                    <div class="result-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="color: #069494; font-weight: bold;">Formatted JSON:</span>
+                            <span style="color: #aaa; font-size: 12px;">Lines: ${formatted.split('\n').length} | Characters: ${formatted.length}</span>
+                        </div>
+                        <textarea id="jsonOutput" readonly style="min-height: 300px; font-family: monospace; background-color: #0a0a0a; color: #00ff00; border: 1px solid #069494; padding: 15px; border-radius: 5px; width: 100%; resize: vertical;">${formatted}</textarea>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">Invalid JSON: ${error.message}</div>`;
+            }
+        }
+
+        function formatXml() {
+            const xmlInput = document.getElementById('xmlInput').value.trim();
+            const resultDiv = document.getElementById('xmlPrettyResult');
+
+            if (!xmlInput) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter XML to format</div>';
+                return;
+            }
+
+            try {
+                // Format XML with indentation (skip validation for lenient formatting)
+                const formatted = formatXmlString(xmlInput, 2);
+                
+                resultDiv.innerHTML = `
+                    <div class="result-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="color: #069494; font-weight: bold;">Formatted XML:</span>
+                            <span style="color: #aaa; font-size: 12px;">Lines: ${formatted.split('\n').length} | Characters: ${formatted.length}</span>
+                        </div>
+                        <textarea id="xmlOutput" readonly style="min-height: 300px; font-family: monospace; background-color: #0a0a0a; color: #00ff00; border: 1px solid #069494; padding: 15px; border-radius: 5px; width: 100%; resize: vertical;">${formatted}</textarea>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">Error formatting XML: ${error.message}</div>`;
+            }
+        }
+
+        function formatXmlExtraPretty() {
+            const xmlInput = document.getElementById('xmlInput').value.trim();
+            const resultDiv = document.getElementById('xmlPrettyResult');
+
+            if (!xmlInput) {
+                resultDiv.innerHTML = '<div class="error-message">Please enter XML to format</div>';
+                return;
+            }
+
+            try {
+                // Split input into lines
+                let lines = xmlInput.split('\n');
+                let formatted = '';
+                
+                // Process each line
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i];
+                    
+                    // Skip empty lines
+                    if (line.trim() === '') {
+                        formatted += '\n';
+                        continue;
+                    }
+                    
+                    // Rule 1: Remove leading spaces
+                    line = line.trimStart();
+                    
+                    // Rule 3 first: If line contains " followed by space, split at each occurrence
+                    // This handles XML attributes on single lines
+                    if (line.includes('" ')) {
+                        // Split by '" ' and rejoin with '"\n'
+                        let parts = line.split('" ');
+                        for (let j = 0; j < parts.length; j++) {
+                            if (j < parts.length - 1) {
+                                formatted += parts[j] + '"\n';
+                            } else {
+                                // Last part
+                                formatted += parts[j];
+                                // Rule 2: If ends with >, add newlines
+                                if (parts[j].endsWith('>') || parts[j].endsWith('/>')) {
+                                    formatted += '\n\n';
+                                }
+                            }
+                        }
+                    } else {
+                        // No quote-space processing needed
+                        formatted += line;
+                        // Rule 2: If line ends with >, add newlines after it
+                        if (line.endsWith('>') || line.endsWith('/>')) {
+                            formatted += '\n\n';
+                        }
+                    }
+                }
+                
+                // Clean up - remove trailing whitespace
+                formatted = formatted.trimEnd();
+                
+                resultDiv.innerHTML = `
+                    <div class="result-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="color: #069494; font-weight: bold;">Extra Pretty XML:</span>
+                            <span style="color: #aaa; font-size: 12px;">Lines: ${formatted.split('\n').length} | Characters: ${formatted.length}</span>
+                        </div>
+                        <textarea id="xmlOutput" readonly style="min-height: 300px; font-family: monospace; background-color: #0a0a0a; color: #00ff00; border: 1px solid #069494; padding: 15px; border-radius: 5px; width: 100%; resize: vertical;">${formatted}</textarea>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">Error formatting XML: ${error.message}</div>`;
+            }
+        }
+
+        function formatXmlString(xml, indent) {
+            const PADDING = ' '.repeat(indent);
+            const reg = /(>)(<)(\/*)/g;
+            let formatted = '';
+            let pad = 0;
+            
+            xml = xml.replace(reg, '$1\r\n$2$3');
+            xml.split('\r\n').forEach(node => {
+                let indent = 0;
+                if (node.match(/.+<\/\w[^>]*>$/)) {
+                    indent = 0;
+                } else if (node.match(/^<\/\w/) && pad > 0) {
+                    pad -= 1;
+                } else if (node.match(/^<\w[^>]*[^\/]>.*$/)) {
+                    indent = 1;
+                } else {
+                    indent = 0;
+                }
+                
+                formatted += PADDING.repeat(pad) + node + '\n';
+                pad += indent;
+            });
+            
+            return formatted.trim();
+        }
+
+        function copyToClipboard(outputId) {
+            const outputElement = document.getElementById(outputId);
+            
+            if (!outputElement) {
+                alert('Please format the text first');
+                return;
+            }
+
+            outputElement.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const originalBg = outputElement.style.backgroundColor;
+            outputElement.style.backgroundColor = '#2d9a5a';
+            setTimeout(() => {
+                outputElement.style.backgroundColor = originalBg;
+            }, 200);
+            
+            alert('Copied to clipboard!');
+        }
+
+        function clearJson() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('jsonPrettyResult').innerHTML = '';
+        }
+
+        function clearXml() {
+            document.getElementById('xmlInput').value = '';
+            document.getElementById('xmlPrettyResult').innerHTML = '';
+        }
+</script>

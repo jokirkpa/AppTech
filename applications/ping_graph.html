@@ -1,0 +1,360 @@
+<!-- @tool {"id":"pingGraphModal","name":"Ping Graph","description":"Visualize ping results with latency graphs and annotations for packet loss and TTL changes","author":"jokirkpa"} -->
+<!-- Ping Graph Tool -->
+    <!-- Ping Graph Modal -->
+    <div id="pingGraphModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>📊 Ping Graph</h2>
+                <button class="close-btn" onclick="closeModal('pingGraphModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="pingOutput">Ping Output</label>
+                    <textarea id="pingOutput" placeholder="Paste your ping and watch it sing!" style="min-height: 200px; font-family: monospace;"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="analyzePing()" style="flex: 1;">Analyze & Graph</button>
+                    <button class="btn" onclick="clearPingData()" style="flex: 1; background-color: #555;">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ping Graph Result Modal (Full View) -->
+    <div id="pingGraphResultModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 95%; width: 1400px;">
+            <div class="modal-header">
+                <h2>📊 Ping Graph Results</h2>
+                <button class="close-btn" onclick="closeModal('pingGraphResultModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="pingResultContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Analyzer Modal -->
+
+<script>
+        // Ping Graph Analyzer
+        let pingDataByIP = {}; // Store ping data grouped by IP
+        let currentSelectedIP = null;
+
+        function analyzePing() {
+            const pingOutput = document.getElementById('pingOutput').value;
+
+            if (!pingOutput.trim()) {
+                alert('Please paste ping output');
+                return;
+            }
+
+            const newPingData = parsePingOutput(pingOutput);
+
+            if (Object.keys(newPingData).length === 0) {
+                alert('No valid ping data found. Please check your input.');
+                return;
+            }
+
+            // Merge new data with existing data
+            Object.keys(newPingData).forEach(ip => {
+                if (pingDataByIP[ip]) {
+                    // Append new data to existing IP
+                    pingDataByIP[ip] = pingDataByIP[ip].concat(newPingData[ip]);
+                    // Sort by sequence number
+                    pingDataByIP[ip].sort((a, b) => a.seq - b.seq);
+                } else {
+                    // New IP
+                    pingDataByIP[ip] = newPingData[ip];
+                }
+            });
+
+            // Auto-select the first IP if none selected
+            if (!currentSelectedIP || !pingDataByIP[currentSelectedIP]) {
+                currentSelectedIP = Object.keys(pingDataByIP)[0];
+            }
+
+            displayPingResults();
+            openModal('pingGraphResultModal');
+        }
+
+        function displayPingResults() {
+            const resultDiv = document.getElementById('pingResultContent');
+            const ipList = Object.keys(pingDataByIP);
+
+            if (ipList.length === 0) {
+                return;
+            }
+
+            // Build IP selector if multiple IPs
+            let ipSelector = '';
+            if (ipList.length > 1) {
+                ipSelector = `
+                    <div style="margin-top: 20px; margin-bottom: 20px;">
+                        <h3 style="color: #069494; margin-bottom: 15px;">Select Ping Target</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${ipList.map(ip => `
+                                <button class="btn" onclick="selectPingIP('${ip}')" style="
+                                    padding: 10px 20px;
+                                    background-color: ${ip === currentSelectedIP ? '#069494' : '#2d5aa0'};
+                                    color: ${ip === currentSelectedIP ? '#000' : '#fff'};
+                                    font-weight: ${ip === currentSelectedIP ? 'bold' : 'normal'};
+                                ">
+                                    ${ip} (${pingDataByIP[ip].length} packets)
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const pingData = pingDataByIP[currentSelectedIP];
+            const graph = generatePingGraph(pingData);
+            const stats = calculatePingStats(pingData);
+
+            resultDiv.innerHTML = `
+                ${ipSelector}
+                <div style="margin-top: 20px;">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Ping Statistics - ${currentSelectedIP}</h3>
+                    <div class="result-box">
+                        <div class="result-row">
+                            <span class="result-label">Target IP:</span>
+                            <span class="result-value">${currentSelectedIP}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Packet Size:</span>
+                            <span class="result-value">${stats.packetSize !== null ? stats.packetSize + ' bytes' : 'N/A'}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Total Packets:</span>
+                            <span class="result-value">${stats.total}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Packets Lost:</span>
+                            <span class="result-value" style="color: ${stats.lost > 0 ? '#ff6666' : '#069494'};">${stats.lost}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Min Latency:</span>
+                            <span class="result-value">${stats.min.toFixed(2)} ms</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Max Latency:</span>
+                            <span class="result-value">${stats.max.toFixed(2)} ms</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Avg Latency:</span>
+                            <span class="result-value">${stats.avg.toFixed(2)} ms</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">TTL Changes:</span>
+                            <span class="result-value" style="color: ${stats.ttlChanges > 0 ? '#ffaa00' : '#069494'};">${stats.ttlChanges}</span>
+                        </div>
+                    </div>
+                    
+                    <h3 style="color: #069494; margin: 20px 0 15px 0;">Latency Graph</h3>
+                    ${graph}
+                </div>
+            `;
+        }
+
+        function selectPingIP(ip) {
+            currentSelectedIP = ip;
+            displayPingResults();
+        }
+
+        function clearPingData() {
+            pingDataByIP = {};
+            currentSelectedIP = null;
+            document.getElementById('pingResultContent').innerHTML = '';
+        }
+
+        function parsePingOutput(output) {
+            const lines = output.split('\n');
+            const pingDataByIP = {};
+
+            lines.forEach(line => {
+                // Match ping response lines - must contain "bytes from" and required fields
+                // Example: 64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=14.2 ms
+                const match = line.match(/(\d+)\s+bytes\s+from\s+([\d.]+).*?icmp_seq=(\d+).*?ttl=(\d+).*?time=([\d.]+)/);
+                
+                if (match) {
+                    const ip = match[2];
+                    const pingEntry = {
+                        bytes: parseInt(match[1]),
+                        seq: parseInt(match[3]),
+                        ttl: parseInt(match[4]),
+                        time: parseFloat(match[5])
+                    };
+
+                    if (!pingDataByIP[ip]) {
+                        pingDataByIP[ip] = [];
+                    }
+                    pingDataByIP[ip].push(pingEntry);
+                }
+            });
+
+            return pingDataByIP;
+        }
+
+        function calculatePingStats(pingData) {
+            if (pingData.length === 0) {
+                return { total: 0, lost: 0, min: 0, max: 0, avg: 0, ttlChanges: 0, packetSize: null };
+            }
+
+            const times = pingData.map(p => p.time);
+            const min = Math.min(...times);
+            const max = Math.max(...times);
+            const avg = times.reduce((a, b) => a + b, 0) / times.length;
+
+            // Get packet size (should be consistent)
+            const packetSize = pingData[0].bytes;
+
+            // Calculate lost packets
+            const sequences = pingData.map(p => p.seq).sort((a, b) => a - b);
+            const minSeq = sequences[0];
+            const maxSeq = sequences[sequences.length - 1];
+            const expectedTotal = maxSeq - minSeq + 1;
+            const lost = expectedTotal - pingData.length;
+
+            // Calculate TTL changes
+            let ttlChanges = 0;
+            for (let i = 1; i < pingData.length; i++) {
+                if (pingData[i].ttl !== pingData[i - 1].ttl) {
+                    ttlChanges++;
+                }
+            }
+
+            return {
+                total: pingData.length,
+                lost: lost,
+                min: min,
+                max: max,
+                avg: avg,
+                ttlChanges: ttlChanges,
+                packetSize: packetSize
+            };
+        }
+
+        function generatePingGraph(pingData) {
+            // Dynamic width based on data points (minimum 40px per point for readability)
+            const pointWidth = 40;
+            const minWidth = 800;
+            const calculatedWidth = Math.max(minWidth, pingData.length * pointWidth);
+            const width = calculatedWidth;
+            const height = 400;
+            const padding = 60;
+            const graphWidth = width - 2 * padding;
+            const graphHeight = height - 2 * padding;
+
+            const times = pingData.map(p => p.time);
+            const maxTime = Math.max(...times);
+            const minTime = Math.min(...times);
+            const timeRange = maxTime - minTime || 1;
+
+            const sequences = pingData.map(p => p.seq);
+            const minSeq = Math.min(...sequences);
+            const maxSeq = Math.max(...sequences);
+            const seqRange = maxSeq - minSeq || 1;
+
+            // Build SVG points
+            let points = '';
+            let circles = '';
+            let annotations = '';
+            let previousTtl = pingData[0].ttl;
+
+            pingData.forEach((ping, index) => {
+                const x = ((ping.seq - minSeq) / seqRange) * graphWidth;
+                const y = padding + graphHeight - ((ping.time - minTime) / timeRange) * graphHeight;
+
+                points += `${x},${y} `;
+                circles += `<circle cx="${x}" cy="${y}" r="4" fill="#069494" />`;
+
+                // Check for lost packets
+                if (index > 0) {
+                    const prevSeq = pingData[index - 1].seq;
+                    if (ping.seq - prevSeq > 1) {
+                        const lostCount = ping.seq - prevSeq - 1;
+                        const lostX = ((prevSeq + 0.5 - minSeq) / seqRange) * graphWidth;
+                        annotations += `
+                            <text x="${lostX}" y="${padding - 10}" fill="#ff6666" font-size="12" text-anchor="middle">⚠ ${lostCount} lost</text>
+                            <line x1="${lostX}" y1="${padding}" x2="${lostX}" y2="${padding + graphHeight}" stroke="#ff6666" stroke-width="1" stroke-dasharray="5,5" opacity="0.5" />
+                        `;
+                    }
+                }
+
+                // Check for TTL changes
+                if (ping.ttl !== previousTtl) {
+                    annotations += `
+                        <text x="${x}" y="${y - 15}" fill="#ffaa00" font-size="11" text-anchor="middle">TTL: ${ping.ttl}</text>
+                    `;
+                    previousTtl = ping.ttl;
+                }
+            });
+
+            // Y-axis labels
+            let yAxisLabels = '';
+            for (let i = 0; i <= 5; i++) {
+                const value = minTime + (timeRange / 5) * i;
+                const y = padding + graphHeight - (i / 5) * graphHeight;
+                yAxisLabels += `
+                    <line x1="${padding - 5}" y1="${y}" x2="${padding}" y2="${y}" stroke="#555" stroke-width="1" />
+                    <text x="${padding - 10}" y="${y + 4}" fill="#aaa" font-size="12" text-anchor="end">${value.toFixed(1)}</text>
+                `;
+            }
+
+            // X-axis labels
+            let xAxisLabels = '';
+            const labelStep = Math.ceil(seqRange / 10);
+            for (let seq = minSeq; seq <= maxSeq; seq += labelStep) {
+                const x = ((seq - minSeq) / seqRange) * graphWidth;
+                xAxisLabels += `
+                    <line x1="${x}" y1="${padding + graphHeight}" x2="${x}" y2="${padding + graphHeight + 5}" stroke="#555" stroke-width="1" />
+                    <text x="${x}" y="${padding + graphHeight + 20}" fill="#aaa" font-size="12" text-anchor="middle">${seq}</text>
+                `;
+            }
+
+            return `
+                <div style="background-color: #1a1a1a; border: 1px solid #555; border-radius: 5px; padding: 20px; margin-top: 10px;">
+                    <div style="display: flex; position: relative;">
+                        <!-- Fixed Y-axis -->
+                        <div style="flex-shrink: 0; width: ${padding}px; height: ${height}px; position: relative;">
+                            <svg width="${padding}" height="${height}" style="background-color: #0a0a0a;">
+                                <!-- Y-axis line -->
+                                <line x1="${padding - 1}" y1="${padding}" x2="${padding - 1}" y2="${padding + graphHeight}" stroke="#555" stroke-width="2" />
+                                
+                                <!-- Y-axis labels -->
+                                ${yAxisLabels}
+                                
+                                <!-- Y-axis label -->
+                                <text x="${padding - 45}" y="${padding + graphHeight / 2}" fill="#069494" font-size="14" text-anchor="middle" transform="rotate(-90, ${padding - 45}, ${padding + graphHeight / 2})">Latency (ms)</text>
+                            </svg>
+                        </div>
+                        
+                        <!-- Scrollable graph area -->
+                        <div style="overflow-x: auto; overflow-y: hidden; flex: 1;">
+                            <svg width="${width - padding}" height="${height}" style="background-color: #0a0a0a; border-radius: 0 5px 5px 0; display: block;">
+                                <!-- X-axis line -->
+                                <line x1="0" y1="${padding + graphHeight}" x2="${graphWidth}" y2="${padding + graphHeight}" stroke="#555" stroke-width="2" />
+                                
+                                <!-- X-axis labels -->
+                                ${xAxisLabels.replace(new RegExp(`x="${padding}`, 'g'), 'x="0')}
+                                
+                                <!-- X-axis label -->
+                                <text x="${graphWidth / 2}" y="${padding + graphHeight + 45}" fill="#069494" font-size="14" text-anchor="middle">ICMP Sequence</text>
+                                
+                                <!-- Line graph -->
+                                <polyline points="${points.replace(new RegExp(`${padding}\\+`, 'g'), '0+')}" fill="none" stroke="#069494" stroke-width="2" />
+                                
+                                <!-- Data points -->
+                                ${circles.replace(new RegExp(`cx="${padding}`, 'g'), 'cx="0')}
+                                
+                                <!-- Annotations -->
+                                ${annotations.replace(new RegExp(`x="${padding}`, 'g'), 'x="0').replace(new RegExp(`x1="${padding}`, 'g'), 'x1="0').replace(new RegExp(`x2="${padding}`, 'g'), 'x2="0')}
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // === Pretty Text Functions ===
+</script>

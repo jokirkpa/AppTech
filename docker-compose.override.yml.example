@@ -1,0 +1,15 @@
+name: apptech-<your-cec>
+services:
+  apptech:
+    container_name: apptech-dev-<your-cec>
+    ports: !override
+      - "<your-port-one>:7996"
+      - "<your-port-two>:7997"
+    volumes:
+      - ".:/app:rw"
+    # If you also run husky-rabbit's dev stack locally, uncomment and point
+    # this at whatever host port YOUR husky-rabbit override maps fastapi to.
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    # environment:
+    #   - QUICKER_AI_URL=http://host.docker.internal:<your-husky-rabbit-port>/sovct/api/v1/ai/chat

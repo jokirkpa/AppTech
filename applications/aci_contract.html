@@ -1,0 +1,2013 @@
+<!-- @tool {"id":"aciContractModal","name":"ACI Contract Trainer","description":"Visual representation of how contracts work in ACI policy model","author":"jokirkpa"} -->
+<!-- Aci Contract Tool -->
+    <!-- ACI Contract Trainer Modal -->
+    <div id="aciContractModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h2>📄 ACI Contract Trainer</h2>
+                <button class="close-btn" onclick="closeModal('aciContractModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Configuration Section -->
+                <div style="background-color: #1a1a1a; border: 1px solid #555; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                    <!-- Contract and Subject - Side by Side with Divider -->
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; margin-bottom: 20px;">
+                        <!-- Contract Section -->
+                        <div>
+                            <h4 style="color: #8e44ad; margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid #555; padding-bottom: 8px;">Contract: <span style="color: #fff;">WEB_to_APP</span></h4>
+                            <!-- Scope - Inline -->
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="aciScope" style="color: #aaa; font-size: 14px; white-space: nowrap;">Scope:</label>
+                                <select id="aciScope" onchange="updateAciVisual()" style="flex: 0 1 auto; min-width: 200px;">
+                                    <option value="application-profile">Application Profile</option>
+                                    <option value="vrf">VRF</option>
+                                    <option value="tenant">Tenant</option>
+                                    <option value="global" selected>Global</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Vertical Divider -->
+                        <div style="border-left: 1px solid #555;"></div>
+                        
+                        <!-- Subject Section -->
+                        <div>
+                            <h4 style="color: #8e44ad; margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid #555; padding-bottom: 8px;">Subject: <span style="color: #fff;">Direction</span></h4>
+                            <div style="display: flex; flex-direction: row; gap: 15px; flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; cursor: pointer; color: #aaa; font-size: 14px;">
+                                    <input type="checkbox" id="aciApplyBothDirections" onchange="updateAciReversePortFilter(); updateAciZoningTables();" checked style="margin-right: 8px; cursor: pointer;">
+                                    Apply Both Directions
+                                </label>
+                                <label style="display: flex; align-items: center; cursor: pointer; color: #aaa; font-size: 14px;">
+                                    <input type="checkbox" id="aciReversePortFilter" onchange="updateAciReverseFilterPorts()" checked style="margin-right: 8px; cursor: pointer;">
+                                    Reverse Filter Ports
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Chain Subsection -->
+                    <div>
+                        <!-- Single Filter Chain (visible when Apply Both Directions is checked) -->
+                        <div id="aciSingleFilterChain">
+                            <h4 style="color: #8e44ad; margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid #555; padding-bottom: 8px;">Filter Chain: <span style="color: #fff;">Con_to_Pro</span></h4>
+                        
+                            <!-- Filter Entries Container -->
+                            <div id="aciFilterEntries">
+                                <!-- Filter Entry 1 -->
+                                <div class="aci-filter-entry" data-entry="1" style="margin-bottom: 10px;">
+                                    <div style="display: grid; grid-template-columns: repeat(7, 1fr) 80px; gap: 8px; align-items: end;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 12px;">Action:</label>
+                                            <select id="aciAction1" onchange="updateAciPortColors(); updateAciZoningTables();" style="padding: 6px; font-size: 13px; background-color: #ffd700; color: #000;">
+                                                <option value="permit" selected style="background-color: #ffd700; color: #000;">Permit</option>
+                                                <option value="deny" style="background-color: #ff0000; color: #fff;">Deny</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 12px;">Ethertype:</label>
+                                            <select id="aciEthertype1" onchange="updateAciFieldStates(1)" style="padding: 6px; font-size: 13px;">
+                                                <option value="unspecified">Unspecified</option>
+                                                <option value="ip">IP</option>
+                                                <option value="arp" disabled style="color: #888;">ARP</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 12px;">ARP Flag:</label>
+                                            <select id="aciArpFlag1" disabled style="padding: 6px; font-size: 13px;">
+                                                <option value="unspecified">Unspecified</option>
+                                                <option value="arp-request">Request</option>
+                                                <option value="arp-reply">Reply</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 12px;">IP Protocol:</label>
+                                            <select id="aciIpProtocol1" onchange="updateAciFieldStates(1)" disabled style="padding: 6px; font-size: 13px;">
+                                                <option value="unspecified">Unspecified</option>
+                                                <option value="tcp">TCP</option>
+                                                <option value="udp">UDP</option>
+                                                <option value="icmp" disabled style="color: #888;">ICMP</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 12px;">ICMP Type:</label>
+                                            <select id="aciIcmpType1" disabled style="padding: 6px; font-size: 13px;">
+                                                <option value="unspecified">Unspecified</option>
+                                                <option value="dst-unreach">Dst Unreach</option>
+                                                <option value="echo">Echo</option>
+                                                <option value="echo-reply">Echo Reply</option>
+                                                <option value="time-exceeded">Time Exceed</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 12px;">Source Port:</label>
+                                            <select id="aciSourcePort1" onchange="updateAciPortDisplay()" disabled style="padding: 6px; font-size: 13px;">
+                                                <option value="unspecified">Unspecified</option>
+                                                <option value="http">HTTP</option>
+                                                <option value="https">HTTPS</option>
+                                                <option value="ssh">SSH</option>
+                                                <option value="ftp">FTP</option>
+                                                <option value="dns">DNS</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 12px;">Destination Port:</label>
+                                            <select id="aciDestPort1" onchange="updateAciPortDisplay()" disabled style="padding: 6px; font-size: 13px;">
+                                                <option value="unspecified">Unspecified</option>
+                                                <option value="http">HTTP</option>
+                                                <option value="https">HTTPS</option>
+                                                <option value="ssh">SSH</option>
+                                                <option value="ftp">FTP</option>
+                                                <option value="dns">DNS</option>
+                                            </select>
+                                        </div>
+
+
+
+                                        <div style="display: flex; align-items: center; justify-content: center;">
+                                            <!-- Placeholder for delete button on additional entries -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Two Separate Filter Chains (visible when Apply Both Directions is unchecked) -->
+                        <div id="aciDualFilterChains" style="display: none;">
+                            <!-- Consumer to Provider Filter -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="color: #8e44ad; margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid #555; padding-bottom: 8px;">Filter Chain for the Consumer to Provider: <span style="color: #fff;">Con_to_Pro</span></h4>
+                                <div style="display: grid; grid-template-columns: repeat(7, 1fr) 80px; gap: 8px; align-items: end;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">Action:</label>
+                                        <select id="aciActionC2P" onchange="updateAciPortColors(); updateAciZoningTables();" style="padding: 6px; font-size: 13px; background-color: #ffd700; color: #000;">
+                                            <option value="permit" selected style="background-color: #ffd700; color: #000;">Permit</option>
+                                            <option value="deny" style="background-color: #ff0000; color: #fff;">Deny</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">Ethertype:</label>
+                                        <select id="aciEthertypeC2P" onchange="updateAciFieldStates('C2P')" style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="ip">IP</option>
+                                            <option value="arp" disabled style="color: #888;">ARP</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">ARP Flag:</label>
+                                        <select id="aciArpFlagC2P" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="arp-request">Request</option>
+                                            <option value="arp-reply">Reply</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">IP Protocol:</label>
+                                        <select id="aciIpProtocolC2P" onchange="updateAciFieldStates('C2P')" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="tcp">TCP</option>
+                                            <option value="udp">UDP</option>
+                                            <option value="icmp" disabled style="color: #888;">ICMP</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">ICMP Type:</label>
+                                        <select id="aciIcmpTypeC2P" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="dst-unreach">Dst Unreach</option>
+                                            <option value="echo">Echo</option>
+                                            <option value="echo-reply">Echo Reply</option>
+                                            <option value="time-exceeded">Time Exceed</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">Source Port:</label>
+                                        <select id="aciSourcePortC2P" onchange="updateAciPortDisplay()" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="http">HTTP</option>
+                                            <option value="https">HTTPS</option>
+                                            <option value="ssh">SSH</option>
+                                            <option value="ftp">FTP</option>
+                                            <option value="dns">DNS</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">Destination Port:</label>
+                                        <select id="aciDestPortC2P" onchange="updateAciPortDisplay()" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="http">HTTP</option>
+                                            <option value="https">HTTPS</option>
+                                            <option value="ssh">SSH</option>
+                                            <option value="ftp">FTP</option>
+                                            <option value="dns">DNS</option>
+                                        </select>
+                                    </div>
+                                    <div></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Provider to Consumer Filter -->
+                            <div>
+                                <h4 style="color: #8e44ad; margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid #555; padding-bottom: 8px;">Filter Chain for the Provider to Consumer: <span style="color: #fff;">Pro_to_Con</span></h4>
+                                <div style="display: grid; grid-template-columns: repeat(7, 1fr) 80px; gap: 8px; align-items: end;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">Action:</label>
+                                        <select id="aciActionP2C" onchange="updateAciPortColors(); updateAciZoningTables();" style="padding: 6px; font-size: 13px; background-color: #ffd700; color: #000;">
+                                            <option value="permit" selected style="background-color: #ffd700; color: #000;">Permit</option>
+                                            <option value="deny" style="background-color: #ff0000; color: #fff;">Deny</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">Ethertype:</label>
+                                        <select id="aciEthertypeP2C" onchange="updateAciFieldStates('P2C')" style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="ip">IP</option>
+                                            <option value="arp" disabled style="color: #888;">ARP</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">ARP Flag:</label>
+                                        <select id="aciArpFlagP2C" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="arp-request">Request</option>
+                                            <option value="arp-reply">Reply</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">IP Protocol:</label>
+                                        <select id="aciIpProtocolP2C" onchange="updateAciFieldStates('P2C')" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="tcp">TCP</option>
+                                            <option value="udp">UDP</option>
+                                            <option value="icmp" disabled style="color: #888;">ICMP</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">ICMP Type:</label>
+                                        <select id="aciIcmpTypeP2C" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="dst-unreach">Dst Unreach</option>
+                                            <option value="echo">Echo</option>
+                                            <option value="echo-reply">Echo Reply</option>
+                                            <option value="time-exceeded">Time Exceed</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">Source Port:</label>
+                                        <select id="aciSourcePortP2C" onchange="updateAciPortDisplay()" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="http">HTTP</option>
+                                            <option value="https">HTTPS</option>
+                                            <option value="ssh">SSH</option>
+                                            <option value="ftp">FTP</option>
+                                            <option value="dns">DNS</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label style="font-size: 12px;">Destination Port:</label>
+                                        <select id="aciDestPortP2C" onchange="updateAciPortDisplay()" disabled style="padding: 6px; font-size: 13px;">
+                                            <option value="unspecified">Unspecified</option>
+                                            <option value="http">HTTP</option>
+                                            <option value="https">HTTPS</option>
+                                            <option value="ssh">SSH</option>
+                                            <option value="ftp">FTP</option>
+                                            <option value="dns">DNS</option>
+                                        </select>
+                                    </div>
+                                    <div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Representation Section -->
+                <div style="margin-bottom: 30px;">
+                    <div style="background-color: #1a1a1a; border: 2px solid #555; border-radius: 10px; padding: 30px 40px; position: relative;">
+                        <!-- Grid Lines Container - spans entire backplane -->
+                        <div id="aciBackplaneGridLines" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0;"></div>
+                        
+                        <!-- Spanning Bubbles Container -->
+                        <div id="aciSpanningBubbles" style="position: relative; z-index: 2;"></div>
+                        
+                        <!-- EPGs with Individual Bubbles -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 15px; position: relative; z-index: 2;">
+                            <!-- Left EPG -->
+                            <div style="flex: 0 0 28%; text-align: center; position: relative;">
+                                <div id="aciLeftBubbles" style="position: relative;"></div>
+                                <div style="position: relative; background: linear-gradient(135deg, #2d5aa0 0%, #1a3a6b 100%); border-radius: 10px; padding: 50px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); min-height: 160px; margin-top: 10px;">
+                                    <div style="font-size: 48px; margin-bottom: 10px;">💻</div>
+                                    <div style="font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 8px;">EPG WEB</div>
+                                    
+                                    <!-- Provider Section -->
+                                    <!-- P:SRC Port Box -->
+                                    <div style="position: absolute; top: 10px; right: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #8e44ad; border-radius: 4px; padding: 4px 6px; font-size: 10px;">
+                                        <div id="aciEpg1ProviderSrcLabel" style="color: #2d5aa0; font-weight: bold; margin-bottom: 2px;">P:SRC</div>
+                                        <div id="aciEpg1ProviderSrc" style="color: #ffd700; font-family: monospace; font-size: 11px;">--</div>
+                                    </div>
+                                    
+                                    <!-- C:DST Port Box -->
+                                    <div id="aciEpg1ProviderDstBox" style="position: absolute; top: 56px; right: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #8e44ad; border-radius: 4px; padding: 4px 6px; font-size: 10px;">
+                                        <div id="aciEpg1ProviderDstLabel" style="color: #2d5aa0; font-weight: bold; margin-bottom: 2px;">C:DST</div>
+                                        <div id="aciEpg1ProviderDst" style="color: #ffd700; font-family: monospace; font-size: 11px;">--</div>
+                                    </div>
+                                    
+                                    <!-- Consumer Section -->
+                                    <!-- C:SRC Port Box -->
+                                    <div id="aciEpg1ConsumerSrcBox" style="position: absolute; bottom: 56px; right: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #8e44ad; border-radius: 4px; padding: 4px 6px; font-size: 10px;">
+                                        <div id="aciEpg1ConsumerSrcLabel" style="color: #2d8659; font-weight: bold; margin-bottom: 2px;">C:SRC</div>
+                                        <div id="aciEpg1ConsumerSrc" style="color: #ffd700; font-family: monospace; font-size: 11px;">--</div>
+                                    </div>
+                                    
+                                    <!-- P:DST Port Box -->
+                                    <div style="position: absolute; bottom: 10px; right: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #8e44ad; border-radius: 4px; padding: 4px 6px; font-size: 10px;">
+                                        <div id="aciEpg1ConsumerDstLabel" style="color: #2d8659; font-weight: bold; margin-bottom: 2px;">P:DST</div>
+                                        <div id="aciEpg1ConsumerDst" style="color: #ffd700; font-family: monospace; font-size: 11px;">--</div>
+                                    </div>
+                                </div>
+                            </div>
+
+            <!-- Contract Traffic Flow -->
+                            <div id="aciContractFlow" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; min-width: 0; position: relative; z-index: 2;">
+                                
+                                <!-- Horizontal Lines for Dual Filter Mode (4 lines aligning with port boxes) -->
+                                <!-- Line 1: Top row - EPG1 P:SRC to EPG2 C:DST (Blue) - positioned below grid line at 25px -->
+                                <svg id="aciLine1" style="position: absolute; top: -173px; left: 0; width: 100%; height: 8px; display: none;" viewBox="0 0 100 8" preserveAspectRatio="none">
+                                    <line x1="0" y1="4" x2="100" y2="4" stroke="#2d5aa0" stroke-width="2"/>
+                                    <polygon points="100,4 88,0 88,8" fill="#2d5aa0"/>
+                                </svg>
+                                
+                                <!-- Line 2: Second row - EPG2 C:SRC to EPG1 P:DST (Blue) - positioned below grid line at 71px -->
+                                <svg id="aciLine2" style="position: absolute; top: -127px; left: 0; width: 100%; height: 8px; display: none;" viewBox="0 0 100 8" preserveAspectRatio="none">
+                                    <line x1="0" y1="4" x2="100" y2="4" stroke="#2d5aa0" stroke-width="2"/>
+                                    <polygon points="0,4 12,0 12,8" fill="#2d5aa0"/>
+                                </svg>
+                                
+                                <!-- Line 3: Third row - EPG1 C:SRC to EPG2 P:DST (Green) - positioned below grid line -->
+                                <svg id="aciLine3" style="position:absolute; top: -77px; left:0; width:100%; height:8px; display:none;" viewBox="0 0 100 8" preserveAspectRatio="none">
+                                  <line x1="0" y1="4" x2="100" y2="4" stroke="#2d8659" stroke-width="2"/>
+                                  <polygon points="100,4 88,0 88,8" fill="#2d8659"/>
+                                </svg>
+                                
+                                <!-- Line 4: Bottom row - EPG2 P:SRC to EPG1 C:DST (Green) - positioned below grid line -->
+                                <svg id="aciLine4" style="position:absolute; top: -31px; left:0; width:100%; height:8px; display:none;" viewBox="0 0 100 8" preserveAspectRatio="none">
+                                  <line x1="0" y1="4" x2="100" y2="4" stroke="#2d8659" stroke-width="2"/>
+                                  <polygon points="0,4 12,0 12,8" fill="#2d8659"/>
+                                </svg>
+                                
+                                <!-- Apply Both Directions Mode Lines -->
+                                <!-- Single Filter Line 1: Top position (same as Line 1) - Blue bidirectional -->
+                                <svg id="aciSingleLine1" style="position: absolute; top: -173px; left: 0; width: 100%; height: 8px; display: none;" viewBox="0 0 100 8" preserveAspectRatio="none">
+                                    <line x1="0" y1="4" x2="100" y2="4" stroke="#2d5aa0" stroke-width="2"/>
+                                    <polygon points="100,4 88,0 88,8" fill="#2d5aa0"/>
+                                </svg>
+                                <div id="aciBlueProviderLabel" style="position: absolute; top: -160px; left: 5px; font-size: 10px; color: #2d5aa0; font-weight: bold; display: none;">Provider</div>
+                                
+                                <!-- Single Filter Line 2: Second position (same as Line 2) - Blue bidirectional -->
+                                <svg id="aciSingleLine2" style="position: absolute; top: -127px; left: 0; width: 100%; height: 8px; display: none;" viewBox="0 0 100 8" preserveAspectRatio="none">
+                                    <line x1="0" y1="4" x2="100" y2="4" stroke="#2d5aa0" stroke-width="2"/>
+                                    <polygon points="0,4 12,0 12,8" fill="#2d5aa0"/>
+                                </svg>
+                                <div id="aciBlueConsumerLabel" style="position: absolute; top: -114px; right: 5px; font-size: 10px; color: #2d5aa0; font-weight: bold; display: none;">Consumer</div>
+                                
+                                <!-- Single Filter Line 3: Third position (same as Line 3) - Green bidirectional -->
+                                <svg id="aciSingleLine3" style="position: absolute; top: -77px; left: 0; width: 100%; height: 8px; display: none;" viewBox="0 0 100 8" preserveAspectRatio="none">
+                                    <line x1="0" y1="4" x2="100" y2="4" stroke="#2d8659" stroke-width="2"/>
+                                    <polygon points="100,4 88,0 88,8" fill="#2d8659"/>
+                                </svg>
+                                
+                                <!-- Consumer Label for upper green line -->
+                                <div id="aciConsumerLabel" style="position: absolute; top: -64px; left: 5px; font-size: 10px; color: #2d8659; font-weight: bold; display: none;">Consumer</div>
+                                
+                                <!-- Single Filter Line 4: Bottom position (same as Line 4) - Green bidirectional -->
+                                <svg id="aciSingleLine4" style="position: absolute; top: -31px; left: 0; width: 100%; height: 8px; display: none;" viewBox="0 0 100 8" preserveAspectRatio="none">
+                                    <line x1="0" y1="4" x2="100" y2="4" stroke="#2d8659" stroke-width="2"/>
+                                    <polygon points="0,4 12,0 12,8" fill="#2d8659"/>
+                                </svg>
+                                
+                                <!-- Provider Label for bottom green line -->
+                                <div id="aciProviderLabel" style="position: absolute; top: -18px; right: 5px; font-size: 10px; color: #2d8659; font-weight: bold; display: none;">Provider</div>
+                            </div>
+
+
+                            <!-- Right EPG -->
+                            <div style="flex: 0 0 28%; text-align: center; position: relative; z-index: 2;">
+                                <div id="aciRightBubbles" style="position: relative;"></div>
+                                <div style="position: relative; background: linear-gradient(135deg, #2d8659 0%, #1a5a3a 100%); border-radius: 10px; padding: 50px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); min-height: 160px; margin-top: 10px;">
+                                    <div style="font-size: 48px; margin-bottom: 10px;">💻</div>
+                                    <div style="font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 8px;">EPG APP</div>
+                                    
+                                    <!-- Consumer Section -->
+                                    <!-- P:DST Port Box -->
+                                    <div id="aciEpg2ConsumerDstBox" style="position: absolute; top: 10px; left: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #8e44ad; border-radius: 4px; padding: 4px 6px; font-size: 10px;">
+                                        <div id="aciEpg2ConsumerDstLabel" style="color: #2d5aa0; font-weight: bold; margin-bottom: 2px;">P:DST</div>
+                                        <div id="aciEpg2ConsumerDst" style="color: #ffd700; font-family: monospace; font-size: 11px;">--</div>
+                                    </div>
+                                    
+                                    <!-- C:SRC Port Box -->
+                                    <div id="aciEpg2ConsumerSrcBox" style="position: absolute; top: 56px; left: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #8e44ad; border-radius: 4px; padding: 4px 6px; font-size: 10px;">
+                                        <div id="aciEpg2ConsumerSrcLabel" style="color: #2d5aa0; font-weight: bold; margin-bottom: 2px;">C:SRC</div>
+                                        <div id="aciEpg2ConsumerSrc" style="color: #ffd700; font-family: monospace; font-size: 11px;">--</div>
+                                    </div>
+                                    
+                                    <!-- Provider Section -->
+                                    <!-- C:DST Port Box -->
+                                    <div id="aciEpg2ProviderDstBox" style="position: absolute; bottom: 56px; left: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #8e44ad; border-radius: 4px; padding: 4px 6px; font-size: 10px;">
+                                        <div id="aciEpg2ProviderDstLabel" style="color: #2d8659; font-weight: bold; margin-bottom: 2px;">C:DST</div>
+                                        <div id="aciEpg2ProviderDst" style="color: #ffd700; font-family: monospace; font-size: 11px;">--</div>
+                                    </div>
+                                    
+                                    <!-- P:SRC Port Box -->
+                                    <div id="aciEpg2ProviderSrcBox" style="position: absolute; bottom: 10px; left: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #8e44ad; border-radius: 4px; padding: 4px 6px; font-size: 10px;">
+                                        <div id="aciEpg2ProviderSrcLabel" style="color: #2d8659; font-weight: bold; margin-bottom: 2px;">P:SRC</div>
+                                        <div id="aciEpg2ProviderSrc" style="color: #ffd700; font-family: monospace; font-size: 11px;">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EPG Roles Section -->
+                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <!-- EPG 1 Roles -->
+                    <div style="flex: 1; background-color: #1a1a1a; border: 1px solid #555; border-radius: 10px; padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; border-bottom: 2px solid #2d5aa0; padding-bottom: 8px;">
+                            <h4 style="color: #2d5aa0; font-size: 16px; margin: 0;">EPG WEB</h4>
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="font-size: 11px; color: #aaa;">PCTag:</span>
+                                <span id="aciEpg1PcTag" style="font-size: 12px; color: #ffffff; font-weight: bold; font-family: monospace;">16386-65535 (Local)</span>
+                            </div>
+                        </div>
+                        <!-- Checkboxes on same line -->
+                        <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; color: #aaa;">
+                                <input type="checkbox" id="aciEpg1Provider" onchange="updateAciPcTags(); updateAciArrowVisibility(); updateAciPctagIdentifiers(); updateAciZoningTables();" style="margin-right: 8px; cursor: pointer;">
+                                Provider
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; color: #aaa;">
+                                <input type="checkbox" id="aciEpg1Consumer" onchange="updateAciPcTags(); updateAciArrowVisibility(); updateAciPctagIdentifiers(); updateAciZoningTables();" style="margin-right: 8px; cursor: pointer;">
+                                Consumer
+                            </label>
+                        </div>
+                        
+                        <!-- Divider -->
+                        <div style="border-top: 1px solid #555; margin-bottom: 15px;"></div>
+                        
+                        <!-- Identifiers -->
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center;">
+                                <span style="color: #aaa; font-size: 13px; min-width: 90px;">Tenant:</span>
+                                <span id="aciEpg1Tenant" style="color: #fff; font-size: 13px;">--</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="color: #aaa; font-size: 13px; min-width: 90px;">VRF VNID:</span>
+                                <span id="aciEpg1VrfVnid" style="color: #fff; font-size: 13px;">--</span>
+                                <span style="color: #aaa; font-size: 13px; margin-left: 15px;">Class ID:</span>
+                                <span id="aciEpg1Class" style="color: #fff; font-size: 13px; margin-left: 5px;">--</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="color: #aaa; font-size: 13px; min-width: 90px;">PCTAG:</span>
+                                <span id="aciEpg1Pctag" style="color: #fff; font-size: 13px;">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EPG 2 Roles -->
+                    <div style="flex: 1; background-color: #1a1a1a; border: 1px solid #555; border-radius: 10px; padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; border-bottom: 2px solid #2d8659; padding-bottom: 8px;">
+                            <h4 style="color: #2d8659; font-size: 16px; margin: 0;">EPG APP</h4>
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="font-size: 11px; color: #aaa;">PCTag:</span>
+                                <span id="aciEpg2PcTag" style="font-size: 12px; color: #ffffff; font-weight: bold; font-family: monospace;">16386-65535 (Local)</span>
+                            </div>
+                        </div>
+                        <!-- Checkboxes on same line -->
+                        <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; color: #aaa;">
+                                <input type="checkbox" id="aciEpg2Provider" onchange="updateAciPcTags(); updateAciArrowVisibility(); updateAciPctagIdentifiers(); updateAciZoningTables();" style="margin-right: 8px; cursor: pointer;">
+                                Provider
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer; color: #aaa;">
+                                <input type="checkbox" id="aciEpg2Consumer" onchange="updateAciPcTags(); updateAciArrowVisibility(); updateAciPctagIdentifiers(); updateAciZoningTables();" style="margin-right: 8px; cursor: pointer;">
+                                Consumer
+                            </label>
+                        </div>
+                        
+                        <!-- Divider -->
+                        <div style="border-top: 1px solid #555; margin-bottom: 15px;"></div>
+                        
+                        <!-- Identifiers -->
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center;">
+                                <span style="color: #aaa; font-size: 13px; min-width: 90px;">Tenant:</span>
+                                <span id="aciEpg2Tenant" style="color: #fff; font-size: 13px;">--</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="color: #aaa; font-size: 13px; min-width: 90px;">VRF VNID:</span>
+                                <span id="aciEpg2VrfVnid" style="color: #fff; font-size: 13px;">--</span>
+                                <span style="color: #aaa; font-size: 13px; margin-left: 15px;">Class ID:</span>
+                                <span id="aciEpg2Class" style="color: #fff; font-size: 13px; margin-left: 5px;">--</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="color: #aaa; font-size: 13px; min-width: 90px;">PCTAG:</span>
+                                <span id="aciEpg2Pctag" style="color: #fff; font-size: 13px;">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Zoning Rule Output Section -->
+                <div style="background-color: #1a1a1a; border: 1px solid #555; border-radius: 10px; padding: 25px; margin-top: 20px;">
+                    <!-- Tabs -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #555;">
+                        <div style="display: flex; gap: 10px;">
+                            <div id="aciZoningTab1" onclick="switchAciZoningTab('tab1')" style="padding: 10px 20px; cursor: pointer; background-color: #2d5aa0; color: #fff; border-radius: 5px 5px 0 0; font-weight: bold; font-size: 13px;">
+                                3047425
+                            </div>
+                            <div id="aciZoningTab2" onclick="switchAciZoningTab('tab2')" style="padding: 10px 20px; cursor: pointer; background-color: #333; color: #aaa; border-radius: 5px 5px 0 0; font-weight: bold; font-size: 13px;">
+                                2359297
+                            </div>
+                        </div>
+                        <div style="padding: 10px 20px; color: #E1BA0A; font-weight: bold; font-size: 14px;">
+                            # show zoning-rules scope
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Content 1 (3047425) -->
+                    <div id="aciZoningContent1" style="display: block;">
+                        <div style="background-color: #333333; border-radius: 5px; padding: 15px; overflow-x: auto;">
+                            <pre id="aciZoningTable1" style="color: #E1BA0A; font-family: 'Courier New', Courier, monospace; font-size: 12px; margin: 0; padding-right: 20px; line-height: 1.4;"></pre>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab Content 2 (2359297) -->
+                    <div id="aciZoningContent2" style="display: none;">
+                        <div style="background-color: #333333; border-radius: 5px; padding: 15px; overflow-x: auto;">
+                            <pre id="aciZoningTable2" style="color: #E1BA0A; font-family: 'Courier New', Courier, monospace; font-size: 12px; margin: 0; padding-right: 20px; line-height: 1.4;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+        // ACI Contract Trainer - Update visual representation based on scope
+        function updateAciVisual() {
+            const scope = document.getElementById('aciScope').value;
+            const spanningBubbles = document.getElementById('aciSpanningBubbles');
+            const leftBubbles = document.getElementById('aciLeftBubbles');
+            const rightBubbles = document.getElementById('aciRightBubbles');
+
+            // Update PCTag ranges based on scope
+            updateAciPcTags();
+
+            // Helper function to create a bubble
+            function createBubble(text, isSpanning = false, isGreen = false) {
+                const bubble = document.createElement('div');
+                let bgColor, borderColor, textColor;
+                
+                if (isSpanning) {
+                    // Purple for spanning bubbles
+                    bgColor = 'linear-gradient(135deg, rgba(142, 68, 173, 0.3) 0%, rgba(108, 52, 131, 0.3) 100%)';
+                    borderColor = '#8e44ad';
+                    textColor = '#d5a6e8';
+                } else if (isGreen) {
+                    // Green for EPG 2 bubbles
+                    bgColor = 'linear-gradient(135deg, rgba(45, 134, 89, 0.3) 0%, rgba(26, 90, 58, 0.3) 100%)';
+                    borderColor = '#2d8659';
+                    textColor = '#a6e8c3';
+                } else {
+                    // Blue for EPG 1 bubbles
+                    bgColor = 'linear-gradient(135deg, rgba(45, 90, 160, 0.3) 0%, rgba(26, 58, 107, 0.3) 100%)';
+                    borderColor = '#2d5aa0';
+                    textColor = '#a6c8e8';
+                }
+                
+                bubble.style.cssText = `
+                    background: ${bgColor};
+                    border: 2px solid ${borderColor};
+                    border-radius: 8px;
+                    padding: 8px 15px;
+                    font-size: 11px;
+                    color: ${textColor};
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                    text-align: center;
+                    position: relative;
+                    z-index: 10;
+                `;
+                bubble.textContent = text;
+                return bubble;
+            }
+
+            // Clear existing bubbles
+            spanningBubbles.innerHTML = '';
+            leftBubbles.innerHTML = '';
+            rightBubbles.innerHTML = '';
+
+            // Build visual based on scope
+            if (scope === 'global') {
+                // Global: Each EPG has its own Tenant, VRF, and App Profile
+                leftBubbles.appendChild(createBubble('Tenant 1', false, false));
+                leftBubbles.appendChild(createBubble('VRF 1', false, false));
+                leftBubbles.appendChild(createBubble('Application Profile 1', false, false));
+
+                rightBubbles.appendChild(createBubble('Tenant 2', false, true));
+                rightBubbles.appendChild(createBubble('VRF 2', false, true));
+                rightBubbles.appendChild(createBubble('Application Profile 2', false, true));
+            } else if (scope === 'tenant') {
+                // Tenant: Tenant spans, each EPG has VRF and App Profile
+                spanningBubbles.appendChild(createBubble('Tenant', true));
+
+                leftBubbles.appendChild(createBubble('VRF 1', false, false));
+                leftBubbles.appendChild(createBubble('Application Profile 1', false, false));
+
+                rightBubbles.appendChild(createBubble('VRF 2', false, true));
+                rightBubbles.appendChild(createBubble('Application Profile 2', false, true));
+            } else if (scope === 'vrf') {
+                // VRF: Tenant and VRF span, each EPG has App Profile
+                spanningBubbles.appendChild(createBubble('Tenant', true));
+                spanningBubbles.appendChild(createBubble('VRF', true));
+
+                leftBubbles.appendChild(createBubble('Application Profile 1', false, false));
+                rightBubbles.appendChild(createBubble('Application Profile 2', false, true));
+            } else if (scope === 'application-profile') {
+                // Application Profile: Tenant, VRF, and App Profile all span
+                spanningBubbles.appendChild(createBubble('Tenant', true));
+                spanningBubbles.appendChild(createBubble('VRF', true));
+                spanningBubbles.appendChild(createBubble('Application Profile', true));
+            }
+            
+            // Remove margin-bottom from the last bubble in each container to ensure consistent spacing
+            if (spanningBubbles.lastChild) {
+                spanningBubbles.lastChild.style.marginBottom = '0';
+            }
+            if (leftBubbles.lastChild) {
+                leftBubbles.lastChild.style.marginBottom = '0';
+            }
+            if (rightBubbles.lastChild) {
+                rightBubbles.lastChild.style.marginBottom = '0';
+            }
+            
+            // Update EPG identifier fields based on scope
+            const epg1Tenant = document.getElementById('aciEpg1Tenant');
+            const epg2Tenant = document.getElementById('aciEpg2Tenant');
+            const epg1VrfVnid = document.getElementById('aciEpg1VrfVnid');
+            const epg2VrfVnid = document.getElementById('aciEpg2VrfVnid');
+            const epg1Class = document.getElementById('aciEpg1Class');
+            const epg2Class = document.getElementById('aciEpg2Class');
+            const epg1Pctag = document.getElementById('aciEpg1Pctag');
+            const epg2Pctag = document.getElementById('aciEpg2Pctag');
+            
+            if (scope === 'global') {
+                // Global scope: different tenants with different colors
+                epg1Tenant.textContent = 'Tenant_1';
+                epg1Tenant.style.color = '#3a7dc8'; // Blue (darker)
+                epg2Tenant.textContent = 'Tenant_2';
+                epg2Tenant.style.color = '#3ac880'; // Green (darker)
+                
+                // Global scope: different VRF VNIDs with different colors
+                epg1VrfVnid.textContent = '3047425';
+                epg1VrfVnid.style.color = '#3a7dc8'; // Blue (darker)
+                epg2VrfVnid.textContent = '2359297';
+                epg2VrfVnid.style.color = '#3ac880'; // Green (darker)
+                
+                // Global scope: different Class IDs - white color
+                epg1Class.textContent = '16386';
+                epg1Class.style.color = '#fff'; // White
+                epg2Class.textContent = '49156';
+                epg2Class.style.color = '#fff'; // White
+            } else if (scope === 'tenant') {
+                // Tenant scope: same tenant, purple color
+                epg1Tenant.textContent = 'Tenant_1';
+                epg1Tenant.style.color = '#a56ad8'; // Purple (darker)
+                epg2Tenant.textContent = 'Tenant_1';
+                epg2Tenant.style.color = '#a56ad8'; // Purple (darker)
+                
+                // Tenant scope: different VRF VNIDs with different colors
+                epg1VrfVnid.textContent = '3047425';
+                epg1VrfVnid.style.color = '#3a7dc8'; // Blue (darker)
+                epg2VrfVnid.textContent = '2359297';
+                epg2VrfVnid.style.color = '#3ac880'; // Green (darker)
+                
+                // Tenant scope: different Class IDs - white color
+                epg1Class.textContent = '16386';
+                epg1Class.style.color = '#fff'; // White
+                epg2Class.textContent = '49156';
+                epg2Class.style.color = '#fff'; // White
+            } else if (scope === 'vrf') {
+                // VRF scope: same tenant, purple color
+                epg1Tenant.textContent = 'Tenant_1';
+                epg1Tenant.style.color = '#a56ad8'; // Purple (darker)
+                epg2Tenant.textContent = 'Tenant_1';
+                epg2Tenant.style.color = '#a56ad8'; // Purple (darker)
+                
+                // VRF scope: same VRF VNID, purple color
+                epg1VrfVnid.textContent = '3047425';
+                epg1VrfVnid.style.color = '#a56ad8'; // Purple (darker)
+                epg2VrfVnid.textContent = '3047425';
+                epg2VrfVnid.style.color = '#a56ad8'; // Purple (darker)
+                
+                // VRF scope: same Class ID - white color
+                epg1Class.textContent = '16386';
+                epg1Class.style.color = '#fff'; // White
+                epg2Class.textContent = '16386';
+                epg2Class.style.color = '#fff'; // White
+            } else if (scope === 'application-profile') {
+                // Application-profile scope: same tenant, purple color
+                epg1Tenant.textContent = 'Tenant_1';
+                epg1Tenant.style.color = '#a56ad8'; // Purple (darker)
+                epg2Tenant.textContent = 'Tenant_1';
+                epg2Tenant.style.color = '#a56ad8'; // Purple (darker)
+                
+                // Application-profile scope: same VRF VNID, purple color
+                epg1VrfVnid.textContent = '3047425';
+                epg1VrfVnid.style.color = '#a56ad8'; // Purple (darker)
+                epg2VrfVnid.textContent = '3047425';
+                epg2VrfVnid.style.color = '#a56ad8'; // Purple (darker)
+                
+                // Application-profile scope: same Class ID - white color
+                epg1Class.textContent = '16386';
+                epg1Class.style.color = '#fff'; // White
+                epg2Class.textContent = '16386';
+                epg2Class.style.color = '#fff'; // White
+            }
+            
+            // Update PCTAG identifiers
+            updateAciPctagIdentifiers();
+            
+            // Update zoning rule tables
+            updateAciZoningTables();
+            
+            // Handle zoning rule tab visibility based on scope
+            const zoningTab2 = document.getElementById('aciZoningTab2');
+            const zoningContent2 = document.getElementById('aciZoningContent2');
+            
+            if (scope === 'vrf' || scope === 'application-profile') {
+                // Disable tab 2 for VRF and Application Profile scopes
+                zoningTab2.style.pointerEvents = 'none';
+                zoningTab2.style.opacity = '0.4';
+                zoningTab2.style.cursor = 'not-allowed';
+                
+                // If tab 2 is currently active, switch to tab 1
+                if (zoningContent2.style.display === 'block') {
+                    switchAciZoningTab('tab1');
+                }
+            } else {
+                // Enable tab 2 for Global and Tenant scopes
+                zoningTab2.style.pointerEvents = 'auto';
+                zoningTab2.style.opacity = '1';
+                zoningTab2.style.cursor = 'pointer';
+            }
+            
+            // Generate backplane grid lines after bubbles are created
+            setTimeout(updateAciBackplaneGridLines, 0);
+        }
+        
+        // Function to update PCTAG identifiers based on scope and checkbox states
+        function updateAciPctagIdentifiers() {
+            const scope = document.getElementById('aciScope').value;
+            const epg1Pctag = document.getElementById('aciEpg1Pctag');
+            const epg2Pctag = document.getElementById('aciEpg2Pctag');
+            const epg1Provider = document.getElementById('aciEpg1Provider').checked;
+            const epg1Consumer = document.getElementById('aciEpg1Consumer').checked;
+            const epg2Provider = document.getElementById('aciEpg2Provider').checked;
+            const epg2Consumer = document.getElementById('aciEpg2Consumer').checked;
+            
+            // Default PCTAGs (Local)
+            let epg1PctagValue = '16393';
+            let epg1PctagColor = '#3a7dc8'; // Blue for EPG WEB
+            let epg1PctagScope = 'Local';
+            let epg2PctagValue = '49161';
+            let epg2PctagColor = '#3ac880'; // Green for EPG APP
+            let epg2PctagScope = 'Local';
+            
+            // Check if scope is Tenant or Global
+            if (scope === 'tenant' || scope === 'global') {
+                // If EPG WEB is Provider AND EPG APP is Consumer
+                if (epg1Provider && epg2Consumer) {
+                    epg1PctagValue = '5480';
+                    epg1PctagScope = 'Global';
+                }
+                
+                // If EPG APP is Provider AND EPG WEB is Consumer
+                if (epg2Provider && epg1Consumer) {
+                    epg2PctagValue = '5479';
+                    epg2PctagScope = 'Global';
+                }
+            }
+            
+            // Build the display with scope label
+            const epg1ScopeLabel = epg1PctagScope === 'Global' ? '<span style="color: #a56ad8;"> (Global)</span>' : '<span style="color: #fff;"> (Local)</span>';
+            const epg2ScopeLabel = epg2PctagScope === 'Global' ? '<span style="color: #a56ad8;"> (Global)</span>' : '<span style="color: #fff;"> (Local)</span>';
+            
+            // Update the display with colored PCTAG and scope label
+            epg1Pctag.innerHTML = `<span style="color: ${epg1PctagColor};">${epg1PctagValue}</span>${epg1ScopeLabel}`;
+            epg1Pctag.setAttribute('data-pctag', epg1PctagValue); // Store numeric value for later use
+            
+            epg2Pctag.innerHTML = `<span style="color: ${epg2PctagColor};">${epg2PctagValue}</span>${epg2ScopeLabel}`;
+            epg2Pctag.setAttribute('data-pctag', epg2PctagValue); // Store numeric value for later use
+        }
+        
+        // Function to switch between zoning rule tabs
+        function switchAciZoningTab(tab) {
+            const tab1Button = document.getElementById('aciZoningTab1');
+            const tab2Button = document.getElementById('aciZoningTab2');
+            const content1 = document.getElementById('aciZoningContent1');
+            const content2 = document.getElementById('aciZoningContent2');
+            
+            if (tab === 'tab1') {
+                // Activate tab 1
+                tab1Button.style.backgroundColor = '#2d5aa0';
+                tab1Button.style.color = '#fff';
+                tab2Button.style.backgroundColor = '#333';
+                tab2Button.style.color = '#aaa';
+                content1.style.display = 'block';
+                content2.style.display = 'none';
+            } else if (tab === 'tab2') {
+                // Activate tab 2
+                tab1Button.style.backgroundColor = '#333';
+                tab1Button.style.color = '#aaa';
+                tab2Button.style.backgroundColor = '#2d8659';
+                tab2Button.style.color = '#fff';
+                content1.style.display = 'none';
+                content2.style.display = 'block';
+            }
+        }
+        
+        // Rule ID management
+        // Note: aciUsedRuleIds Set ensures Rule IDs are unique across BOTH tabs (3047425 and 2359297)
+        // This Set persists across both table builds within a single updateAciZoningTables() call
+        let aciRuleIdCounter = 4100; // Start from 4100 for default entries (SrcEPG = 0)
+        const aciUsedRuleIds = new Set();
+        
+        function generateAciRuleId(isDefaultEntry = true) {
+            const startRange = isDefaultEntry ? 4100 : 4121;
+            const endRange = isDefaultEntry ? 4120 : 4160;
+            const maxAttempts = 200; // Increased attempts for safety
+            
+            // Generate a random ID within the appropriate range
+            let ruleId;
+            let attempts = 0;
+            
+            do {
+                ruleId = Math.floor(Math.random() * (endRange - startRange + 1)) + startRange;
+                attempts++;
+                
+                // If we've tried too many times, we may have exhausted the range
+                if (attempts >= maxAttempts) {
+                    // Try to find any available ID in the range
+                    for (let id = startRange; id <= endRange; id++) {
+                        if (!aciUsedRuleIds.has(id)) {
+                            ruleId = id;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            } while (aciUsedRuleIds.has(ruleId));
+            
+            // Final check: if this ID is already used, log an error but still add it
+            // This should never happen with proper range management
+            if (aciUsedRuleIds.has(ruleId)) {
+                console.error(`Warning: Unable to generate unique Rule ID. Reusing ${ruleId}`);
+            }
+            
+            aciUsedRuleIds.add(ruleId);
+            return ruleId;
+        }
+        
+        function resetAciRuleIds() {
+            aciUsedRuleIds.clear();
+            aciRuleIdCounter = 4100;
+        }
+        
+        // Function to build zoning rule table
+        function buildAciZoningTable(scopeId, scopeName) {
+            const rules = [];
+            
+            // Get checkbox states
+            const epg1Provider = document.getElementById('aciEpg1Provider').checked;
+            const epg1Consumer = document.getElementById('aciEpg1Consumer').checked;
+            const epg2Provider = document.getElementById('aciEpg2Provider').checked;
+            const epg2Consumer = document.getElementById('aciEpg2Consumer').checked;
+            
+            // Get PCTAG values from the identifier displays (use data attribute to get numeric value only)
+            const epg1PctagText = document.getElementById('aciEpg1Pctag').getAttribute('data-pctag') || '--';
+            const epg2PctagText = document.getElementById('aciEpg2Pctag').getAttribute('data-pctag') || '--';
+            
+            // Get filter action from dropdown (permit or deny)
+            const applyBothDirections = document.getElementById('aciApplyBothDirections').checked;
+            let filterAction = 'permit';
+            if (applyBothDirections) {
+                filterAction = document.getElementById('aciAction1')?.value || 'permit';
+            } else {
+                // When not applying both directions, use C2P action (we can expand this later if needed)
+                filterAction = document.getElementById('aciActionC2P')?.value || 'permit';
+            }
+            
+            // Get VRF VNID values to check if they're different
+            const epg1VrfVnidText = document.getElementById('aciEpg1VrfVnid').textContent;
+            const epg2VrfVnidText = document.getElementById('aciEpg2VrfVnid').textContent;
+            const vrfVnidsAreDifferent = epg1VrfVnidText !== epg2VrfVnidText && epg1VrfVnidText !== '--' && epg2VrfVnidText !== '--';
+            
+            // Default entries for scope 3047425
+            if (scopeId === '3047425') {
+                rules.push({
+                    ruleId: generateAciRuleId(true),
+                    srcEpg: '0',
+                    dstEpg: '15',
+                    filterId: 'implicit',
+                    dir: 'uni-dir',
+                    operSt: 'enabled',
+                    scope: scopeId,
+                    name: '',
+                    action: 'deny,log',
+                    priority: 'any_vrf_any_deny(22)'
+                });
+                rules.push({
+                    ruleId: generateAciRuleId(true),
+                    srcEpg: '0',
+                    dstEpg: '0',
+                    filterId: 'implicit',
+                    dir: 'uni-dir',
+                    operSt: 'enabled',
+                    scope: scopeId,
+                    name: '',
+                    action: 'deny,log',
+                    priority: 'any_any_any(21)'
+                });
+                rules.push({
+                    ruleId: generateAciRuleId(true),
+                    srcEpg: '0',
+                    dstEpg: '0',
+                    filterId: 'implarp',
+                    dir: 'uni-dir',
+                    operSt: 'enabled',
+                    scope: scopeId,
+                    name: '',
+                    action: 'permit',
+                    priority: 'any_any_filter(17)'
+                });
+                rules.push({
+                    ruleId: generateAciRuleId(true),
+                    srcEpg: '0',
+                    dstEpg: '16386',
+                    filterId: 'implicit',
+                    dir: 'uni-dir',
+                    operSt: 'enabled',
+                    scope: scopeId,
+                    name: '',
+                    action: 'permit',
+                    priority: 'src_dst_any(9)'
+                });
+                
+                // Add implicit entries when VRF VNIDs are different
+                if (vrfVnidsAreDifferent) {
+                    // If EPG WEB (in this VRF) is Provider and EPG APP is Consumer
+                    // permit_override appears in provider's home VRF
+                    if (epg1Provider && epg2Consumer) {
+                        rules.push({
+                            ruleId: generateAciRuleId(true),
+                            srcEpg: epg1PctagText,  // Provider's PCTAG
+                            dstEpg: '14',
+                            filterId: 'implicit',
+                            dir: 'uni-dir',
+                            operSt: 'enabled',
+                            scope: scopeId,
+                            name: '',
+                            action: 'permit_override',
+                            priority: 'src_dst_any(9)'
+                        });
+                    }
+                    
+                    // If EPG WEB (in this VRF) is Consumer and EPG APP is Provider
+                    // deny,log appears in consumer's home VRF
+                    if (epg1Consumer && epg2Provider) {
+                        rules.push({
+                            ruleId: generateAciRuleId(true),
+                            srcEpg: epg2PctagText,  // Provider's PCTAG
+                            dstEpg: '0',
+                            filterId: 'implicit',
+                            dir: 'uni-dir',
+                            operSt: 'enabled',
+                            scope: scopeId,
+                            name: '',
+                            action: 'deny,log',
+                            priority: 'shsrc_any_any_deny(12)'
+                        });
+                    }
+                }
+                
+                // When VRFs are different, only show FilterID 8/9 entries in consumer's VRF
+                // For scope 3047425 (WEB's home VRF), only show if WEB is consumer (APP is provider)
+                // When VRFs are same, always show entries based on provider/consumer roles
+                const showEntriesInWebVrf = !vrfVnidsAreDifferent || epg1Consumer;
+                
+                // Add entries when EPG APP is Provider and EPG WEB is Consumer
+                // (These appear in WEB's VRF because WEB is the consumer)
+                if (showEntriesInWebVrf && epg2Provider && epg1Consumer && epg1PctagText !== '--' && epg2PctagText !== '--') {
+                    // Entry 1: SrcEPG = EPG APP PCTAG, DstEPG = EPG WEB PCTAG, FilterID = 9, Dir = uni-dir-ignore
+                    rules.push({
+                        ruleId: generateAciRuleId(false),
+                        srcEpg: epg2PctagText,
+                        dstEpg: epg1PctagText,
+                        filterId: '9',
+                        dir: 'uni-dir-ignore',
+                        operSt: 'enabled',
+                        scope: scopeId,
+                        name: 'Tenant_1:WEB_to_APP',
+                        action: filterAction,
+                        priority: 'fully_qual(7)'
+                    });
+                    
+                    // Entry 2: SrcEPG = EPG WEB PCTAG, DstEPG = EPG APP PCTAG, FilterID = 8, Dir = bi-dir
+                    rules.push({
+                        ruleId: generateAciRuleId(false),
+                        srcEpg: epg1PctagText,
+                        dstEpg: epg2PctagText,
+                        filterId: '8',
+                        dir: 'bi-dir',
+                        operSt: 'enabled',
+                        scope: scopeId,
+                        name: 'Tenant_1:WEB_to_APP',
+                        action: filterAction,
+                        priority: 'fully_qual(7)'
+                    });
+                }
+                
+                // Add opposite direction entries when both sides are Provider AND Consumer
+                if (showEntriesInWebVrf && epg1Provider && epg1Consumer && epg2Provider && epg2Consumer && epg1PctagText !== '--' && epg2PctagText !== '--') {
+                    // Entry 3: SrcEPG = EPG WEB PCTAG, DstEPG = EPG APP PCTAG, FilterID = 9, Dir = uni-dir-ignore
+                    rules.push({
+                        ruleId: generateAciRuleId(false),
+                        srcEpg: epg1PctagText,
+                        dstEpg: epg2PctagText,
+                        filterId: '9',
+                        dir: 'uni-dir-ignore',
+                        operSt: 'enabled',
+                        scope: scopeId,
+                        name: 'Tenant_1:WEB_to_APP',
+                        action: filterAction,
+                        priority: 'fully_qual(7)'
+                    });
+                    
+                    // Entry 4: SrcEPG = EPG APP PCTAG, DstEPG = EPG WEB PCTAG, FilterID = 8, Dir = bi-dir
+                    rules.push({
+                        ruleId: generateAciRuleId(false),
+                        srcEpg: epg2PctagText,
+                        dstEpg: epg1PctagText,
+                        filterId: '8',
+                        dir: 'bi-dir',
+                        operSt: 'enabled',
+                        scope: scopeId,
+                        name: 'Tenant_1:WEB_to_APP',
+                        action: filterAction,
+                        priority: 'fully_qual(7)'
+                    });
+                }
+            }
+            // Default entries for scope 2359297
+            else if (scopeId === '2359297') {
+                rules.push({
+                    ruleId: generateAciRuleId(true),
+                    srcEpg: '0',
+                    dstEpg: '15',
+                    filterId: 'implicit',
+                    dir: 'uni-dir',
+                    operSt: 'enabled',
+                    scope: scopeId,
+                    name: '',
+                    action: 'deny,log',
+                    priority: 'any_vrf_any_deny(22)'
+                });
+                rules.push({
+                    ruleId: generateAciRuleId(true),
+                    srcEpg: '0',
+                    dstEpg: '0',
+                    filterId: 'implarp',
+                    dir: 'uni-dir',
+                    operSt: 'enabled',
+                    scope: scopeId,
+                    name: '',
+                    action: 'permit',
+                    priority: 'any_any_filter(17)'
+                });
+                rules.push({
+                    ruleId: generateAciRuleId(true),
+                    srcEpg: '0',
+                    dstEpg: '0',
+                    filterId: 'implicit',
+                    dir: 'uni-dir',
+                    operSt: 'enabled',
+                    scope: scopeId,
+                    name: '',
+                    action: 'deny,log',
+                    priority: 'any_any_any(21)'
+                });
+                rules.push({
+                    ruleId: generateAciRuleId(true),
+                    srcEpg: '0',
+                    dstEpg: '49156',
+                    filterId: 'implicit',
+                    dir: 'uni-dir',
+                    operSt: 'enabled',
+                    scope: scopeId,
+                    name: '',
+                    action: 'permit',
+                    priority: 'src_dst_any(9)'
+                });
+                
+                // Add implicit entries when VRF VNIDs are different
+                if (vrfVnidsAreDifferent) {
+                    // If EPG APP is Consumer (receives from EPG WEB provider in VRF 3047425)
+                    // deny,log appears in consumer's home VRF
+                    if (epg2Consumer && epg1Provider) {
+                        rules.push({
+                            ruleId: generateAciRuleId(true),
+                            srcEpg: epg1PctagText,  // Provider's PCTAG
+                            dstEpg: '0',
+                            filterId: 'implicit',
+                            dir: 'uni-dir',
+                            operSt: 'enabled',
+                            scope: scopeId,
+                            name: '',
+                            action: 'deny,log',
+                            priority: 'shsrc_any_any_deny(12)'
+                        });
+                    }
+                    
+                    // If EPG APP (in this VRF) is Provider and EPG WEB is Consumer
+                    // permit_override appears in provider's home VRF
+                    if (epg2Provider && epg1Consumer) {
+                        rules.push({
+                            ruleId: generateAciRuleId(true),
+                            srcEpg: epg2PctagText,  // Provider's PCTAG
+                            dstEpg: '14',
+                            filterId: 'implicit',
+                            dir: 'uni-dir',
+                            operSt: 'enabled',
+                            scope: scopeId,
+                            name: '',
+                            action: 'permit_override',
+                            priority: 'src_dst_any(9)'
+                        });
+                    }
+                }
+                
+                // When VRFs are different, only show FilterID 8/9 entries in consumer's VRF
+                // For scope 2359297 (APP's home VRF), only show if APP is consumer (WEB is provider)
+                // When VRFs are same, always show entries based on provider/consumer roles
+                const showEntriesInAppVrf = !vrfVnidsAreDifferent || epg2Consumer;
+                
+                // Add entries when EPG WEB is Provider and EPG APP is Consumer
+                // (These appear in APP's VRF because APP is the consumer)
+                if (showEntriesInAppVrf && epg1Provider && epg2Consumer && epg1PctagText !== '--' && epg2PctagText !== '--') {
+                    // Entry 1: SrcEPG = EPG WEB PCTAG, DstEPG = EPG APP PCTAG, FilterID = 9, Dir = uni-dir-ignore
+                    rules.push({
+                        ruleId: generateAciRuleId(false),
+                        srcEpg: epg1PctagText,
+                        dstEpg: epg2PctagText,
+                        filterId: '9',
+                        dir: 'uni-dir-ignore',
+                        operSt: 'enabled',
+                        scope: scopeId,
+                        name: 'Tenant_1:WEB_to_APP',
+                        action: filterAction,
+                        priority: 'fully_qual(7)'
+                    });
+                    
+                    // Entry 2: SrcEPG = EPG APP PCTAG, DstEPG = EPG WEB PCTAG, FilterID = 8, Dir = bi-dir
+                    rules.push({
+                        ruleId: generateAciRuleId(false),
+                        srcEpg: epg2PctagText,
+                        dstEpg: epg1PctagText,
+                        filterId: '8',
+                        dir: 'bi-dir',
+                        operSt: 'enabled',
+                        scope: scopeId,
+                        name: 'Tenant_1:WEB_to_APP',
+                        action: filterAction,
+                        priority: 'fully_qual(7)'
+                    });
+                }
+                
+                // Add opposite direction entries when both sides are Provider AND Consumer
+                if (showEntriesInAppVrf && epg1Provider && epg1Consumer && epg2Provider && epg2Consumer && epg1PctagText !== '--' && epg2PctagText !== '--') {
+                    // Entry 3: SrcEPG = EPG APP PCTAG, DstEPG = EPG WEB PCTAG, FilterID = 9, Dir = uni-dir-ignore
+                    rules.push({
+                        ruleId: generateAciRuleId(false),
+                        srcEpg: epg2PctagText,
+                        dstEpg: epg1PctagText,
+                        filterId: '9',
+                        dir: 'uni-dir-ignore',
+                        operSt: 'enabled',
+                        scope: scopeId,
+                        name: 'Tenant_1:WEB_to_APP',
+                        action: filterAction,
+                        priority: 'fully_qual(7)'
+                    });
+                    
+                    // Entry 4: SrcEPG = EPG WEB PCTAG, DstEPG = EPG APP PCTAG, FilterID = 8, Dir = bi-dir
+                    rules.push({
+                        ruleId: generateAciRuleId(false),
+                        srcEpg: epg1PctagText,
+                        dstEpg: epg2PctagText,
+                        filterId: '8',
+                        dir: 'bi-dir',
+                        operSt: 'enabled',
+                        scope: scopeId,
+                        name: 'Tenant_1:WEB_to_APP',
+                        action: filterAction,
+                        priority: 'fully_qual(7)'
+                    });
+                }
+            }
+            
+            // Build table string
+            // Calculate max widths for dynamic column sizing
+            let maxNameWidth = 4; // Default minimum width (for "Name")
+            let maxDirWidth = 3; // Default minimum width (for "Dir")
+            let maxActionWidth = 6; // Default minimum width (for "Action")
+            let maxPriorityWidth = 8; // Default minimum width (for "Priority")
+            
+            rules.forEach(rule => {
+                if (rule.name.length > maxNameWidth) {
+                    maxNameWidth = rule.name.length;
+                }
+                if (rule.dir.length > maxDirWidth) {
+                    maxDirWidth = rule.dir.length;
+                }
+                if (rule.action.length > maxActionWidth) {
+                    maxActionWidth = rule.action.length;
+                }
+                if (rule.priority.length > maxPriorityWidth) {
+                    maxPriorityWidth = rule.priority.length;
+                }
+            });
+            
+            // Build header with dynamic column widths
+            const nameHeaderPadded = 'Name'.padEnd(maxNameWidth);
+            const nameBorder = '-'.repeat(maxNameWidth + 2); // +2 for spaces on either side
+            const dirHeaderPadded = 'Dir'.padEnd(maxDirWidth);
+            const dirBorder = '-'.repeat(maxDirWidth + 2);
+            const actionHeaderPadded = 'Action'.padEnd(maxActionWidth);
+            const actionBorder = '-'.repeat(maxActionWidth + 2);
+            const priorityHeaderPadded = 'Priority'.padEnd(maxPriorityWidth);
+            const priorityBorder = '-'.repeat(maxPriorityWidth + 2);
+            
+            let table = `Leaf# show zoning-rule scope ${scopeId}\n`;
+            table += `+---------+--------+--------+----------+${dirBorder}+---------+---------+${nameBorder}+${actionBorder}+${priorityBorder}+   \n`;
+            table += `| Rule ID | SrcEPG | DstEPG | FilterID | ${dirHeaderPadded} |  operSt |  Scope  | ${nameHeaderPadded} | ${actionHeaderPadded} | ${priorityHeaderPadded} |   \n`;
+            table += `+---------+--------+--------+----------+${dirBorder}+---------+---------+${nameBorder}+${actionBorder}+${priorityBorder}+   \n`;
+            
+            rules.forEach(rule => {
+                // Format each field with proper padding
+                const ruleIdStr = rule.ruleId.toString().padStart(7);
+                
+                // Color code SrcEPG and DstEPG based on PCTAG values
+                // Blue for EPG WEB PCTAGs, Green for EPG APP PCTAGs
+                const srcEpgValue = rule.srcEpg.toString();
+                const dstEpgValue = rule.dstEpg.toString();
+                
+                // Helper function to determine color based on PCTAG value
+                function getPctagColor(value) {
+                    // Class IDs should be white
+                    if (value === '16386' || value === '16388' || value === '49156') {
+                        return '#fff'; // White
+                    }
+                    // EPG WEB PCTAGs: 16393 (local), 5480 (global)
+                    if (value === epg1PctagText || value === '5480') {
+                        return '#3a7dc8'; // Blue
+                    }
+                    // EPG APP PCTAGs: 49161 (local), 5479 (global)
+                    if (value === epg2PctagText || value === '49161' || value === '5479') {
+                        return '#3ac880'; // Green
+                    }
+                    return null; // No color for other values
+                }
+                
+                const srcColor = getPctagColor(srcEpgValue);
+                const dstColor = getPctagColor(dstEpgValue);
+                
+                const srcEpgStr = srcColor ? 
+                    `<span style="color: ${srcColor};">${srcEpgValue.padStart(6)}</span>` : 
+                    srcEpgValue.padStart(6);
+                const dstEpgStr = dstColor ? 
+                    `<span style="color: ${dstColor};">${dstEpgValue.padStart(6)}</span>` : 
+                    dstEpgValue.padStart(6);
+                
+                const filterIdStr = rule.filterId.toString().padEnd(8);
+                const dirStr = rule.dir.toString().padEnd(maxDirWidth);
+                const operStStr = rule.operSt.toString().padEnd(7);
+                const scopeStr = rule.scope.toString().padEnd(7);
+                const nameStr = rule.name.toString().padEnd(maxNameWidth);
+                
+                // Color code the action based on the value
+                // Only apply color coding to WEB_to_APP contract entries, not default/implicit entries
+                const actionValue = rule.action.toString();
+                let actionStr;
+                
+                if (rule.name === 'Tenant_1:WEB_to_APP') {
+                    // WEB_to_APP contract entries - apply color based on action
+                    if (actionValue.includes('deny')) {
+                        // Red color for deny actions
+                        actionStr = `<span style="color: #ff0000;">${actionValue.padEnd(maxActionWidth)}</span>`;
+                    } else if (actionValue === 'permit' || actionValue === 'permit_override') {
+                        // Gold/yellow color for permit actions
+                        actionStr = `<span style="color: #ffd700;">${actionValue.padEnd(maxActionWidth)}</span>`;
+                    } else {
+                        actionStr = actionValue.padEnd(maxActionWidth);
+                    }
+                } else {
+                    // Default/implicit entries - no color coding, keep default text color
+                    actionStr = actionValue.padEnd(maxActionWidth);
+                }
+                
+                const priorityStr = rule.priority.toString().padEnd(maxPriorityWidth);
+                
+                table += `| ${ruleIdStr} | ${srcEpgStr} | ${dstEpgStr} | ${filterIdStr} | ${dirStr} | ${operStStr} | ${scopeStr} | ${nameStr} | ${actionStr} | ${priorityStr} |   \n`;
+            });
+            
+            table += `+---------+--------+--------+----------+${dirBorder}+---------+---------+${nameBorder}+${actionBorder}+${priorityBorder}+   \n`;
+            
+            return table;
+        }
+        
+        // Function to update zoning rule tables
+        function updateAciZoningTables() {
+            resetAciRuleIds();
+            
+            const table1 = document.getElementById('aciZoningTable1');
+            const table2 = document.getElementById('aciZoningTable2');
+            
+            if (table1) {
+                table1.innerHTML = buildAciZoningTable('3047425', 'VRF 1');
+            }
+            if (table2) {
+                table2.innerHTML = buildAciZoningTable('2359297', 'VRF 2');
+            }
+        }
+        
+        // Function to create grid lines across the entire backplane
+        function updateAciBackplaneGridLines() {
+            const gridContainer = document.getElementById('aciBackplaneGridLines');
+            if (!gridContainer) return;
+            
+            gridContainer.innerHTML = '';
+            
+            const containerRect = gridContainer.getBoundingClientRect();
+            
+            // Always create 7 horizontal grid lines at fixed positions
+            // 3 for bubble rows (Tenant, VRF, App Profile) and 4 for port boxes
+            
+            // Calculate positions based on the spanning bubbles and EPG boxes
+            const spanningBubbles = document.getElementById('aciSpanningBubbles');
+            const leftBubbles = document.getElementById('aciLeftBubbles');
+            
+            // Grid lines for bubble rows (top 3 positions)
+            const bubbleLinePositions = [];
+            
+            // Check if we have spanning bubbles
+            if (spanningBubbles && spanningBubbles.children.length > 0) {
+                // Use spanning bubble positions
+                Array.from(spanningBubbles.children).forEach(bubble => {
+                    const bubbleRect = bubble.getBoundingClientRect();
+                    const yPos = bubbleRect.top + bubbleRect.height / 2 - containerRect.top;
+                    bubbleLinePositions.push(yPos);
+                });
+            }
+            
+            // Check if we have left bubbles (non-spanning case)
+            if (leftBubbles && leftBubbles.children.length > 0) {
+                Array.from(leftBubbles.children).forEach(bubble => {
+                    const bubbleRect = bubble.getBoundingClientRect();
+                    const yPos = bubbleRect.top + bubbleRect.height / 2 - containerRect.top;
+                    bubbleLinePositions.push(yPos);
+                });
+            }
+            
+            // Create grid lines for bubbles (colored to match background)
+            bubbleLinePositions.forEach(yPos => {
+                const line = document.createElement('div');
+                line.style.cssText = `
+                    position: absolute;
+                    top: ${yPos}px;
+                    left: 0;
+                    right: 0;
+                    height: 1px;
+                    background-color: #1a1a1a;
+                `;
+                gridContainer.appendChild(line);
+            });
+            
+            // Create grid lines for port boxes (4 lines at fixed positions within EPG boxes)
+            const epgBox = document.querySelector('[style*="linear-gradient(135deg, #2d5aa0"]');
+            if (epgBox) {
+                const epgRect = epgBox.getBoundingClientRect();
+                const epgTop = epgRect.top - containerRect.top;
+                
+                // Port box positions (relative to EPG box): 10px, 56px from top, and 56px, 10px from bottom
+                const portPositions = [
+                    epgTop + 25,           // P:SRC position
+                    epgTop + 71,           // P:DST position
+                    epgTop + epgRect.height - 71,  // C:SRC position
+                    epgTop + epgRect.height - 25   // C:DST position
+                ];
+                
+                portPositions.forEach(yPos => {
+                    const line = document.createElement('div');
+                    line.style.cssText = `
+                        position: absolute;
+                        top: ${yPos}px;
+                        left: 0;
+                        right: 0;
+                        height: 1px;
+                        background-color: #1a1a1a;
+                    `;
+                    gridContainer.appendChild(line);
+                });
+            }
+        }
+
+        // ACI Contract Trainer - Update PCTag ranges based on scope and provider status
+        function updateAciPcTags() {
+            const scope = document.getElementById('aciScope').value;
+            const epg1Provider = document.getElementById('aciEpg1Provider').checked;
+            const epg2Provider = document.getElementById('aciEpg2Provider').checked;
+            const epg1Consumer = document.getElementById('aciEpg1Consumer').checked;
+            const epg2Consumer = document.getElementById('aciEpg2Consumer').checked;
+            const epg1PcTag = document.getElementById('aciEpg1PcTag');
+            const epg2PcTag = document.getElementById('aciEpg2PcTag');
+            
+            // PCTag is global (16-16385) only if scope is Global/Tenant AND
+            // EPG has Provider checked AND opposite EPG has Consumer checked (complete contract)
+            // Otherwise, PCTag is local (16386-65535)
+            
+            // EPG 1 - needs Provider on EPG1 AND Consumer on EPG2
+            if ((scope === 'global' || scope === 'tenant') && epg1Provider && epg2Consumer) {
+                epg1PcTag.textContent = '16-16385 (Global)';
+                epg1PcTag.style.color = '#a06db8'; // Darker purple for global
+            } else {
+                epg1PcTag.textContent = '16386-65535 (Local)';
+                epg1PcTag.style.color = '#ffffff'; // White for local
+            }
+            
+            // EPG 2 - needs Provider on EPG2 AND Consumer on EPG1
+            if ((scope === 'global' || scope === 'tenant') && epg2Provider && epg1Consumer) {
+                epg2PcTag.textContent = '16-16385 (Global)';
+                epg2PcTag.style.color = '#a06db8'; // Darker purple for global
+            } else {
+                epg2PcTag.textContent = '16386-65535 (Local)';
+                epg2PcTag.style.color = '#ffffff'; // White for local
+            }
+        }
+
+        // ACI Contract Trainer - Update arrow visibility based on EPG roles and Apply Both Directions
+        function updateAciArrowVisibility() {
+            const applyBothDirections = document.getElementById('aciApplyBothDirections').checked;
+            const epg1Provider = document.getElementById('aciEpg1Provider').checked;
+            const epg1Consumer = document.getElementById('aciEpg1Consumer').checked;
+            const epg2Provider = document.getElementById('aciEpg2Provider').checked;
+            const epg2Consumer = document.getElementById('aciEpg2Consumer').checked;
+            
+            const line1 = document.getElementById('aciLine1');
+            const line2 = document.getElementById('aciLine2');
+            const line3 = document.getElementById('aciLine3');
+            const line4 = document.getElementById('aciLine4');
+            const singleLine1 = document.getElementById('aciSingleLine1');
+            const singleLine2 = document.getElementById('aciSingleLine2');
+            const singleLine3 = document.getElementById('aciSingleLine3');
+            const singleLine4 = document.getElementById('aciSingleLine4');
+            const providerLabel = document.getElementById('aciProviderLabel');
+            const consumerLabel = document.getElementById('aciConsumerLabel');
+            const blueProviderLabel = document.getElementById('aciBlueProviderLabel');
+            const blueConsumerLabel = document.getElementById('aciBlueConsumerLabel');
+            
+            // Hide all lines by default
+            line1.style.display = 'none';
+            line2.style.display = 'none';
+            line3.style.display = 'none';
+            line4.style.display = 'none';
+            singleLine1.style.display = 'none';
+            singleLine2.style.display = 'none';
+            singleLine3.style.display = 'none';
+            singleLine4.style.display = 'none';
+            providerLabel.style.display = 'none';
+            consumerLabel.style.display = 'none';
+            blueProviderLabel.style.display = 'none';
+            blueConsumerLabel.style.display = 'none';
+            
+            // Show Provider and Consumer labels when EPG1 Consumer + EPG2 Provider (regardless of mode)
+            if (epg1Consumer && epg2Provider) {
+                providerLabel.style.display = 'block';
+                consumerLabel.style.display = 'block';
+            }
+            
+            // Show Blue Provider and Consumer labels when EPG1 Provider + EPG2 Consumer (regardless of mode)
+            if (epg1Provider && epg2Consumer) {
+                blueProviderLabel.style.display = 'block';
+                blueConsumerLabel.style.display = 'block';
+            }
+            
+            // Show lines based on mode
+            if (applyBothDirections) {
+                // Apply Both Directions Mode - show bidirectional arrows matching dual filter positions and colors
+                // Top two lines (blue): EPG1 Provider + EPG2 Consumer
+                if (epg1Provider && epg2Consumer) {
+                    singleLine1.style.display = 'block';
+                    singleLine2.style.display = 'block';
+                }
+                // Bottom two lines (green): EPG1 Consumer + EPG2 Provider
+                if (epg1Consumer && epg2Provider) {
+                    singleLine3.style.display = 'block';
+                    singleLine4.style.display = 'block';
+                }
+            } else {
+                // Dual Filter Mode - show color-coded arrows
+                // EPG 1 Provider, EPG 2 Consumer - Show blue lines (EPG1 -> EPG2)
+                if (epg1Provider && epg2Consumer) {
+                    line1.style.display = 'block'; // P:SRC -> C:DST
+                    line2.style.display = 'block'; // C:SRC -> P:DST (EPG2 to EPG1)
+                }
+                
+                // EPG 1 Consumer, EPG 2 Provider - Show green lines (EPG2 -> EPG1)
+                if (epg1Consumer && epg2Provider) {
+                    line3.style.display = 'block'; // P:SRC -> C:DST (EPG2 to EPG1)
+                    line4.style.display = 'block'; // C:SRC -> P:DST (EPG1 to EPG2)
+                }
+            }
+        }
+
+        // ACI Contract Trainer - Update port display boxes
+        function updateAciPortDisplay() {
+            // Port mapping
+            const portMap = {
+                'unspecified': '--',
+                'http': '80',
+                'https': '443',
+                'ssh': '22',
+                'ftp': '21',
+                'dns': '53'
+            };
+            
+            const applyBothDirections = document.getElementById('aciApplyBothDirections').checked;
+            
+            if (applyBothDirections) {
+                // Single Filter Chain mode - Show all 4 boxes per EPG
+                const srcPort = document.getElementById('aciSourcePort1').value;
+                const dstPort = document.getElementById('aciDestPort1').value;
+                const reverseFilterPorts = document.getElementById('aciReversePortFilter').checked;
+                
+                // Determine what ports go to P: boxes based on Reverse Filter Ports checkbox
+                const pSrcPortValue = reverseFilterPorts ? dstPort : srcPort;
+                const pDstPortValue = reverseFilterPorts ? srcPort : dstPort;
+                
+                // EPG 1 - Show all 4 boxes: P:SRC, C:DST, C:SRC, P:DST (top to bottom)
+                const epg1PSrcLabel = document.getElementById('aciEpg1ProviderSrcLabel');
+                epg1PSrcLabel.textContent = 'P:SRC';
+                epg1PSrcLabel.style.color = '#2d5aa0'; // Blue
+                document.getElementById('aciEpg1ProviderSrc').textContent = portMap[pSrcPortValue] || '--';
+                
+                const epg1PDstLabel = document.getElementById('aciEpg1ProviderDstLabel');
+                epg1PDstLabel.textContent = 'C:DST';
+                epg1PDstLabel.style.color = '#2d5aa0'; // Blue
+                document.getElementById('aciEpg1ProviderDstBox').style.display = 'block';
+                document.getElementById('aciEpg1ProviderDst').textContent = portMap[dstPort] || '--';
+                
+                const epg1CSrcLabel = document.getElementById('aciEpg1ConsumerSrcLabel');
+                epg1CSrcLabel.textContent = 'C:SRC';
+                epg1CSrcLabel.style.color = '#2d8659'; // Green
+                document.getElementById('aciEpg1ConsumerSrcBox').style.display = 'block';
+                document.getElementById('aciEpg1ConsumerSrc').textContent = portMap[srcPort] || '--';
+                
+                const epg1CDstLabel = document.getElementById('aciEpg1ConsumerDstLabel');
+                epg1CDstLabel.textContent = 'P:DST';
+                epg1CDstLabel.style.color = '#2d8659'; // Green
+                document.getElementById('aciEpg1ConsumerDst').textContent = portMap[pDstPortValue] || '--';
+                
+                // EPG 2 - Show all 4 boxes: P:DST, C:SRC, C:DST, P:SRC (top to bottom)
+                const epg2CDstLabel = document.getElementById('aciEpg2ConsumerDstLabel');
+                epg2CDstLabel.textContent = 'P:DST';
+                epg2CDstLabel.style.color = '#2d5aa0'; // Blue
+                document.getElementById('aciEpg2ConsumerDst').textContent = portMap[pDstPortValue] || '--';
+                document.getElementById('aciEpg2ConsumerDstBox').style.display = 'block';
+                
+                const epg2CSrcLabel = document.getElementById('aciEpg2ConsumerSrcLabel');
+                epg2CSrcLabel.textContent = 'C:SRC';
+                epg2CSrcLabel.style.color = '#2d5aa0'; // Blue
+                document.getElementById('aciEpg2ConsumerSrc').textContent = portMap[srcPort] || '--';
+                document.getElementById('aciEpg2ConsumerSrcBox').style.display = 'block';
+                
+                const epg2PDstLabel = document.getElementById('aciEpg2ProviderDstLabel');
+                epg2PDstLabel.textContent = 'C:DST';
+                epg2PDstLabel.style.color = '#2d8659'; // Green
+                document.getElementById('aciEpg2ProviderDst').textContent = portMap[dstPort] || '--';
+                document.getElementById('aciEpg2ProviderDstBox').style.display = 'block';
+                
+                const epg2PSrcLabel = document.getElementById('aciEpg2ProviderSrcLabel');
+                epg2PSrcLabel.textContent = 'P:SRC';
+                epg2PSrcLabel.style.color = '#2d8659'; // Green
+                document.getElementById('aciEpg2ProviderSrc').textContent = portMap[pSrcPortValue] || '--';
+                document.getElementById('aciEpg2ProviderSrcBox').style.display = 'block';
+            } else {
+                // Dual Filter Chain mode - Show all 4 boxes per EPG with directional colors
+                // Consumer to Provider (C2P) filter
+                const srcPortC2P = document.getElementById('aciSourcePortC2P').value;
+                const dstPortC2P = document.getElementById('aciDestPortC2P').value;
+                
+                // Provider to Consumer (P2C) filter
+                const srcPortP2C = document.getElementById('aciSourcePortP2C').value;
+                const dstPortP2C = document.getElementById('aciDestPortP2C').value;
+                
+                // EPG 1 - Boxes ordered: P:SRC, C:DST, C:SRC, P:DST (top to bottom)
+                const epg1PSrcLabel = document.getElementById('aciEpg1ProviderSrcLabel');
+                epg1PSrcLabel.textContent = 'P:SRC';
+                epg1PSrcLabel.style.color = '#2d5aa0'; // Blue
+                document.getElementById('aciEpg1ProviderSrc').textContent = portMap[srcPortP2C] || '--';
+                
+                const epg1PDstLabel = document.getElementById('aciEpg1ProviderDstLabel');
+                epg1PDstLabel.textContent = 'C:DST';
+                epg1PDstLabel.style.color = '#2d5aa0'; // Blue
+                document.getElementById('aciEpg1ProviderDstBox').style.display = 'block';
+                document.getElementById('aciEpg1ProviderDst').textContent = portMap[dstPortC2P] || '--';
+                
+                const epg1CSrcLabel = document.getElementById('aciEpg1ConsumerSrcLabel');
+                epg1CSrcLabel.textContent = 'C:SRC';
+                epg1CSrcLabel.style.color = '#2d8659'; // Green
+                document.getElementById('aciEpg1ConsumerSrcBox').style.display = 'block';
+                document.getElementById('aciEpg1ConsumerSrc').textContent = portMap[srcPortC2P] || '--';
+                
+                const epg1CDstLabel = document.getElementById('aciEpg1ConsumerDstLabel');
+                epg1CDstLabel.textContent = 'P:DST';
+                epg1CDstLabel.style.color = '#2d8659'; // Green
+                document.getElementById('aciEpg1ConsumerDst').textContent = portMap[dstPortP2C] || '--';
+                
+                // EPG 2 - Boxes ordered: P:DST, C:SRC, C:DST, P:SRC (top to bottom)
+                const epg2CDstLabel = document.getElementById('aciEpg2ConsumerDstLabel');
+                epg2CDstLabel.textContent = 'P:DST';
+                epg2CDstLabel.style.color = '#2d5aa0'; // Blue
+                document.getElementById('aciEpg2ConsumerDst').textContent = portMap[dstPortP2C] || '--';
+                document.getElementById('aciEpg2ConsumerDstBox').style.display = 'block';
+                
+                const epg2CSrcLabel = document.getElementById('aciEpg2ConsumerSrcLabel');
+                epg2CSrcLabel.textContent = 'C:SRC';
+                epg2CSrcLabel.style.color = '#2d5aa0'; // Blue
+                document.getElementById('aciEpg2ConsumerSrc').textContent = portMap[srcPortC2P] || '--';
+                document.getElementById('aciEpg2ConsumerSrcBox').style.display = 'block';
+                
+                const epg2PDstLabel = document.getElementById('aciEpg2ProviderDstLabel');
+                epg2PDstLabel.textContent = 'C:DST';
+                epg2PDstLabel.style.color = '#2d8659'; // Green
+                document.getElementById('aciEpg2ProviderDst').textContent = portMap[dstPortC2P] || '--';
+                document.getElementById('aciEpg2ProviderDstBox').style.display = 'block';
+                
+                const epg2PSrcLabel = document.getElementById('aciEpg2ProviderSrcLabel');
+                epg2PSrcLabel.textContent = 'P:SRC';
+                epg2PSrcLabel.style.color = '#2d8659'; // Green
+                document.getElementById('aciEpg2ProviderSrc').textContent = portMap[srcPortP2C] || '--';
+                document.getElementById('aciEpg2ProviderSrcBox').style.display = 'block';
+            }
+            
+            // Update port colors based on Action selection
+            updateAciPortColors();
+        }
+        
+        // ACI Contract Trainer - Update port colors based on Action (Permit/Deny)
+        function updateAciPortColors() {
+            const applyBothDirections = document.getElementById('aciApplyBothDirections').checked;
+            
+            // Get all port display elements
+            const epg1PSrc = document.getElementById('aciEpg1ProviderSrc');
+            const epg1PDst = document.getElementById('aciEpg1ProviderDst');
+            const epg1CSrc = document.getElementById('aciEpg1ConsumerSrc');
+            const epg1CDst = document.getElementById('aciEpg1ConsumerDst');
+            const epg2CDst = document.getElementById('aciEpg2ConsumerDst');
+            const epg2CSrc = document.getElementById('aciEpg2ConsumerSrc');
+            const epg2PDst = document.getElementById('aciEpg2ProviderDst');
+            const epg2PSrc = document.getElementById('aciEpg2ProviderSrc');
+            
+            if (applyBothDirections) {
+                // Single Filter Chain mode
+                const actionSelect = document.getElementById('aciAction1');
+                const action = actionSelect.value;
+                const color = action === 'deny' ? '#ff0000' : '#ffd700';
+                const textColor = action === 'deny' ? '#fff' : '#000';
+                
+                // Update select element appearance
+                actionSelect.style.backgroundColor = color;
+                actionSelect.style.color = textColor;
+                
+                // Set all port colors
+                epg1PSrc.style.color = color;
+                epg1PDst.style.color = color;
+                epg1CSrc.style.color = color;
+                epg1CDst.style.color = color;
+                epg2CDst.style.color = color;
+                epg2CSrc.style.color = color;
+                epg2PDst.style.color = color;
+                epg2PSrc.style.color = color;
+            } else {
+                // Dual Filter Chain mode
+                const actionSelectC2P = document.getElementById('aciActionC2P');
+                const actionSelectP2C = document.getElementById('aciActionP2C');
+                const actionC2P = actionSelectC2P.value;
+                const actionP2C = actionSelectP2C.value;
+                const colorC2P = actionC2P === 'deny' ? '#ff0000' : '#ffd700';
+                const colorP2C = actionP2C === 'deny' ? '#ff0000' : '#ffd700';
+                const textColorC2P = actionC2P === 'deny' ? '#fff' : '#000';
+                const textColorP2C = actionP2C === 'deny' ? '#fff' : '#000';
+                
+                // Update select element appearances
+                actionSelectC2P.style.backgroundColor = colorC2P;
+                actionSelectC2P.style.color = textColorC2P;
+                actionSelectP2C.style.backgroundColor = colorP2C;
+                actionSelectP2C.style.color = textColorP2C;
+                
+                // Consumer to Provider (C2P) affects ports displaying C2P filter values
+                // EPG1: C:DST (displays dstPortC2P), C:SRC (displays srcPortC2P)
+                // EPG2: C:SRC (displays srcPortC2P), C:DST (displays dstPortC2P)
+                epg1PDst.style.color = colorC2P;  // EPG1 C:DST box
+                epg1CSrc.style.color = colorC2P;  // EPG1 C:SRC box
+                epg2CSrc.style.color = colorC2P;  // EPG2 C:SRC box
+                epg2PDst.style.color = colorC2P;  // EPG2 C:DST box
+                
+                // Provider to Consumer (P2C) affects ports displaying P2C filter values
+                // EPG1: P:SRC (displays srcPortP2C), P:DST (displays dstPortP2C)
+                // EPG2: P:DST (displays dstPortP2C), P:SRC (displays srcPortP2C)
+                epg1PSrc.style.color = colorP2C;  // EPG1 P:SRC box
+                epg1CDst.style.color = colorP2C;  // EPG1 P:DST box
+                epg2CDst.style.color = colorP2C;  // EPG2 P:DST box
+                epg2PSrc.style.color = colorP2C;  // EPG2 P:SRC box
+            }
+        }
+
+        // ACI Contract Trainer - Update Reverse Port Filter based on Apply Both Directions
+        function updateAciReversePortFilter() {
+            const applyBothDirections = document.getElementById('aciApplyBothDirections');
+            const reversePortFilter = document.getElementById('aciReversePortFilter');
+            const singleFilterChain = document.getElementById('aciSingleFilterChain');
+            const dualFilterChains = document.getElementById('aciDualFilterChains');
+            
+            if (!applyBothDirections.checked) {
+                // If Apply Both Directions is unchecked, uncheck and disable Reverse Port Filter
+                reversePortFilter.checked = false;
+                reversePortFilter.disabled = true;
+                reversePortFilter.style.opacity = '0.5';
+                reversePortFilter.parentElement.style.opacity = '0.5';
+                reversePortFilter.parentElement.style.cursor = 'not-allowed';
+                
+                // Show dual filter chains, hide single filter chain
+                singleFilterChain.style.display = 'none';
+                dualFilterChains.style.display = 'block';
+            } else {
+                // If Apply Both Directions is checked, enable and check Reverse Port Filter
+                reversePortFilter.checked = true;
+                reversePortFilter.disabled = false;
+                reversePortFilter.style.opacity = '1';
+                reversePortFilter.parentElement.style.opacity = '1';
+                reversePortFilter.parentElement.style.cursor = 'pointer';
+                
+                // Show single filter chain, hide dual filter chains
+                singleFilterChain.style.display = 'block';
+                dualFilterChains.style.display = 'none';
+            }
+            
+            // Update port displays
+            updateAciPortDisplay();
+            
+            // Update arrow visibility
+            updateAciArrowVisibility();
+        }
+
+        // ACI Contract Trainer - Update port display when Reverse Filter Ports is toggled
+        function updateAciReverseFilterPorts() {
+            // Simply trigger the main display update which now handles all port mapping logic
+            updateAciPortDisplay();
+        }
+
+        // ACI Contract Trainer - Update field states based on selections
+        function updateAciFieldStates(entryNum = 1) {
+            // Handle both numbered entries and C2P/P2C entries
+            const suffix = (typeof entryNum === 'string') ? entryNum : entryNum.toString();
+            
+            const ethertype = document.getElementById('aciEthertype' + suffix);
+            const arpFlag = document.getElementById('aciArpFlag' + suffix);
+            const ipProtocolSelect = document.getElementById('aciIpProtocol' + suffix);
+            const icmpType = document.getElementById('aciIcmpType' + suffix);
+            const sourcePort = document.getElementById('aciSourcePort' + suffix);
+            const destPort = document.getElementById('aciDestPort' + suffix);
+            
+            if (!ethertype) return; // Exit if elements don't exist
+            
+            const ethertypeValue = ethertype.value;
+            const ipProtocol = ipProtocolSelect.value;
+
+            // Auto-reset logic: if IP Protocol changes to unspecified, reset ports to unspecified
+            if (ipProtocol === 'unspecified') {
+                if (sourcePort.value !== 'unspecified') {
+                    sourcePort.value = 'unspecified';
+                }
+                if (destPort.value !== 'unspecified') {
+                    destPort.value = 'unspecified';
+                }
+            }
+
+            // Auto-reset logic: if Ethertype changes from IP to unspecified, reset IP Protocol to unspecified
+            if (ethertypeValue === 'unspecified' && ipProtocolSelect.value !== 'unspecified') {
+                ipProtocolSelect.value = 'unspecified';
+            }
+
+            // Reset all to disabled first
+            arpFlag.disabled = true;
+            ipProtocolSelect.disabled = true;
+            icmpType.disabled = true;
+            sourcePort.disabled = true;
+            destPort.disabled = true;
+
+            // Apply conditional logic
+            if (ethertypeValue === 'arp') {
+                // ARP is disabled, so this shouldn't happen
+                arpFlag.disabled = false;
+            } else if (ethertypeValue === 'ip') {
+                // Enable IP Protocol when Ethertype is IP
+                ipProtocolSelect.disabled = false;
+
+                // ICMP is disabled, so ICMP Type should never be enabled
+
+                // Enable Src Port and Dst Port when IP Protocol is TCP or UDP
+                if (ipProtocol === 'tcp' || ipProtocol === 'udp') {
+                    sourcePort.disabled = false;
+                    destPort.disabled = false;
+                }
+            }
+
+            // Add visual styling for disabled fields
+            arpFlag.style.opacity = arpFlag.disabled ? '0.5' : '1';
+            ipProtocolSelect.style.opacity = ipProtocolSelect.disabled ? '0.5' : '1';
+            icmpType.style.opacity = icmpType.disabled ? '0.5' : '1';
+            sourcePort.style.opacity = sourcePort.disabled ? '0.5' : '1';
+            destPort.style.opacity = destPort.disabled ? '0.5' : '1';
+
+            // Update port display to reflect any auto-resets
+            if (suffix === '1' || suffix === 'C2P' || suffix === 'P2C') {
+                updateAciPortDisplay();
+            }
+        }
+
+        // ACI Contract Trainer - Add filter entry
+        let aciFilterCount = 1;
+        function addAciFilterEntry() {
+            if (aciFilterCount >= 3) return;
+            
+            aciFilterCount++;
+            const container = document.getElementById('aciFilterEntries');
+            const entryNum = aciFilterCount;
+            
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'aci-filter-entry';
+            entryDiv.setAttribute('data-entry', entryNum);
+            entryDiv.style.marginBottom = '10px';
+            entryDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(6, 1fr) 80px; gap: 8px; align-items: end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 12px;">Ethertype</label>
+                        <select id="aciEthertype${entryNum}" onchange="updateAciFieldStates(${entryNum})" style="padding: 6px; font-size: 13px;">
+                            <option value="unspecified">Unspecified</option>
+                            <option value="ip">IP</option>
+                            <option value="arp" disabled style="color: #888;">ARP</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 12px;">ARP Flag</label>
+                        <select id="aciArpFlag${entryNum}" disabled style="padding: 6px; font-size: 13px;">
+                            <option value="unspecified">Unspecified</option>
+                            <option value="arp-request">Request</option>
+                            <option value="arp-reply">Reply</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 12px;">IP Protocol</label>
+                        <select id="aciIpProtocol${entryNum}" onchange="updateAciFieldStates(${entryNum})" disabled style="padding: 6px; font-size: 13px;">
+                            <option value="unspecified">Unspecified</option>
+                            <option value="tcp">TCP</option>
+                            <option value="udp">UDP</option>
+                            <option value="icmp" disabled style="color: #888;">ICMP</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 12px;">ICMP Type</label>
+                        <select id="aciIcmpType${entryNum}" disabled style="padding: 6px; font-size: 13px;">
+                            <option value="unspecified">Unspecified</option>
+                            <option value="dst-unreach">Dst Unreach</option>
+                            <option value="echo">Echo</option>
+                            <option value="echo-reply">Echo Reply</option>
+                            <option value="time-exceeded">Time Exceed</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 12px;">Src Port</label>
+                        <select id="aciSourcePort${entryNum}" disabled style="padding: 6px; font-size: 13px;">
+                            <option value="unspecified">Unspecified</option>
+                            <option value="http">HTTP</option>
+                            <option value="https">HTTPS</option>
+                            <option value="ssh">SSH</option>
+                            <option value="ftp">FTP</option>
+                            <option value="dns">DNS</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 12px;">Dst Port</label>
+                        <select id="aciDestPort${entryNum}" disabled style="padding: 6px; font-size: 13px;">
+                            <option value="unspecified">Unspecified</option>
+                            <option value="http">HTTP</option>
+                            <option value="https">HTTPS</option>
+                            <option value="ssh">SSH</option>
+                            <option value="ftp">FTP</option>
+                            <option value="dns">DNS</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <button onclick="removeAciFilterEntry(${entryNum})" style="background-color: #aa0000; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(entryDiv);
+            updateAciFieldStates(entryNum);
+            
+            // Hide Add Entry button if we have 3 entries
+            if (aciFilterCount >= 3) {
+                document.getElementById('aciAddFilterBtn').style.display = 'none';
+            }
+        }
+
+        // ACI Contract Trainer - Remove filter entry
+        function removeAciFilterEntry(entryNum) {
+            const entry = document.querySelector(`.aci-filter-entry[data-entry="${entryNum}"]`);
+            if (entry) {
+                entry.remove();
+                aciFilterCount--;
+                
+                // Show Add Entry button if we have less than 3 entries
+                if (aciFilterCount < 3) {
+                    document.getElementById('aciAddFilterBtn').style.display = 'inline-block';
+                }
+            }
+        }
+        
+        // ==========================================
+        // Local AI Trainer
+        // ==========================================
+        let hcInterval = null;
+        let hcCurrentQuestion = null;
+        let hcCurrentAnswer = null;
+        // Register open-hook: resets ACI tool state and initializes settings each time the modal opens
+        window._toolOnOpen = window._toolOnOpen || {};
+        window._toolOnOpen['aciContractModal'] = function() {
+            // Initialize dashboard-level settings (DOMContentLoaded won't fire for dynamically loaded scripts)
+            if (typeof loadUserSettings === 'function') loadUserSettings();
+            if (typeof loadCircuitCredentialsList === 'function') loadCircuitCredentialsList();
+            if (typeof updateAskModeUI === 'function') updateAskModeUI();
+
+            aciFilterCount = 1;
+            const allEntries = document.querySelectorAll('.aci-filter-entry');
+            allEntries.forEach((entry, index) => { if (index > 0) entry.remove(); });
+            document.getElementById('aciApplyBothDirections').checked = true;
+            document.getElementById('aciReversePortFilter').checked = true;
+            document.getElementById('aciScope').value = 'global';
+            document.getElementById('aciEthertype1').value = 'unspecified';
+            document.getElementById('aciIpProtocol1').value = 'unspecified';
+            document.getElementById('aciSourcePort1').value = 'unspecified';
+            document.getElementById('aciDestPort1').value = 'unspecified';
+            document.getElementById('aciEthertypeC2P').value = 'unspecified';
+            document.getElementById('aciIpProtocolC2P').value = 'unspecified';
+            document.getElementById('aciSourcePortC2P').value = 'unspecified';
+            document.getElementById('aciDestPortC2P').value = 'unspecified';
+            document.getElementById('aciEthertypeP2C').value = 'unspecified';
+            document.getElementById('aciIpProtocolP2C').value = 'unspecified';
+            document.getElementById('aciSourcePortP2C').value = 'unspecified';
+            document.getElementById('aciDestPortP2C').value = 'unspecified';
+            updateAciFieldStates(1);
+            updateAciFieldStates('C2P');
+            updateAciFieldStates('P2C');
+            updateAciReversePortFilter();
+            updateAciArrowVisibility();
+            updateAciZoningTables();
+            setTimeout(() => { updateAciVisual(); updateAciPcTags(); }, 350);
+        };
+</script>

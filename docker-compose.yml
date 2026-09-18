@@ -1,0 +1,25 @@
+name: apptech
+services:
+  apptech:
+    container_name: apptech-prod
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    restart: unless-stopped
+    ports:
+      - "7996:7996"
+      - "7997:7997"
+    volumes:
+      - "./user_profiles:/app/user_profiles:rw"
+      - "./applications:/app/applications:rw"
+    dns:
+      - 64.102.6.247
+      - 173.36.131.10
+    networks:
+      - apptech
+
+networks:
+  apptech:
+    driver: bridge

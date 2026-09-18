@@ -1,0 +1,62 @@
+{
+  "username": "jokirkpa",
+  "password": "519fe96bce3119be3edd5cead151e762:446e02f6901d94416b1d10cfb2f2e23cc44c075c083fb411fda1d350cbf2ad69",
+  "tools": [
+    "subnetModal",
+    "tcpdumpModal",
+    "timeCalcModal",
+    "hexToIpModal",
+    "jsonPrettyModal",
+    "pingGraphModal",
+    "logAnalyzerModal",
+    "diffModal",
+    "aciContractModal",
+    "columnSorterModal",
+    "testTool1Modal",
+    "testTool2Modal",
+    "testTool3Modal",
+    "testTool4Modal",
+    "testTool5Modal",
+    "testTool6Modal",
+    "testTool7Modal",
+    "testTool8Modal",
+    "testTool9Modal",
+    "testTool10Modal",
+    "testTool11Modal",
+    "testTool12Modal",
+    "testTool13Modal",
+    "portSpeedModal",
+    "techzoneSearchBuddyModal",
+    "testTool18Modal",
+    "testTool17Modal",
+    "testTool16Modal",
+    "testTool15Modal",
+    "testTool14Modal"
+  ],
+  "created": "2026-07-23T11:09:08",
+  "dashboard_profile": {
+    "categories": [
+      {
+        "id": "misc",
+        "name": "Miscellaneous",
+        "color": "#2d5aa0"
+      }
+    ],
+    "assignments": {},
+    "order": [],
+    "columns": 6,
+    "activeTab": "misc"
+  },
+  "token_usage": {
+    "2026-07": {
+      "total": 10871,
+      "input": 8352,
+      "output": 2519
+    },
+    "2026-08": {
+      "total": 1549,
+      "input": 1235,
+      "output": 314
+    }
+  }
+}

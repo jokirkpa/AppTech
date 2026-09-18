@@ -1,0 +1,822 @@
+<!-- @tool {"id":"diffModal","name":"Diff Check","description":"Compare two text blocks and highlight differences line-by-line with navigation and search","author":"jokirkpa"} -->
+<!-- Diff Tool -->
+<style>
+    .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .diff-container { font-family: monospace; font-size: 13px; }
+    .diff-row { display: grid; grid-template-columns: 40px 1fr 1fr 40px; gap: 5px; align-items: stretch; }
+    .diff-row-left-focus { grid-template-columns: 40px 4fr 1fr 40px; }
+    .diff-row-right-focus { grid-template-columns: 40px 1fr 4fr 40px; }
+    .diff-row-headers { position: sticky; top: 0; z-index: 10; background-color: #2a2a2a; padding-bottom: 10px; }
+    .diff-column { background-color: #1a1a1a; border: 1px solid #555; border-radius: 5px; padding: 15px; }
+    .diff-column h4 { color: #069494; margin: 0; padding: 5px; }
+    .diff-line-numbers-header { background-color: #2a2a2a; border: 1px solid #555; border-radius: 5px; padding: 5px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .diff-expand-button { width: 30px; height: 30px; background-color: #1a3a6b; border: 2px solid #2d5aa0; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #069494; font-size: 16px; user-select: none; transition: all 0.2s; }
+    .diff-expand-button:hover { background-color: #2d5aa0; border-color: #069494; transform: scale(1.1); }
+    .diff-expand-button:active { background-color: #069494; border-color: #00ffcc; }
+    .diff-expand-button.expanded { background-color: #069494; border-color: #00ffcc; }
+    .diff-cell { background-color: #1a1a1a; border: 1px solid #555; padding: 2px 8px; min-height: 20px; line-height: 1.4; white-space: pre-wrap; word-break: normal; overflow-wrap: break-word; }
+    .diff-line-number { background-color: #2a2a2a; border: 1px solid #555; padding: 2px 5px; text-align: center; color: #069494; font-weight: bold; min-height: 20px; line-height: 1.4; user-select: none; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
+    .diff-line-number:hover { background-color: rgba(6, 148, 148, 0.2); }
+    .diff-line-number-gap { color: #555; cursor: default; }
+    .diff-line-highlighted { background-color: rgba(255, 255, 0, 0.3) !important; }
+    .diff-cell-changed { background-color: rgba(255, 0, 0, 0.2); border-left: 3px solid #ff0000; }
+    .diff-cell-gap { background-color: rgba(128, 0, 128, 0.3); color: #b19cd9; font-style: italic; }
+    .diff-gap-active { outline: 3px solid #b19cd9; outline-offset: -3px; }
+    .diff-search-highlight { background-color: rgba(0, 255, 0, 0.3); }
+    .diff-search-active { outline: 3px solid #66ff66; outline-offset: -3px; }
+    .diff-line-active { outline: 3px solid #069494; outline-offset: -3px; }
+</style>
+    <!-- Diff Check Modal -->
+    <div id="diffModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>🔍 Diff Check</h2>
+                <button class="close-btn" onclick="closeModal('diffModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="two-column">
+                    <div class="form-group">
+                        <label for="diffText1">Before</label>
+                        <textarea id="diffText1" placeholder="Paste before text here..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="diffText2">After</label>
+                        <textarea id="diffText2" placeholder="Paste after text here..."></textarea>
+                    </div>
+                </div>
+                <button class="btn" onclick="performDiffCheck()">Compare</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diff Result Modal (Full View) -->
+    <div id="diffResultModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 98%; width: 98%; max-height: 95vh;">
+            <div class="modal-header">
+                <h2 id="diffResultTitle">📊 Comparison Results</h2>
+                <button class="close-btn" onclick="closeModal('diffResultModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="diffNavButtons" style="display: none; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-evenly; align-items: flex-start; gap: 15px;">
+                        <!-- Zoom Section -->
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <h4 style="color: #069494; margin: 0; font-size: 14px; font-weight: bold;">Zoom</h4>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn" onclick="diffZoomOut()" style="padding: 8px 15px; background-color: #069494;">🔍−</button>
+                                <button class="btn" onclick="diffZoomIn()" style="padding: 8px 15px; background-color: #069494;">🔍+</button>
+                            </div>
+                            <span id="diffZoomPercent" style="color: #069494; font-size: 14px; font-weight: bold; min-width: 50px; text-align: center;">100%</span>
+                        </div>
+                        
+                        <!-- Divider -->
+                        <div style="width: 2px; height: 70px; background-color: #555; align-self: center;"></div>
+                        
+                        <!-- Differences Section -->
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <h4 style="color: #ff6666; margin: 0; font-size: 14px; font-weight: bold;">Differences</h4>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn" onclick="diffNavigateFirst()" style="padding: 8px 15px; background-color: #8B0000;" title="First Difference">▲ First</button>
+                                <button class="btn" onclick="diffNavigatePrevious()" style="padding: 8px 15px; background-color: #8B0000;">◀ Previous</button>
+                                <button class="btn" onclick="diffNavigateNext()" style="padding: 8px 15px; background-color: #8B0000;">Next ▶</button>
+                                <button class="btn" onclick="diffNavigateLast()" style="padding: 8px 15px; background-color: #8B0000;" title="Last Difference">Last ▼</button>
+                            </div>
+                            <span id="diffNavCounter" style="color: #ff6666; font-size: 14px; font-weight: bold;"></span>
+                        </div>
+                        
+                        <!-- Divider -->
+                        <div style="width: 2px; height: 70px; background-color: #555; align-self: center;"></div>
+                        
+                        <!-- Gaps Section -->
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <h4 style="color: #b19cd9; margin: 0; font-size: 14px; font-weight: bold;">Gaps</h4>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn" onclick="gapNavigateFirst()" style="padding: 8px 15px; background-color: #3a2a4a;" title="First Gap">▲ First</button>
+                                <button class="btn" onclick="gapNavigatePrevious()" style="padding: 8px 15px; background-color: #3a2a4a;">◀ Previous</button>
+                                <button class="btn" onclick="gapNavigateNext()" style="padding: 8px 15px; background-color: #3a2a4a;">Next ▶</button>
+                                <button class="btn" onclick="gapNavigateLast()" style="padding: 8px 15px; background-color: #3a2a4a;" title="Last Gap">Last ▼</button>
+                            </div>
+                            <span id="gapNavCounter" style="color: #b19cd9; font-size: 14px; font-weight: bold;"></span>
+                        </div>
+                        
+                        <!-- Divider -->
+                        <div style="width: 2px; height: 70px; background-color: #555; align-self: center;"></div>
+                        
+                        <!-- Search Section -->
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <h4 style="color: #66ff66; margin: 0; font-size: 14px; font-weight: bold;">Search</h4>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn" onclick="searchNavigateFirst()" style="padding: 8px 15px; background-color: #2d5a2d;" title="First Result">▲ First</button>
+                                <button class="btn" onclick="searchNavigatePrevious()" style="padding: 8px 15px; background-color: #2d5a2d;">◀ Previous</button>
+                                <button class="btn" onclick="searchNavigateNext()" style="padding: 8px 15px; background-color: #2d5a2d;">Next ▶</button>
+                                <button class="btn" onclick="searchNavigateLast()" style="padding: 8px 15px; background-color: #2d5a2d;" title="Last Result">Last ▼</button>
+                                <input type="text" id="diffSearchInput" placeholder="Search..." style="padding: 8px 10px; background-color: #1a1a1a; color: white; border: 1px solid #555; border-radius: 3px; width: 150px;" onkeyup="performDiffSearch()" />
+                            </div>
+                            <span id="searchNavCounter" style="color: #66ff66; font-size: 14px; font-weight: bold;"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="diffResultContent"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+        // Diff Check
+        const diffZoomLevels = [55, 70, 85, 100, 115, 130, 145];
+        let diffCurrentZoomIndex = 3; // Start at 100% (index 3)
+        let diffFontSize = 13; // Default font size in pixels (100%)
+        let diffExpandMode = 'none'; // 'none', 'left', 'right'
+
+        function performDiffCheck() {
+            const text1 = document.getElementById('diffText1').value;
+            const text2 = document.getElementById('diffText2').value;
+
+            if (!text1 && !text2) {
+                alert('Please enter text in both fields');
+                return;
+            }
+
+            // Reset font size and layout when starting a new comparison
+            diffCurrentZoomIndex = 3; // 100%
+            diffFontSize = 13;
+            diffExpandMode = 'none';
+            showDiffComparison(text1, text2);
+        }
+
+        function diffZoomIn() {
+            if (diffCurrentZoomIndex < diffZoomLevels.length - 1) {
+                diffCurrentZoomIndex++;
+                diffFontSize = 13 * (diffZoomLevels[diffCurrentZoomIndex] / 100);
+                applyDiffFontSize();
+                updateDiffZoomPercent();
+            }
+        }
+
+        function diffZoomOut() {
+            if (diffCurrentZoomIndex > 0) {
+                diffCurrentZoomIndex--;
+                diffFontSize = 13 * (diffZoomLevels[diffCurrentZoomIndex] / 100);
+                applyDiffFontSize();
+                updateDiffZoomPercent();
+            }
+        }
+
+        function applyDiffFontSize() {
+            const diffContainer = document.querySelector('#diffScrollContainer .diff-container');
+            if (diffContainer) {
+                diffContainer.style.fontSize = diffFontSize + 'px';
+            }
+        }
+
+        function updateDiffZoomPercent() {
+            const percentElement = document.getElementById('diffZoomPercent');
+            if (percentElement) {
+                percentElement.textContent = diffZoomLevels[diffCurrentZoomIndex] + '%';
+            }
+        }
+
+        function toggleDiffExpand(side) {
+            // Toggle expand mode
+            if (diffExpandMode === side) {
+                // If clicking the already expanded side, return to normal
+                diffExpandMode = 'none';
+            } else {
+                // Expand the clicked side
+                diffExpandMode = side;
+            }
+            
+            // Update all row layouts
+            const rows = document.querySelectorAll('.diff-row');
+            rows.forEach(row => {
+                row.classList.remove('diff-row-left-focus', 'diff-row-right-focus');
+                if (diffExpandMode === 'left') {
+                    row.classList.add('diff-row-left-focus');
+                } else if (diffExpandMode === 'right') {
+                    row.classList.add('diff-row-right-focus');
+                }
+            });
+            
+            // Update button states
+            const leftButton = document.getElementById('expandLeftButton');
+            const rightButton = document.getElementById('expandRightButton');
+            if (leftButton && rightButton) {
+                leftButton.classList.remove('expanded');
+                rightButton.classList.remove('expanded');
+                
+                if (diffExpandMode === 'left') {
+                    leftButton.classList.add('expanded');
+                } else if (diffExpandMode === 'right') {
+                    rightButton.classList.add('expanded');
+                }
+            }
+        }
+
+        function showDiffComparison(text1, text2) {
+            const lines1 = text1.split('\n');
+            const lines2 = text2.split('\n');
+            
+            const alignedPairs = alignLines(lines1, lines2);
+            
+            let rowsHtml = '';
+            let diffIndex = 0;
+
+            // Build header row
+            const headerRow = `
+                <div class="diff-row diff-row-headers">
+                    <div class="diff-line-numbers-header">
+                        <h4 style="color: #069494; margin: 0; font-size: 12px;">#</h4>
+                        <div class="diff-expand-button" id="expandLeftButton" onclick="toggleDiffExpand('left')" title="Expand/Collapse Before">
+                            🔍
+                        </div>
+                    </div>
+                    <div class="diff-column"><h4>Before</h4></div>
+                    <div class="diff-column"><h4>After</h4></div>
+                    <div class="diff-line-numbers-header">
+                        <h4 style="color: #069494; margin: 0; font-size: 12px;">#</h4>
+                        <div class="diff-expand-button" id="expandRightButton" onclick="toggleDiffExpand('right')" title="Expand/Collapse After">
+                            🔍
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Build content rows with independent line numbers
+            let leftLineNum = 0;
+            let rightLineNum = 0;
+            let gapIndex = 0;
+            
+            // Arrays to map row index to diff/gap index
+            const rowToDiffMap = [];
+            const rowToGapMap = [];
+            
+            alignedPairs.forEach((pair, index) => {
+                const line1 = pair.left;
+                const line2 = pair.right;
+                const isDifferent = line1 !== line2;
+                const isGap = line1 === null || line2 === null;
+                
+                if (isDifferent) {
+                    diffIndex++;
+                }
+                
+                if (isGap) {
+                    gapIndex++;
+                }
+                
+                // Store mappings
+                rowToDiffMap[index] = isDifferent ? diffIndex : 0;
+                rowToGapMap[index] = isGap ? gapIndex : 0;
+                
+                let leftCell, rightCell, leftNumberCell, rightNumberCell;
+                
+                // Build left cell and number
+                if (line1 === null) {
+                    leftCell = '<div class="diff-cell diff-cell-gap" data-diff-index="' + diffIndex + '" data-gap-index="' + gapIndex + '" data-row-index="' + index + '">--- gap ---</div>';
+                    leftNumberCell = '<div class="diff-line-number diff-line-number-gap">-</div>';
+                } else {
+                    leftLineNum++;
+                    if (line1 === line2) {
+                        leftCell = '<div class="diff-cell" data-row-index="' + index + '">' + escapeHtml(line1) + '</div>';
+                    } else {
+                        leftCell = '<div class="diff-cell diff-cell-changed" data-diff-index="' + diffIndex + '" data-row-index="' + index + '">' + escapeHtml(line1) + '</div>';
+                    }
+                    leftNumberCell = '<div class="diff-line-number" onclick="highlightDiffLine(' + index + ')">' + leftLineNum + '</div>';
+                }
+                
+                // Build right cell and number
+                if (line2 === null) {
+                    rightCell = '<div class="diff-cell diff-cell-gap" data-diff-index="' + diffIndex + '" data-gap-index="' + gapIndex + '" data-row-index="' + index + '">--- gap ---</div>';
+                    rightNumberCell = '<div class="diff-line-number diff-line-number-gap">-</div>';
+                } else {
+                    rightLineNum++;
+                    if (line1 === line2) {
+                        rightCell = '<div class="diff-cell" data-row-index="' + index + '">' + escapeHtml(line2) + '</div>';
+                    } else {
+                        rightCell = '<div class="diff-cell diff-cell-changed" data-diff-index="' + diffIndex + '" data-row-index="' + index + '">' + escapeHtml(line2) + '</div>';
+                    }
+                    rightNumberCell = '<div class="diff-line-number" onclick="highlightDiffLine(' + index + ')">' + rightLineNum + '</div>';
+                }
+                
+                rowsHtml += '<div class="diff-row">' + leftNumberCell + leftCell + rightCell + rightNumberCell + '</div>';
+            });
+
+            window.diffTotalCount = diffIndex;
+            window.diffCurrentIndex = 0;
+            window.gapTotalCount = gapIndex;
+            window.gapCurrentIndex = 0;
+            window.rowToDiffMap = rowToDiffMap;
+            window.rowToGapMap = rowToGapMap;
+            window.lastSelectedRow = -1;
+            window.searchResults = [];
+            window.searchCurrentIndex = 0;
+
+            const resultHtml = `
+                <div style="max-height: calc(95vh - 200px); overflow-y: auto; border: 1px solid #555; border-radius: 5px;" id="diffScrollContainer">
+                    <div class="diff-container" style="font-size: ${diffFontSize}px;">
+                        ${headerRow}
+                        ${rowsHtml}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('diffResultTitle').textContent = '📊 Comparison Results';
+            document.getElementById('diffResultContent').innerHTML = resultHtml;
+            
+            // Always show navigation buttons (they contain zoom controls)
+            const navButtons = document.getElementById('diffNavButtons');
+            navButtons.style.display = 'block';
+            
+            // Update counter and zoom display
+            if (window.diffTotalCount > 0) {
+                diffUpdateCounter();
+            } else {
+                document.getElementById('diffNavCounter').textContent = 'No differences found';
+            }
+            
+            if (window.gapTotalCount > 0) {
+                gapUpdateCounter();
+            } else {
+                document.getElementById('gapNavCounter').textContent = 'No gaps found';
+            }
+            
+            // Initialize search
+            document.getElementById('searchNavCounter').textContent = '0 results';
+            
+            // Initialize zoom percentage display
+            updateDiffZoomPercent();
+            
+            openModal('diffResultModal');
+        }
+
+        function diffNavigateNext() {
+            // Start from the current position or last selected row
+            let startRow = -1;
+            if (window.diffCurrentIndex > 0) {
+                // Find the row of the current diff
+                startRow = window.rowToDiffMap.indexOf(window.diffCurrentIndex);
+            } else if (window.lastSelectedRow >= 0) {
+                startRow = window.lastSelectedRow;
+            }
+            
+            // Find next difference after startRow
+            for (let i = startRow + 1; i < window.rowToDiffMap.length; i++) {
+                if (window.rowToDiffMap[i] > 0) {
+                    window.diffCurrentIndex = window.rowToDiffMap[i];
+                    diffHighlightCurrent();
+                    return;
+                }
+            }
+            
+            // If no next found and we haven't started, go to first
+            if (window.diffCurrentIndex === 0 && window.diffTotalCount > 0) {
+                window.diffCurrentIndex = 1;
+                diffHighlightCurrent();
+            }
+        }
+
+        function diffNavigatePrevious() {
+            // Start from the current position or last selected row
+            let startRow = -1;
+            if (window.diffCurrentIndex > 0) {
+                // Find the row of the current diff
+                startRow = window.rowToDiffMap.indexOf(window.diffCurrentIndex);
+            } else if (window.lastSelectedRow >= 0) {
+                startRow = window.lastSelectedRow;
+            } else {
+                startRow = window.rowToDiffMap.length;
+            }
+            
+            // Find previous difference before startRow
+            for (let i = startRow - 1; i >= 0; i--) {
+                if (window.rowToDiffMap[i] > 0) {
+                    window.diffCurrentIndex = window.rowToDiffMap[i];
+                    diffHighlightCurrent();
+                    return;
+                }
+            }
+        }
+
+        function diffNavigateFirst() {
+            if (window.diffTotalCount > 0) {
+                window.diffCurrentIndex = 1;
+                diffHighlightCurrent();
+            }
+        }
+
+        function diffNavigateLast() {
+            if (window.diffTotalCount > 0) {
+                window.diffCurrentIndex = window.diffTotalCount;
+                diffHighlightCurrent();
+            }
+        }
+
+        function diffHighlightCurrent() {
+            // Remove previous active highlight
+            document.querySelectorAll('.diff-line-active').forEach(el => {
+                el.classList.remove('diff-line-active');
+            });
+            
+            // Highlight current difference
+            const currentDiffs = document.querySelectorAll(`[data-diff-index="${window.diffCurrentIndex}"]`);
+            currentDiffs.forEach(el => {
+                el.classList.add('diff-line-active');
+                // Update last selected row
+                if (el.dataset.rowIndex !== undefined) {
+                    window.lastSelectedRow = parseInt(el.dataset.rowIndex);
+                }
+            });
+            
+            // Scroll to current difference
+            if (currentDiffs.length > 0) {
+                const container = document.getElementById('diffScrollContainer');
+                const firstDiff = currentDiffs[0];
+                const containerRect = container.getBoundingClientRect();
+                const diffRect = firstDiff.getBoundingClientRect();
+                const scrollTop = container.scrollTop + (diffRect.top - containerRect.top) - (containerRect.height / 2) + (diffRect.height / 2);
+                container.scrollTo({ top: scrollTop, behavior: 'smooth' });
+            }
+            
+            diffUpdateCounter();
+        }
+
+        function diffUpdateCounter() {
+            const counter = document.getElementById('diffNavCounter');
+            if (window.diffCurrentIndex > 0) {
+                counter.textContent = `Difference ${window.diffCurrentIndex} of ${window.diffTotalCount}`;
+            } else {
+                counter.textContent = `${window.diffTotalCount} difference${window.diffTotalCount !== 1 ? 's' : ''} found`;
+            }
+        }
+
+        function gapNavigateNext() {
+            // Start from the current position or last selected row
+            let startRow = -1;
+            if (window.gapCurrentIndex > 0) {
+                // Find the row of the current gap
+                startRow = window.rowToGapMap.indexOf(window.gapCurrentIndex);
+            } else if (window.lastSelectedRow >= 0) {
+                startRow = window.lastSelectedRow;
+            }
+            
+            // Find next gap after startRow
+            for (let i = startRow + 1; i < window.rowToGapMap.length; i++) {
+                if (window.rowToGapMap[i] > 0) {
+                    window.gapCurrentIndex = window.rowToGapMap[i];
+                    gapHighlightCurrent();
+                    return;
+                }
+            }
+            
+            // If no next found and we haven't started, go to first
+            if (window.gapCurrentIndex === 0 && window.gapTotalCount > 0) {
+                window.gapCurrentIndex = 1;
+                gapHighlightCurrent();
+            }
+        }
+
+        function gapNavigatePrevious() {
+            // Start from the current position or last selected row
+            let startRow = -1;
+            if (window.gapCurrentIndex > 0) {
+                // Find the row of the current gap
+                startRow = window.rowToGapMap.indexOf(window.gapCurrentIndex);
+            } else if (window.lastSelectedRow >= 0) {
+                startRow = window.lastSelectedRow;
+            } else {
+                startRow = window.rowToGapMap.length;
+            }
+            
+            // Find previous gap before startRow
+            for (let i = startRow - 1; i >= 0; i--) {
+                if (window.rowToGapMap[i] > 0) {
+                    window.gapCurrentIndex = window.rowToGapMap[i];
+                    gapHighlightCurrent();
+                    return;
+                }
+            }
+        }
+
+        function gapNavigateFirst() {
+            if (window.gapTotalCount > 0) {
+                window.gapCurrentIndex = 1;
+                gapHighlightCurrent();
+            }
+        }
+
+        function gapNavigateLast() {
+            if (window.gapTotalCount > 0) {
+                window.gapCurrentIndex = window.gapTotalCount;
+                gapHighlightCurrent();
+            }
+        }
+
+        function gapHighlightCurrent() {
+            // Remove previous gap highlights
+            document.querySelectorAll('.diff-gap-active').forEach(el => {
+                el.classList.remove('diff-gap-active');
+            });
+            
+            // Highlight current gap
+            const currentGaps = document.querySelectorAll(`[data-gap-index="${window.gapCurrentIndex}"]`);
+            currentGaps.forEach(el => {
+                el.classList.add('diff-gap-active');
+                // Update last selected row
+                if (el.dataset.rowIndex !== undefined) {
+                    window.lastSelectedRow = parseInt(el.dataset.rowIndex);
+                }
+            });
+            
+            // Scroll to current gap
+            if (currentGaps.length > 0) {
+                const container = document.getElementById('diffScrollContainer');
+                const firstGap = currentGaps[0];
+                const containerRect = container.getBoundingClientRect();
+                const gapRect = firstGap.getBoundingClientRect();
+                const scrollTop = container.scrollTop + (gapRect.top - containerRect.top) - (containerRect.height / 2) + (gapRect.height / 2);
+                container.scrollTo({ top: scrollTop, behavior: 'smooth' });
+            }
+            
+            gapUpdateCounter();
+        }
+
+        function gapUpdateCounter() {
+            const counter = document.getElementById('gapNavCounter');
+            if (window.gapCurrentIndex > 0) {
+                counter.textContent = `Gap ${window.gapCurrentIndex} of ${window.gapTotalCount}`;
+            } else {
+                counter.textContent = `${window.gapTotalCount} gap${window.gapTotalCount !== 1 ? 's' : ''} found`;
+            }
+        }
+
+        function performDiffSearch() {
+            const searchInput = document.getElementById('diffSearchInput');
+            const searchTerm = searchInput.value.trim();
+            
+            // Clear previous search highlights and restore original content
+            document.querySelectorAll('.diff-search-highlight, .diff-search-active').forEach(el => {
+                el.classList.remove('diff-search-highlight', 'diff-search-active');
+                // Restore original content if it was stored
+                if (el.dataset.originalContent !== undefined) {
+                    el.textContent = el.dataset.originalContent;
+                    delete el.dataset.originalContent;
+                }
+            });
+            
+            window.searchResults = [];
+            window.searchCurrentIndex = 0;
+            
+            if (!searchTerm) {
+                document.getElementById('searchNavCounter').textContent = '0 results';
+                return;
+            }
+            
+            // Search through all diff cells
+            const allCells = document.querySelectorAll('.diff-cell');
+            allCells.forEach((cell, index) => {
+                const text = cell.textContent;
+                const lowerText = text.toLowerCase();
+                const lowerSearchTerm = searchTerm.toLowerCase();
+                
+                if (lowerText.includes(lowerSearchTerm)) {
+                    // Store original content
+                    cell.dataset.originalContent = text;
+                    
+                    // Highlight matching text with orange color
+                    const regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+                    const highlightedText = text.replace(regex, '<span style="color: #ff8c00; font-weight: bold; background-color: rgba(255, 140, 0, 0.2);">$1</span>');
+                    cell.innerHTML = highlightedText;
+                    
+                    cell.classList.add('diff-search-highlight');
+                    window.searchResults.push(cell);
+                }
+            });
+            
+            searchUpdateCounter();
+        }
+
+        function searchNavigateNext() {
+            if (window.searchResults.length === 0) return;
+            
+            if (window.searchCurrentIndex < window.searchResults.length) {
+                window.searchCurrentIndex++;
+            } else {
+                window.searchCurrentIndex = 1;
+            }
+            
+            searchHighlightCurrent();
+        }
+
+        function searchNavigatePrevious() {
+            if (window.searchResults.length === 0) return;
+            
+            if (window.searchCurrentIndex > 1) {
+                window.searchCurrentIndex--;
+            } else {
+                window.searchCurrentIndex = window.searchResults.length;
+            }
+            
+            searchHighlightCurrent();
+        }
+
+        function searchNavigateFirst() {
+            if (window.searchResults.length > 0) {
+                window.searchCurrentIndex = 1;
+                searchHighlightCurrent();
+            }
+        }
+
+        function searchNavigateLast() {
+            if (window.searchResults.length > 0) {
+                window.searchCurrentIndex = window.searchResults.length;
+                searchHighlightCurrent();
+            }
+        }
+
+        function searchHighlightCurrent() {
+            // Remove previous active highlight
+            document.querySelectorAll('.diff-search-active').forEach(el => {
+                el.classList.remove('diff-search-active');
+            });
+            
+            if (window.searchCurrentIndex > 0 && window.searchCurrentIndex <= window.searchResults.length) {
+                const currentResult = window.searchResults[window.searchCurrentIndex - 1];
+                currentResult.classList.add('diff-search-active');
+                
+                // Scroll to result
+                const container = document.getElementById('diffScrollContainer');
+                const containerRect = container.getBoundingClientRect();
+                const resultRect = currentResult.getBoundingClientRect();
+                const scrollTop = container.scrollTop + (resultRect.top - containerRect.top) - (containerRect.height / 2) + (resultRect.height / 2);
+                container.scrollTo({ top: scrollTop, behavior: 'smooth' });
+            }
+            
+            searchUpdateCounter();
+        }
+
+        function searchUpdateCounter() {
+            const counter = document.getElementById('searchNavCounter');
+            if (window.searchCurrentIndex > 0) {
+                counter.textContent = `Result ${window.searchCurrentIndex} of ${window.searchResults.length}`;
+            } else {
+                counter.textContent = `${window.searchResults.length} result${window.searchResults.length !== 1 ? 's' : ''}`;
+            }
+        }
+
+        function highlightDiffLine(rowIndex) {
+            // Track the last selected row for context-aware navigation
+            window.lastSelectedRow = rowIndex;
+            
+            // Remove any previous highlights
+            document.querySelectorAll('.diff-line-highlighted').forEach(el => {
+                el.classList.remove('diff-line-highlighted');
+            });
+
+            // Get the specific row
+            const rows = document.querySelectorAll('.diff-row:not(.diff-row-headers)');
+            if (rows[rowIndex]) {
+                const row = rows[rowIndex];
+                // Highlight left cell, number cell, and right cell
+                const cells = row.querySelectorAll('.diff-cell, .diff-line-number');
+                cells.forEach(cell => {
+                    cell.classList.add('diff-line-highlighted');
+                });
+            }
+        }
+
+        function extractNumbers(text) {
+            // Extract all numbers (including decimals) from text
+            const matches = text.match(/\d+\.?\d*/g);
+            return matches || [];
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Smart line alignment algorithm for diff
+        function alignLines(lines1, lines2) {
+            const result = [];
+            let i = 0; // pointer for lines1
+            let j = 0; // pointer for lines2
+            
+            while (i < lines1.length || j < lines2.length) {
+                // If we've exhausted one side, just add the rest with gaps
+                if (i >= lines1.length) {
+                    result.push({ left: null, right: lines2[j] });
+                    j++;
+                    continue;
+                }
+                
+                if (j >= lines2.length) {
+                    result.push({ left: lines1[i], right: null });
+                    i++;
+                    continue;
+                }
+                
+                const line1 = lines1[i];
+                const line2 = lines2[j];
+                
+                // If lines match exactly, pair them
+                if (line1 === line2) {
+                    result.push({ left: line1, right: line2 });
+                    i++;
+                    j++;
+                    continue;
+                }
+                
+                // Check if line1 matches any upcoming line in lines2 (look ahead up to 5 lines)
+                let matchFoundInLines2 = -1;
+                for (let k = j; k < Math.min(j + 5, lines2.length); k++) {
+                    if (line1 === lines2[k]) {
+                        matchFoundInLines2 = k;
+                        break;
+                    }
+                }
+                
+                // Check if line2 matches any upcoming line in lines1 (look ahead up to 5 lines)
+                let matchFoundInLines1 = -1;
+                for (let k = i; k < Math.min(i + 5, lines1.length); k++) {
+                    if (line2 === lines1[k]) {
+                        matchFoundInLines1 = k;
+                        break;
+                    }
+                }
+                
+                // Decide which match to use (prefer closer matches)
+                if (matchFoundInLines2 !== -1 && (matchFoundInLines1 === -1 || (matchFoundInLines2 - j) <= (matchFoundInLines1 - i))) {
+                    // Line1 matches something ahead in lines2, so add gaps in lines2
+                    while (j < matchFoundInLines2) {
+                        result.push({ left: null, right: lines2[j] });
+                        j++;
+                    }
+                    result.push({ left: line1, right: lines2[j] });
+                    i++;
+                    j++;
+                } else if (matchFoundInLines1 !== -1) {
+                    // Line2 matches something ahead in lines1, so add gaps in lines1
+                    while (i < matchFoundInLines1) {
+                        result.push({ left: lines1[i], right: null });
+                        i++;
+                    }
+                    result.push({ left: lines1[i], right: line2 });
+                    i++;
+                    j++;
+                } else {
+                    // No matches found nearby, check for similarity
+                    const similarity = calculateSimilarity(line1, line2);
+                    
+                    if (similarity > 0.5) {
+                        // Lines are similar enough, pair them as changes
+                        result.push({ left: line1, right: line2 });
+                        i++;
+                        j++;
+                    } else {
+                        // Lines are too different, try to determine which one to advance
+                        // Look ahead to see if either line appears later
+                        const line1AppearsLater = lines2.slice(j + 1, Math.min(j + 6, lines2.length)).includes(line1);
+                        const line2AppearsLater = lines1.slice(i + 1, Math.min(i + 6, lines1.length)).includes(line2);
+                        
+                        if (line1AppearsLater && !line2AppearsLater) {
+                            // line1 appears later in lines2, so line2 is new
+                            result.push({ left: null, right: line2 });
+                            j++;
+                        } else if (line2AppearsLater && !line1AppearsLater) {
+                            // line2 appears later in lines1, so line1 was removed
+                            result.push({ left: line1, right: null });
+                            i++;
+                        } else {
+                            // Can't determine, pair them as different
+                            result.push({ left: line1, right: line2 });
+                            i++;
+                            j++;
+                        }
+                    }
+                }
+            }
+            
+            return result;
+        }
+
+        function calculateSimilarity(str1, str2) {
+            if (!str1 || !str2) return 0;
+            
+            // Simple similarity based on common characters
+            const set1 = new Set(str1.toLowerCase().split(''));
+            const set2 = new Set(str2.toLowerCase().split(''));
+            
+            let common = 0;
+            set1.forEach(char => {
+                if (set2.has(char)) common++;
+            });
+            
+            const maxSize = Math.max(set1.size, set2.size);
+            return maxSize > 0 ? common / maxSize : 0;
+        }
+</script>

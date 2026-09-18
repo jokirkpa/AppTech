@@ -1,0 +1,1187 @@
+<!-- @tool {"id":"timeCalcModal","name":"Time/Date Calculator","description":"Calculate time and date differences with timezone offset support","author":"jokirkpa"} -->
+<!-- Time Calc Tool -->
+<style>
+    .timezone-tab-container { display: flex; flex-direction: column; gap: 14px; position: relative; }
+    .timezone-row { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; }
+    .timezone-row .form-group { margin-bottom: 0; }
+    .timezone-row .form-group select { max-width: 120px; }
+    .timezone-fixed-zone { width: 120px; padding: 10px; background-color: #1a1a1a; border: 1px solid #555; border-radius: 5px; color: white; font-size: 14px; }
+    .timezone-zone-main { border-color: #2d9a5a !important; box-shadow: inset 0 0 0 1px #2d9a5a; }
+    .timezone-zone-compare1 { border-color: #00bcd4 !important; box-shadow: inset 0 0 0 1px #00bcd4; }
+    .timezone-zone-utc { border-color: #9b59b6 !important; box-shadow: inset 0 0 0 1px #9b59b6; color: #f2dcff; }
+    .timezone-current-time { background-color: #1a1a1a; border: 1px solid #555; border-radius: 5px; padding: 10px 12px; margin-bottom: 12px; color: #ddd; font-size: 14px; }
+    .timezone-current-time strong { color: #069494; }
+    .timezone-timebar { display: flex; gap: 4px; overflow: hidden; padding-top: 4px; padding-bottom: 4px; padding-left: calc(50% - 28px); padding-right: calc(50% - 28px); scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; pointer-events: none; }
+    .timezone-timebar::-webkit-scrollbar { display: none; }
+    .timezone-hour-box { min-width: 56px; padding: 8px 6px; border: 1px solid #555; border-radius: 5px; background-color: #1a1a1a; color: #ddd; font-size: 12px; text-align: center; white-space: nowrap; scroll-snap-align: center; position: relative; z-index: 1; }
+    .timezone-hour-box-main { cursor: pointer; }
+    .timezone-hour-box-selected { border: 1px solid #555; box-shadow: inset 0 0 0 2px #2d9a5a; color: #fff; font-weight: bold; }
+    .timezone-hour-box-compare1 { border: 1px solid #555; box-shadow: inset 0 0 0 2px #00bcd4; color: #fff; font-weight: bold; }
+    .timezone-hour-box-utc { border: 1px solid #555; box-shadow: inset 0 0 0 2px #9b59b6; color: #f2dcff; font-weight: bold; }
+    .timezone-column-overlay { position: absolute; border: 2px solid #069494; background-color: rgba(6, 148, 148, 0.06); border-radius: 10px; pointer-events: none; z-index: 5; display: none; }
+    .timezone-step-row { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; margin-bottom: 6px; }
+    .timezone-step-controls { display: flex; justify-content: center; gap: 10px; z-index: 6; }
+    .timezone-step-btn { width: 36px; height: 32px; padding: 0; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+</style>
+    <!-- Time/Date Calculator Modal -->
+    <div id="timeCalcModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>⏰ Time/Date Calculator</h2>
+                <button class="close-btn" onclick="closeModal('timeCalcModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div style="display: flex; border-bottom: 2px solid #555; margin-bottom: 20px;">
+                    <button id="tabTimezone" class="tab-btn active" onclick="switchTimeCalcTab('timezone')">Timezone</button>
+                    <button id="tabTimeFromDate" class="tab-btn" onclick="switchTimeCalcTab('timeFromDate')">Date and Time</button>
+                    <button id="tabDateToDate" class="tab-btn" onclick="switchTimeCalcTab('dateToDate')">Date to Date</button>
+                </div>
+
+                <!-- Tab 2: Date and Time -->
+                <div id="timeFromDateTab" class="tab-content">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Date and Time</h3>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+                        <h4 style="color: #aaa; font-size: 14px; margin: 0;">Start Date</h4>
+                        <input type="date" id="tfdDatePicker" onchange="syncTimeFromDateFromPicker()" oninput="syncTimeFromDateFromPicker()" style="width: 220px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdDay">Day</label>
+                            <input type="number" id="tfdDay" min="1" max="31">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdMonth">Month</label>
+                            <input type="number" id="tfdMonth" min="1" max="12">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdYear">Year</label>
+                            <input type="number" id="tfdYear">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+                        <h4 style="color: #aaa; font-size: 14px; margin: 0;">Start Time</h4>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="tfdCurrentTimeBtn" type="button" class="btn" onclick="setTimeFromDateCurrentTime()" style="padding: 8px 12px; font-size: 13px; background-color: #2d6aa0;">↻ Current Time</button>
+                            <div style="width: 1px; background-color: #555; margin: 2px 4px;"></div>
+                            <button id="tfdClock12Btn" type="button" class="btn" onclick="setTimeFromDateClockMode('12')" style="padding: 8px 12px; font-size: 13px; background-color: #2d5aa0;">12-hour clock</button>
+                            <button id="tfdClock24Btn" type="button" class="btn" onclick="setTimeFromDateClockMode('24')" style="padding: 8px 12px; font-size: 13px; background-color: #555;">24-hour clock</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="tfdClockMode" value="12">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 80px; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdHour">Hour</label>
+                            <input type="number" id="tfdHour" min="1" max="12" oninput="handleTimeFromDateHourInput()">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdMinute">Minute</label>
+                            <input type="number" id="tfdMinute" min="0" max="59" oninput="handleTimeFromDateRangeInput('tfdMinute', 0, 59)">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdSecond">Second</label>
+                            <input type="number" id="tfdSecond" min="0" max="59" oninput="handleTimeFromDateRangeInput('tfdSecond', 0, 59)">
+                        </div>
+                        <div id="tfdAmPmGroup" class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdAmPm">AM/PM</label>
+                            <select id="tfdAmPm">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Operation</label>
+                        <button id="tfdOperationBtn" class="btn" onclick="toggleTimeFromDateOperation()" data-operation="add" style="width: 100%; background-color: #2d8659; font-size: 16px; font-weight: bold;">
+                            (+) Add
+                        </button>
+                    </div>
+
+                    <h4 style="color: #aaa; margin-bottom: 10px; font-size: 14px;">Time to Add/Subtract</h4>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdAddDays">Days</label>
+                            <input type="number" id="tfdAddDays" value="0" min="0">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdAddHours">Hours</label>
+                            <input type="number" id="tfdAddHours" value="0" min="0">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdAddMinutes">Minutes</label>
+                            <input type="number" id="tfdAddMinutes" value="0" min="0">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tfdAddSeconds">Seconds</label>
+                            <input type="number" id="tfdAddSeconds" value="0" min="0">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="calculateTimeFromDate()" style="flex: 1;">Calculate</button>
+                        <button class="btn" onclick="clearTimeFromDate()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+                    <div id="timeFromDateResult"></div>
+                </div>
+
+                <!-- Tab 3: Date to Date Calculator -->
+                <div id="dateToDateTab" class="tab-content">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Calculate Difference Between Dates</h3>
+
+                    <div style="border: 1px solid #555; border-radius: 8px; padding: 14px; margin-bottom: 14px; background-color: rgba(0, 0, 0, 0.12);">
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+                        <h4 style="color: #aaa; font-size: 14px; margin: 0;">Start Date</h4>
+                        <input type="date" id="dtdStartDatePicker" onchange="syncDateToDateFromPicker('Start')" oninput="syncDateToDateFromPicker('Start')" style="width: 220px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdStartDay">Day</label>
+                            <input type="number" id="dtdStartDay" min="1" max="31">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdStartMonth">Month</label>
+                            <input type="number" id="dtdStartMonth" min="1" max="12">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdStartYear">Year</label>
+                            <input type="number" id="dtdStartYear">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+                        <h4 style="color: #aaa; font-size: 14px; margin: 0;">Start Time</h4>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="dtdStartCurrentTimeBtn" type="button" class="btn" onclick="setDateToDateCurrentTime('Start')" style="padding: 8px 12px; font-size: 13px; background-color: #2d6aa0;">↻ Current Time</button>
+                            <div style="width: 1px; background-color: #555; margin: 2px 4px;"></div>
+                            <button id="dtdStartClock12Btn" type="button" class="btn" onclick="setDateToDateClockMode('Start', '12')" style="padding: 8px 12px; font-size: 13px; background-color: #2d5aa0;">12-hour clock</button>
+                            <button id="dtdStartClock24Btn" type="button" class="btn" onclick="setDateToDateClockMode('Start', '24')" style="padding: 8px 12px; font-size: 13px; background-color: #555;">24-hour clock</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="dtdStartClockMode" value="12">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 80px; gap: 10px; margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdStartHour">Hour</label>
+                            <input type="number" id="dtdStartHour" min="1" max="12" oninput="handleDateToDateHourInput('Start')">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdStartMinute">Minute</label>
+                            <input type="number" id="dtdStartMinute" min="0" max="59" oninput="handleDateToDateRangeInput('dtdStartMinute', 0, 59)">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdStartSecond">Second</label>
+                            <input type="number" id="dtdStartSecond" min="0" max="59" oninput="handleDateToDateRangeInput('dtdStartSecond', 0, 59)">
+                        </div>
+                        <div id="dtdStartAmPmGroup" class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdStartAmPm">AM/PM</label>
+                            <select id="dtdStartAmPm">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    </div>
+
+                    <div style="border: 1px solid #555; border-radius: 8px; padding: 14px; margin-bottom: 14px; background-color: rgba(0, 0, 0, 0.12);">
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+                        <h4 style="color: #aaa; font-size: 14px; margin: 0;">End Date</h4>
+                        <input type="date" id="dtdEndDatePicker" onchange="syncDateToDateFromPicker('End')" oninput="syncDateToDateFromPicker('End')" style="width: 220px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdEndDay">Day</label>
+                            <input type="number" id="dtdEndDay" min="1" max="31">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdEndMonth">Month</label>
+                            <input type="number" id="dtdEndMonth" min="1" max="12">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdEndYear">Year</label>
+                            <input type="number" id="dtdEndYear">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+                        <h4 style="color: #aaa; font-size: 14px; margin: 0;">End Time</h4>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="dtdEndCurrentTimeBtn" type="button" class="btn" onclick="setDateToDateCurrentTime('End')" style="padding: 8px 12px; font-size: 13px; background-color: #2d6aa0;">↻ Current Time</button>
+                            <div style="width: 1px; background-color: #555; margin: 2px 4px;"></div>
+                            <button id="dtdEndClock12Btn" type="button" class="btn" onclick="setDateToDateClockMode('End', '12')" style="padding: 8px 12px; font-size: 13px; background-color: #2d5aa0;">12-hour clock</button>
+                            <button id="dtdEndClock24Btn" type="button" class="btn" onclick="setDateToDateClockMode('End', '24')" style="padding: 8px 12px; font-size: 13px; background-color: #555;">24-hour clock</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="dtdEndClockMode" value="12">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 80px; gap: 10px; margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdEndHour">Hour</label>
+                            <input type="number" id="dtdEndHour" min="1" max="12" oninput="handleDateToDateHourInput('End')">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdEndMinute">Minute</label>
+                            <input type="number" id="dtdEndMinute" min="0" max="59" oninput="handleDateToDateRangeInput('dtdEndMinute', 0, 59)">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdEndSecond">Second</label>
+                            <input type="number" id="dtdEndSecond" min="0" max="59" oninput="handleDateToDateRangeInput('dtdEndSecond', 0, 59)">
+                        </div>
+                        <div id="dtdEndAmPmGroup" class="form-group" style="margin-bottom: 0;">
+                            <label for="dtdEndAmPm">AM/PM</label>
+                            <select id="dtdEndAmPm">
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="calculateDateToDate()" style="flex: 1;">Calculate</button>
+                        <button class="btn" onclick="clearDateToDate()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+                    <div id="dateToDateResult"></div>
+                </div>
+
+                <!-- Tab 4: Timezone -->
+                <div id="timezoneTab" class="tab-content active">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Timezone Comparison</h3>
+                    <p style="color: #aaa; margin-bottom: 15px; font-size: 14px;">Compare your <span style="color: #2d9a5a; font-weight: 600;">Main Timezone</span> to a <span style="color: #00bcd4; font-weight: 600;">Second Timezone</span>; and <span style="color: #9b59b6; font-weight: 600;">UTC</span>.</p>
+
+                    <div class="timezone-current-time">
+                        <strong>Current Time:</strong>
+                        <span id="timezoneCurrentTimeDisplay">--:--:--</span>
+                    </div>
+
+                    <div class="timezone-tab-container">
+                        <div class="timezone-step-row">
+                            <div></div>
+                            <div class="timezone-step-controls">
+                                <button id="timezoneStepLeft" class="btn timezone-step-btn" type="button" aria-label="Previous hour">&#8592;</button>
+                                <button id="timezoneStepRight" class="btn timezone-step-btn" type="button" aria-label="Next hour">&#8594;</button>
+                            </div>
+                        </div>
+
+                        <div class="timezone-row">
+                            <div class="form-group">
+                                <select id="timezoneMainSelect" aria-label="Main Timezone"></select>
+                            </div>
+                            <div id="timezoneMainBar" class="timezone-timebar"></div>
+                        </div>
+
+                        <div class="timezone-row">
+                            <div class="form-group">
+                                <select id="timezoneCompare1Select" aria-label="Additional Timezone 1"></select>
+                            </div>
+                            <div id="timezoneCompare1Bar" class="timezone-timebar"></div>
+                        </div>
+
+                        <div class="timezone-row">
+                            <div class="form-group">
+                                <div id="timezoneCompare2Fixed" class="timezone-fixed-zone">UTC</div>
+                            </div>
+                            <div id="timezoneCompare2Bar" class="timezone-timebar"></div>
+                        </div>
+
+                        <div id="timezoneColumnOverlay" class="timezone-column-overlay"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+        function switchTimeCalcTab(tabName) {
+            // Remove active class from time/date tabs and content
+            const tabIds = ['tabTimeFromDate', 'tabDateToDate', 'tabTimezone'];
+            const contentIds = ['timeFromDateTab', 'dateToDateTab', 'timezoneTab'];
+
+            tabIds.forEach(tabId => {
+                const tab = document.getElementById(tabId);
+                if (tab) tab.classList.remove('active');
+            });
+
+            contentIds.forEach(contentId => {
+                const content = document.getElementById(contentId);
+                if (content) content.classList.remove('active');
+            });
+            
+            // Add active class to selected tab and content
+            if (tabName === 'timeFromDate') {
+                stopTimezoneCurrentTimeTicker();
+                document.getElementById('tabTimeFromDate').classList.add('active');
+                document.getElementById('timeFromDateTab').classList.add('active');
+                initializeTimeFromDate();
+            } else if (tabName === 'dateToDate') {
+                stopTimezoneCurrentTimeTicker();
+                document.getElementById('tabDateToDate').classList.add('active');
+                document.getElementById('dateToDateTab').classList.add('active');
+                initializeDateToDate();
+            } else if (tabName === 'timezone') {
+                document.getElementById('tabTimezone').classList.add('active');
+                document.getElementById('timezoneTab').classList.add('active');
+                initializeTimezoneTab();
+            }
+        }
+
+        let timezoneSelectedHourIndex = null;
+        let timezoneCurrentHourIndex = null;
+        let timezoneScrollSyncing = false;
+        let timezoneCurrentTimeTimer = null;
+
+        const timezoneAbbreviationMap = {
+            UTC: 'UTC',
+            GMT: 'Etc/GMT',
+            EST: 'America/New_York',
+            CST: 'America/Chicago',
+            MST: 'America/Denver',
+            PST: 'America/Los_Angeles',
+            AKST: 'America/Anchorage',
+            HST: 'Pacific/Honolulu',
+            CET: 'Europe/Paris',
+            IST: 'Asia/Kolkata',
+            JST: 'Asia/Tokyo',
+            AEST: 'Australia/Sydney'
+        };
+
+        function getLocalTimezoneAbbreviation() {
+            const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const abbreviation = Object.keys(timezoneAbbreviationMap).find(key => timezoneAbbreviationMap[key] === localTimezone);
+            return abbreviation || 'UTC';
+        }
+
+        function getTimezoneIdFromAbbreviation(abbreviation) {
+            return timezoneAbbreviationMap[abbreviation] || 'UTC';
+        }
+
+        function getTimezoneAbbreviations() {
+            return Object.keys(timezoneAbbreviationMap);
+        }
+
+        function populateTimezoneSelect(selectId, abbreviationList, defaultValue) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            if (select.dataset.initialized === 'true') {
+                return;
+            }
+
+            select.innerHTML = abbreviationList.map(abbreviation =>
+                `<option value="${abbreviation}">${abbreviation}</option>`
+            ).join('');
+
+            if (abbreviationList.includes(defaultValue)) {
+                select.value = defaultValue;
+            } else if (abbreviationList.includes('UTC')) {
+                select.value = 'UTC';
+            }
+
+            select.dataset.initialized = 'true';
+            select.addEventListener('change', renderTimezoneBars);
+        }
+
+        function getTimezoneOffsetMinutes(timezone, referenceDate) {
+            const timezoneDate = new Date(referenceDate.toLocaleString('en-US', { timeZone: timezone }));
+            const utcDate = new Date(referenceDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+            return Math.round((timezoneDate - utcDate) / 60000);
+        }
+
+        function format12HourFromMinutes(totalMinutes) {
+            const normalizedMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+            const hour24 = Math.floor(normalizedMinutes / 60);
+            const minutes = normalizedMinutes % 60;
+            const amPm = hour24 >= 12 ? 'PM' : 'AM';
+            const hour12 = hour24 % 12 || 12;
+
+            if (minutes === 0) {
+                return `${hour12} ${amPm}`;
+            }
+
+            return `${hour12}:${String(minutes).padStart(2, '0')} ${amPm}`;
+        }
+
+        function getHourInTimezone(timezone, referenceDate) {
+            try {
+                const formatter = new Intl.DateTimeFormat('en-US', {
+                    timeZone: timezone,
+                    hour: 'numeric',
+                    hourCycle: 'h23'
+                });
+
+                const hourPart = formatter.formatToParts(referenceDate).find(part => part.type === 'hour');
+                const parsedHour = parseInt(hourPart?.value, 10);
+
+                if (!Number.isNaN(parsedHour)) {
+                    return parsedHour;
+                }
+            } catch (error) {
+                // Fallback below
+            }
+
+            return referenceDate.getHours();
+        }
+
+        function renderTimezoneRow(barId, offsetDifferenceMinutes, isMainRow) {
+            const bar = document.getElementById(barId);
+            if (!bar) return;
+
+            bar.innerHTML = '';
+
+            for (let index = 0; index < 24; index++) {
+                const baseMinutes = 60 + (index * 60); // Starts at 1 AM
+                const rowMinutes = baseMinutes + offsetDifferenceMinutes;
+                const hourLabel = format12HourFromMinutes(rowMinutes);
+
+                const hourBox = document.createElement('div');
+                hourBox.className = 'timezone-hour-box';
+
+                if (isMainRow) {
+                    hourBox.classList.add('timezone-hour-box-main');
+                }
+
+                hourBox.textContent = hourLabel;
+                bar.appendChild(hourBox);
+            }
+        }
+
+        function getTimezoneBarIds() {
+            return ['timezoneMainBar', 'timezoneCompare1Bar', 'timezoneCompare2Bar'];
+        }
+
+        function getCenteredHourIndexFromBar(bar) {
+            if (!bar || !bar.children.length) return 0;
+
+            const centerX = bar.scrollLeft + (bar.clientWidth / 2);
+            let closestIndex = 0;
+            let closestDistance = Infinity;
+
+            for (let index = 0; index < bar.children.length; index++) {
+                const box = bar.children[index];
+                const boxCenter = box.offsetLeft + (box.clientWidth / 2);
+                const distance = Math.abs(boxCenter - centerX);
+
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestIndex = index;
+                }
+            }
+
+            return closestIndex;
+        }
+
+        function applyTimezoneSelectionHighlight() {
+            const mainBar = document.getElementById('timezoneMainBar');
+            if (!mainBar || !mainBar.children.length) return;
+
+            if (timezoneCurrentHourIndex === null) {
+                const mainTimezoneAbbr = document.getElementById('timezoneMainSelect')?.value || 'EST';
+                const mainTimezoneId = getTimezoneIdFromAbbreviation(mainTimezoneAbbr);
+                const currentHour = getHourInTimezone(mainTimezoneId, new Date());
+                timezoneCurrentHourIndex = (currentHour + 23) % 24;
+            }
+
+            Array.from(mainBar.children).forEach((box, index) => {
+                box.classList.toggle('timezone-hour-box-selected', index === timezoneCurrentHourIndex);
+            });
+
+            const compare1Bar = document.getElementById('timezoneCompare1Bar');
+            if (compare1Bar) {
+                Array.from(compare1Bar.children).forEach((box, index) => {
+                    box.classList.toggle('timezone-hour-box-compare1', index === timezoneCurrentHourIndex);
+                });
+            }
+
+            const compare2Bar = document.getElementById('timezoneCompare2Bar');
+            if (compare2Bar) {
+                Array.from(compare2Bar.children).forEach((box, index) => {
+                    box.classList.toggle('timezone-hour-box-utc', index === timezoneCurrentHourIndex);
+                });
+            }
+
+            const mainSelect = document.getElementById('timezoneMainSelect');
+            const compare1Select = document.getElementById('timezoneCompare1Select');
+            const compare2Fixed = document.getElementById('timezoneCompare2Fixed');
+
+            if (mainSelect) mainSelect.classList.add('timezone-zone-main');
+            if (compare1Select) compare1Select.classList.add('timezone-zone-compare1');
+            if (compare2Fixed) compare2Fixed.classList.add('timezone-zone-utc');
+
+            updateTimezoneColumnOverlay();
+        }
+
+        function syncTimezoneBarsFromSource(sourceBar) {
+            if (!sourceBar || timezoneScrollSyncing) return;
+
+            timezoneScrollSyncing = true;
+
+            getTimezoneBarIds().forEach(barId => {
+                const bar = document.getElementById(barId);
+                if (!bar || bar === sourceBar) return;
+                bar.scrollLeft = sourceBar.scrollLeft;
+            });
+
+            timezoneScrollSyncing = false;
+        }
+
+        function stepTimezoneHour(direction) {
+            const mainBar = document.getElementById('timezoneMainBar');
+            const currentIndex = (timezoneSelectedHourIndex ?? (mainBar ? getCenteredHourIndexFromBar(mainBar) : 0));
+            const nextIndex = Math.max(0, Math.min(23, currentIndex + direction));
+            if (nextIndex === currentIndex) return;
+
+            timezoneSelectedHourIndex = nextIndex;
+            centerTimezoneHourIndex(nextIndex, true);
+        }
+
+        function setupTimezoneScrollSync() {
+            const leftBtn = document.getElementById('timezoneStepLeft');
+            const rightBtn = document.getElementById('timezoneStepRight');
+
+            if (leftBtn && leftBtn.dataset.bound !== 'true') {
+                leftBtn.dataset.bound = 'true';
+                leftBtn.addEventListener('click', function() {
+                    stepTimezoneHour(-1);
+                });
+            }
+
+            if (rightBtn && rightBtn.dataset.bound !== 'true') {
+                rightBtn.dataset.bound = 'true';
+                rightBtn.addEventListener('click', function() {
+                    stepTimezoneHour(1);
+                });
+            }
+
+            if (!window.timezoneOverlayResizeBound) {
+                window.addEventListener('resize', updateTimezoneColumnOverlay);
+                window.timezoneOverlayResizeBound = true;
+            }
+        }
+
+        function updateTimezoneColumnOverlay() {
+            const overlay = document.getElementById('timezoneColumnOverlay');
+            const mainBar = document.getElementById('timezoneMainBar');
+            const compare2Bar = document.getElementById('timezoneCompare2Bar');
+
+            if (!overlay || !mainBar || !compare2Bar || !mainBar.children.length) {
+                if (overlay) overlay.style.display = 'none';
+                return;
+            }
+
+            const selectedBox = mainBar.children[0];
+            if (!selectedBox) {
+                overlay.style.display = 'none';
+                return;
+            }
+
+            const left = mainBar.offsetLeft + (mainBar.clientWidth / 2) - (selectedBox.offsetWidth / 2);
+            const top = mainBar.offsetTop;
+            const height = (compare2Bar.offsetTop + compare2Bar.offsetHeight) - top;
+
+            overlay.style.display = 'block';
+            overlay.style.left = `${left}px`;
+            overlay.style.top = `${top}px`;
+            overlay.style.width = `${selectedBox.offsetWidth}px`;
+            overlay.style.height = `${height}px`;
+        }
+
+        function updateTimezoneCurrentTimeDisplay() {
+            const mainTimezoneAbbr = document.getElementById('timezoneMainSelect')?.value || 'UTC';
+            const mainTimezoneId = getTimezoneIdFromAbbreviation(mainTimezoneAbbr);
+            const target = document.getElementById('timezoneCurrentTimeDisplay');
+            if (!target) return;
+
+            const now = new Date();
+            const display = now.toLocaleTimeString('en-US', {
+                timeZone: mainTimezoneId,
+                hour12: true,
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            const currentHour = getHourInTimezone(mainTimezoneId, now);
+            const nextHourIndex = (currentHour + 23) % 24;
+            if (timezoneCurrentHourIndex !== nextHourIndex) {
+                timezoneCurrentHourIndex = nextHourIndex;
+                applyTimezoneSelectionHighlight();
+            }
+
+            const tzParts = new Intl.DateTimeFormat('en-US', {
+                timeZone: mainTimezoneId,
+                timeZoneName: 'short'
+            }).formatToParts(now);
+            const actualAbbr = tzParts.find(p => p.type === 'timeZoneName')?.value || mainTimezoneAbbr;
+
+            target.textContent = `${display} ${actualAbbr}`;
+        }
+
+        function startTimezoneCurrentTimeTicker() {
+            stopTimezoneCurrentTimeTicker();
+            updateTimezoneCurrentTimeDisplay();
+            timezoneCurrentTimeTimer = setInterval(updateTimezoneCurrentTimeDisplay, 1000);
+        }
+
+        function stopTimezoneCurrentTimeTicker() {
+            if (timezoneCurrentTimeTimer) {
+                clearInterval(timezoneCurrentTimeTimer);
+                timezoneCurrentTimeTimer = null;
+            }
+        }
+
+        function renderTimezoneBars() {
+            const mainTimezoneAbbr = document.getElementById('timezoneMainSelect')?.value;
+            const compareTimezone1Abbr = document.getElementById('timezoneCompare1Select')?.value;
+            const compareTimezone2Abbr = 'UTC';
+
+            const mainTimezone = getTimezoneIdFromAbbreviation(mainTimezoneAbbr);
+            const compareTimezone1 = getTimezoneIdFromAbbreviation(compareTimezone1Abbr);
+            const compareTimezone2 = getTimezoneIdFromAbbreviation(compareTimezone2Abbr);
+
+            if (!mainTimezone || !compareTimezone1 || !compareTimezone2) {
+                return;
+            }
+
+            const referenceDate = new Date();
+            const mainOffset = getTimezoneOffsetMinutes(mainTimezone, referenceDate);
+            const compareOffset1 = getTimezoneOffsetMinutes(compareTimezone1, referenceDate);
+            const compareOffset2 = getTimezoneOffsetMinutes(compareTimezone2, referenceDate);
+
+            renderTimezoneRow('timezoneMainBar', 0, true);
+            renderTimezoneRow('timezoneCompare1Bar', compareOffset1 - mainOffset, false);
+            renderTimezoneRow('timezoneCompare2Bar', compareOffset2 - mainOffset, false);
+
+            setupTimezoneScrollSync();
+            updateTimezoneCurrentTimeDisplay();
+
+            if (timezoneSelectedHourIndex !== null) {
+                centerTimezoneHourIndex(timezoneSelectedHourIndex);
+            }
+
+            applyTimezoneSelectionHighlight();
+        }
+
+        function centerTimezoneHourIndex(hourIndex, smooth = true) {
+            const barIds = ['timezoneMainBar', 'timezoneCompare1Bar', 'timezoneCompare2Bar'];
+            const normalizedHourIndex = ((hourIndex % 24) + 24) % 24;
+            timezoneSelectedHourIndex = normalizedHourIndex;
+
+            barIds.forEach(barId => {
+                const bar = document.getElementById(barId);
+                if (!bar) return;
+
+                const firstBox = bar.children[0];
+                if (!firstBox) return;
+
+                const secondBox = bar.children[1];
+                const stepWidth = secondBox
+                    ? (secondBox.offsetLeft - firstBox.offsetLeft)
+                    : firstBox.offsetWidth;
+
+                const targetLeft = Math.round(normalizedHourIndex * stepWidth);
+                bar.scrollTo({
+                    left: Math.max(0, targetLeft),
+                    behavior: smooth ? 'smooth' : 'auto'
+                });
+            });
+
+            updateTimezoneColumnOverlay();
+            requestAnimationFrame(updateTimezoneColumnOverlay);
+        }
+
+        function initializeTimezoneTab() {
+            const timezoneList = getTimezoneAbbreviations();
+
+            populateTimezoneSelect('timezoneMainSelect', timezoneList, 'EST');
+            populateTimezoneSelect('timezoneCompare1Select', timezoneList, 'PST');
+
+            if (timezoneSelectedHourIndex === null) {
+                const mainTimezoneAbbr = document.getElementById('timezoneMainSelect')?.value || 'EST';
+                const mainTimezoneId = getTimezoneIdFromAbbreviation(mainTimezoneAbbr);
+                const currentHour = getHourInTimezone(mainTimezoneId, new Date());
+                timezoneSelectedHourIndex = (currentHour + 23) % 24;
+            }
+
+            startTimezoneCurrentTimeTicker();
+            renderTimezoneBars();
+        }
+
+        function initializeTimeFromDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+
+            const datePicker = document.getElementById('tfdDatePicker');
+            if (datePicker) {
+                datePicker.value = `${year}-${month}-${day}`;
+            }
+
+            syncTimeFromDateFromPicker();
+
+            let hour = now.getHours();
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12 || 12;
+            document.getElementById('tfdHour').value = hour;
+            document.getElementById('tfdMinute').value = now.getMinutes();
+            document.getElementById('tfdSecond').value = now.getSeconds();
+
+            setTimeFromDateClockMode('12');
+
+            document.getElementById('tfdAmPm').value = ampm;
+        }
+
+        function syncTimeFromDateFromPicker() {
+            const datePicker = document.getElementById('tfdDatePicker');
+            if (!datePicker || !datePicker.value) return;
+
+            const [year, month, day] = datePicker.value.split('-');
+            document.getElementById('tfdYear').value = parseInt(year, 10);
+            document.getElementById('tfdMonth').value = parseInt(month, 10);
+            document.getElementById('tfdDay').value = parseInt(day, 10);
+        }
+
+        function setTimeFromDateClockMode(mode) {
+            const clockModeInput = document.getElementById('tfdClockMode');
+            const hourInput = document.getElementById('tfdHour');
+            const amPmGroup = document.getElementById('tfdAmPmGroup');
+            const btn12 = document.getElementById('tfdClock12Btn');
+            const btn24 = document.getElementById('tfdClock24Btn');
+
+            if (!clockModeInput || !hourInput || !amPmGroup || !btn12 || !btn24) {
+                return;
+            }
+
+            clockModeInput.value = mode;
+
+            if (mode === '24') {
+                let hourValue = parseInt(hourInput.value, 10);
+                const ampm = document.getElementById('tfdAmPm').value;
+
+                if (!Number.isNaN(hourValue)) {
+                    if (ampm === 'PM' && hourValue !== 12) hourValue += 12;
+                    if (ampm === 'AM' && hourValue === 12) hourValue = 0;
+                } else {
+                    hourValue = 0;
+                }
+
+                hourInput.min = '0';
+                hourInput.max = '23';
+                hourInput.value = Math.max(0, Math.min(23, hourValue));
+                amPmGroup.style.display = 'none';
+                btn12.style.backgroundColor = '#555';
+                btn24.style.backgroundColor = '#2d5aa0';
+            } else {
+                let hourValue = parseInt(hourInput.value, 10);
+
+                if (!Number.isNaN(hourValue)) {
+                    if (hourValue === 0) {
+                        hourValue = 12;
+                        document.getElementById('tfdAmPm').value = 'AM';
+                    } else if (hourValue >= 12) {
+                        document.getElementById('tfdAmPm').value = hourValue === 24 ? 'AM' : 'PM';
+                        hourValue = hourValue % 12 || 12;
+                    }
+                } else {
+                    hourValue = 12;
+                }
+
+                hourInput.min = '1';
+                hourInput.max = '12';
+                hourInput.value = Math.max(1, Math.min(12, hourValue));
+                amPmGroup.style.display = 'block';
+                btn12.style.backgroundColor = '#2d5aa0';
+                btn24.style.backgroundColor = '#555';
+            }
+
+            handleTimeFromDateHourInput();
+        }
+
+        function handleTimeFromDateHourInput() {
+            const hourInput = document.getElementById('tfdHour');
+            const clockMode = document.getElementById('tfdClockMode')?.value || '12';
+            let value = parseInt(hourInput.value, 10);
+
+            if (Number.isNaN(value)) return;
+
+            if (clockMode === '24') {
+                if (value < 0) value = 0;
+                if (value > 23) value = 23;
+            } else {
+                if (value < 1) value = 1;
+                if (value > 12) value = 12;
+            }
+
+            hourInput.value = value;
+        }
+
+        function handleTimeFromDateRangeInput(inputId, minValue, maxValue) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            let value = parseInt(input.value, 10);
+            if (Number.isNaN(value)) return;
+
+            if (value < minValue) value = minValue;
+            if (value > maxValue) value = maxValue;
+
+            input.value = value;
+        }
+
+        function setTimeFromDateCurrentTime() {
+            const now = new Date();
+            const clockMode = document.getElementById('tfdClockMode')?.value || '12';
+            const hourInput = document.getElementById('tfdHour');
+            const minuteInput = document.getElementById('tfdMinute');
+            const secondInput = document.getElementById('tfdSecond');
+            const amPmSelect = document.getElementById('tfdAmPm');
+
+            if (!hourInput || !minuteInput || !secondInput) {
+                return;
+            }
+
+            const nowHours = now.getHours();
+            const nowMinutes = now.getMinutes();
+            const nowSeconds = now.getSeconds();
+
+            if (clockMode === '24') {
+                hourInput.value = nowHours;
+            } else {
+                hourInput.value = nowHours % 12 || 12;
+                if (amPmSelect) {
+                    amPmSelect.value = nowHours >= 12 ? 'PM' : 'AM';
+                }
+            }
+
+            minuteInput.value = nowMinutes;
+            secondInput.value = nowSeconds;
+
+            handleTimeFromDateHourInput();
+            handleTimeFromDateRangeInput('tfdMinute', 0, 59);
+            handleTimeFromDateRangeInput('tfdSecond', 0, 59);
+        }
+
+        function initializeDateToDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+
+            const startDatePicker = document.getElementById('dtdStartDatePicker');
+            const endDatePicker = document.getElementById('dtdEndDatePicker');
+
+            if (startDatePicker) startDatePicker.value = `${year}-${month}-${day}`;
+            if (endDatePicker) endDatePicker.value = `${year}-${month}-${day}`;
+
+            syncDateToDateFromPicker('Start');
+            syncDateToDateFromPicker('End');
+
+            setDateToDateClockMode('Start', '12');
+            setDateToDateClockMode('End', '12');
+
+            setDateToDateCurrentTime('Start');
+            setDateToDateCurrentTime('End');
+        }
+
+        function syncDateToDateFromPicker(side) {
+            const datePicker = document.getElementById(`dtd${side}DatePicker`);
+            if (!datePicker || !datePicker.value) return;
+
+            const [year, month, day] = datePicker.value.split('-');
+            document.getElementById(`dtd${side}Year`).value = parseInt(year, 10);
+            document.getElementById(`dtd${side}Month`).value = parseInt(month, 10);
+            document.getElementById(`dtd${side}Day`).value = parseInt(day, 10);
+        }
+
+        function setDateToDateClockMode(side, mode) {
+            const clockModeInput = document.getElementById(`dtd${side}ClockMode`);
+            const hourInput = document.getElementById(`dtd${side}Hour`);
+            const amPmGroup = document.getElementById(`dtd${side}AmPmGroup`);
+            const amPmSelect = document.getElementById(`dtd${side}AmPm`);
+            const btn12 = document.getElementById(`dtd${side}Clock12Btn`);
+            const btn24 = document.getElementById(`dtd${side}Clock24Btn`);
+
+            if (!clockModeInput || !hourInput || !amPmGroup || !btn12 || !btn24 || !amPmSelect) return;
+
+            clockModeInput.value = mode;
+
+            if (mode === '24') {
+                let hourValue = parseInt(hourInput.value, 10);
+                const ampm = amPmSelect.value;
+
+                if (!Number.isNaN(hourValue)) {
+                    if (ampm === 'PM' && hourValue !== 12) hourValue += 12;
+                    if (ampm === 'AM' && hourValue === 12) hourValue = 0;
+                } else {
+                    hourValue = 0;
+                }
+
+                hourInput.min = '0';
+                hourInput.max = '23';
+                hourInput.value = Math.max(0, Math.min(23, hourValue));
+                amPmGroup.style.display = 'none';
+                btn12.style.backgroundColor = '#555';
+                btn24.style.backgroundColor = '#2d5aa0';
+            } else {
+                let hourValue = parseInt(hourInput.value, 10);
+
+                if (!Number.isNaN(hourValue)) {
+                    if (hourValue === 0) {
+                        hourValue = 12;
+                        amPmSelect.value = 'AM';
+                    } else if (hourValue >= 12) {
+                        amPmSelect.value = hourValue === 24 ? 'AM' : 'PM';
+                        hourValue = hourValue % 12 || 12;
+                    }
+                } else {
+                    hourValue = 12;
+                }
+
+                hourInput.min = '1';
+                hourInput.max = '12';
+                hourInput.value = Math.max(1, Math.min(12, hourValue));
+                amPmGroup.style.display = 'block';
+                btn12.style.backgroundColor = '#2d5aa0';
+                btn24.style.backgroundColor = '#555';
+            }
+
+            handleDateToDateHourInput(side);
+        }
+
+        function handleDateToDateHourInput(side) {
+            const hourInput = document.getElementById(`dtd${side}Hour`);
+            const clockMode = document.getElementById(`dtd${side}ClockMode`)?.value || '12';
+            if (!hourInput) return;
+
+            let value = parseInt(hourInput.value, 10);
+            if (Number.isNaN(value)) return;
+
+            if (clockMode === '24') {
+                if (value < 0) value = 0;
+                if (value > 23) value = 23;
+            } else {
+                if (value < 1) value = 1;
+                if (value > 12) value = 12;
+            }
+
+            hourInput.value = value;
+        }
+
+        function handleDateToDateRangeInput(inputId, minValue, maxValue) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            let value = parseInt(input.value, 10);
+            if (Number.isNaN(value)) return;
+
+            if (value < minValue) value = minValue;
+            if (value > maxValue) value = maxValue;
+
+            input.value = value;
+        }
+
+        function setDateToDateCurrentTime(side) {
+            const now = new Date();
+            const clockMode = document.getElementById(`dtd${side}ClockMode`)?.value || '12';
+            const hourInput = document.getElementById(`dtd${side}Hour`);
+            const minuteInput = document.getElementById(`dtd${side}Minute`);
+            const secondInput = document.getElementById(`dtd${side}Second`);
+            const amPmSelect = document.getElementById(`dtd${side}AmPm`);
+
+            if (!hourInput || !minuteInput || !secondInput) return;
+
+            const nowHours = now.getHours();
+
+            if (clockMode === '24') {
+                hourInput.value = nowHours;
+            } else {
+                hourInput.value = nowHours % 12 || 12;
+                if (amPmSelect) amPmSelect.value = nowHours >= 12 ? 'PM' : 'AM';
+            }
+
+            minuteInput.value = now.getMinutes();
+            secondInput.value = now.getSeconds();
+
+            handleDateToDateHourInput(side);
+            handleDateToDateRangeInput(`dtd${side}Minute`, 0, 59);
+            handleDateToDateRangeInput(`dtd${side}Second`, 0, 59);
+        }
+
+        function toggleTimeFromDateOperation() {
+            const btn = document.getElementById('tfdOperationBtn');
+            const currentOp = btn.getAttribute('data-operation') || 'add';
+            
+            if (currentOp === 'add') {
+                btn.setAttribute('data-operation', 'subtract');
+                btn.textContent = '(-) Subtract';
+                btn.style.backgroundColor = '#8e44ad';
+            } else {
+                btn.setAttribute('data-operation', 'add');
+                btn.textContent = '(+) Add';
+                btn.style.backgroundColor = '#2d8659';
+            }
+        }
+
+        function calculateTimeFromDate() {
+            const day = parseInt(document.getElementById('tfdDay').value);
+            const month = parseInt(document.getElementById('tfdMonth').value) - 1;
+            const year = parseInt(document.getElementById('tfdYear').value);
+            let hour = parseInt(document.getElementById('tfdHour').value);
+            const minute = Math.max(0, Math.min(59, parseInt(document.getElementById('tfdMinute').value) || 0));
+            const second = Math.max(0, Math.min(59, parseInt(document.getElementById('tfdSecond').value) || 0));
+            const clockMode = document.getElementById('tfdClockMode')?.value || '12';
+
+            if (clockMode === '12') {
+                const ampm = document.getElementById('tfdAmPm').value;
+                hour = Math.max(1, Math.min(12, hour || 12));
+
+                if (ampm === 'PM' && hour !== 12) hour += 12;
+                if (ampm === 'AM' && hour === 12) hour = 0;
+            } else {
+                hour = Math.max(0, Math.min(23, hour || 0));
+            }
+
+            const startDate = new Date(year, month, day, hour, minute, second);
+
+            const addDays = parseInt(document.getElementById('tfdAddDays').value) || 0;
+            const addHours = parseInt(document.getElementById('tfdAddHours').value) || 0;
+            const addMinutes = parseInt(document.getElementById('tfdAddMinutes').value) || 0;
+            const addSeconds = parseInt(document.getElementById('tfdAddSeconds').value) || 0;
+
+            const operation = document.getElementById('tfdOperationBtn').getAttribute('data-operation') || 'add';
+            const multiplier = operation === 'add' ? 1 : -1;
+
+            const totalMs = (addDays * 86400 + addHours * 3600 + addMinutes * 60 + addSeconds) * 1000 * multiplier;
+            const resultDate = new Date(startDate.getTime() + totalMs);
+
+            const resultDiv = document.getElementById('timeFromDateResult');
+            resultDiv.innerHTML = `
+                <div class="result-box">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Result</h3>
+                    <div class="result-row">
+                        <span class="result-label">Resulting Date:</span>
+                        <span class="result-value">${resultDate.toLocaleDateString()}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Resulting Time:</span>
+                        <span class="result-value">${resultDate.toLocaleTimeString()}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Full Date & Time:</span>
+                        <span class="result-value">${resultDate.toString()}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearTimeFromDate() {
+            initializeTimeFromDate();
+            document.getElementById('tfdAddDays').value = 0;
+            document.getElementById('tfdAddHours').value = 0;
+            document.getElementById('tfdAddMinutes').value = 0;
+            document.getElementById('tfdAddSeconds').value = 0;
+            document.getElementById('timeFromDateResult').innerHTML = '';
+        }
+
+        function calculateDateToDate() {
+            // Parse start date
+            const startDay = parseInt(document.getElementById('dtdStartDay').value);
+            const startMonth = parseInt(document.getElementById('dtdStartMonth').value) - 1;
+            const startYear = parseInt(document.getElementById('dtdStartYear').value);
+            let startHour = parseInt(document.getElementById('dtdStartHour').value);
+            const startMinute = Math.max(0, Math.min(59, parseInt(document.getElementById('dtdStartMinute').value) || 0));
+            const startSecond = Math.max(0, Math.min(59, parseInt(document.getElementById('dtdStartSecond').value) || 0));
+            const startClockMode = document.getElementById('dtdStartClockMode')?.value || '12';
+
+            if (startClockMode === '12') {
+                const startAmPm = document.getElementById('dtdStartAmPm').value;
+                startHour = Math.max(1, Math.min(12, startHour || 12));
+                if (startAmPm === 'PM' && startHour !== 12) startHour += 12;
+                if (startAmPm === 'AM' && startHour === 12) startHour = 0;
+            } else {
+                startHour = Math.max(0, Math.min(23, startHour || 0));
+            }
+
+            // Parse end date
+            const endDay = parseInt(document.getElementById('dtdEndDay').value);
+            const endMonth = parseInt(document.getElementById('dtdEndMonth').value) - 1;
+            const endYear = parseInt(document.getElementById('dtdEndYear').value);
+            let endHour = parseInt(document.getElementById('dtdEndHour').value);
+            const endMinute = Math.max(0, Math.min(59, parseInt(document.getElementById('dtdEndMinute').value) || 0));
+            const endSecond = Math.max(0, Math.min(59, parseInt(document.getElementById('dtdEndSecond').value) || 0));
+            const endClockMode = document.getElementById('dtdEndClockMode')?.value || '12';
+
+            if (endClockMode === '12') {
+                const endAmPm = document.getElementById('dtdEndAmPm').value;
+                endHour = Math.max(1, Math.min(12, endHour || 12));
+                if (endAmPm === 'PM' && endHour !== 12) endHour += 12;
+                if (endAmPm === 'AM' && endHour === 12) endHour = 0;
+            } else {
+                endHour = Math.max(0, Math.min(23, endHour || 0));
+            }
+
+            const startDate = new Date(startYear, startMonth, startDay, startHour, startMinute, startSecond);
+            const endDate = new Date(endYear, endMonth, endDay, endHour, endMinute, endSecond);
+
+            const diffMs = endDate - startDate;
+            const isNegative = diffMs < 0;
+            const absDiffMs = Math.abs(diffMs);
+
+            const diffSeconds = Math.floor(absDiffMs / 1000);
+            const diffDays = Math.floor(diffSeconds / 86400);
+            const diffHours = Math.floor((diffSeconds % 86400) / 3600);
+            const diffMinutes = Math.floor((diffSeconds % 3600) / 60);
+            const diffSecs = diffSeconds % 60;
+
+            const resultDiv = document.getElementById('dateToDateResult');
+            resultDiv.innerHTML = `
+                <div class="result-box">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Time Difference</h3>
+                    <div class="result-row">
+                        <span class="result-label">Difference:</span>
+                        <span class="result-value">${isNegative ? '-' : ''}${diffDays}d ${diffHours}h ${diffMinutes}m ${diffSecs}s</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Total Days:</span>
+                        <span class="result-value">${isNegative ? '-' : ''}${(diffSeconds / 86400).toFixed(4)}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Total Hours:</span>
+                        <span class="result-value">${isNegative ? '-' : ''}${(diffSeconds / 3600).toFixed(2)}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Total Minutes:</span>
+                        <span class="result-value">${isNegative ? '-' : ''}${(diffSeconds / 60).toFixed(0)}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Total Seconds:</span>
+                        <span class="result-value">${isNegative ? '-' : ''}${diffSeconds.toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearDateToDate() {
+            initializeDateToDate();
+            document.getElementById('dateToDateResult').innerHTML = '';
+        }
+
+        // Register open-hook so dashboard's openModal stays tool-agnostic
+        window._toolOnOpen = window._toolOnOpen || {};
+        window._toolOnOpen['timeCalcModal'] = function() {
+            switchTimeCalcTab('timezone');
+        };
+</script>

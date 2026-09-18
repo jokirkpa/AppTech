@@ -1,0 +1,24 @@
+<!-- @tool {"id":"testSlot1Modal","name":"🧪 Test Project 1","description":"Fixed placeholder — shows what a populated dashboard looks like","author":"AppTech"} -->
+<!-- Placeholder test project. Not meant to be edited — it exists so the dashboard
+     grid isn't empty on first run. Ask Claude to build your own tool as a new file
+     in applications/ alongside this one; see ../CLAUDE.md for the tool contract. -->
+<div id="testSlot1Modal" class="modal-overlay">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2>🧪 Test Project 1</h2>
+            <button class="close-btn" onclick="closeModal('testSlot1Modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color:#aaa; line-height:1.6;">
+                This is a fixed placeholder — one of four test projects that ship with
+                the builder so you can see what a populated dashboard looks like.
+                It isn't meant to be edited here.
+            </p>
+            <p style="color:#aaa; line-height:1.6; margin-top:14px;">
+                To build your own tool, describe it to Claude — it will create a new
+                file in <code>applications/</code> next to this one, following the
+                contract in <code>CLAUDE.md</code>.
+            </p>
+        </div>
+    </div>
+</div>

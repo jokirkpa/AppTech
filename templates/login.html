@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppTech – Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+            background-color: #04132d;
+            color: #e6edf3;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            background: linear-gradient(160deg, #061847 0%, #04132d 100%);
+            border: 1px solid #1b3b6f;
+            border-radius: 12px;
+            padding: 48px 44px 40px;
+            width: 380px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-logo h1 {
+            font-size: 30px;
+            font-weight: bold;
+            color: #069494;
+            letter-spacing: 3px;
+        }
+
+        .login-logo p {
+            font-size: 12px;
+            color: #556;
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+
+        .form-mode { display: block; }
+        .form-mode.hidden { display: none; }
+
+        h2 {
+            font-size: 15px;
+            color: #8fb3c8;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #778;
+            margin-bottom: 6px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 10px 14px;
+            background: #0a1f44;
+            border: 1px solid #1b3b6f;
+            border-radius: 6px;
+            color: #e6edf3;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .field input:focus {
+            border-color: #069494;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 11px;
+            background: #069494;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 6px;
+        }
+
+        .btn-primary:hover { background: #07b0b0; }
+
+        .switch-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #556;
+        }
+
+        .switch-link a {
+            color: #069494;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .switch-link a:hover { text-decoration: underline; }
+
+        .error-msg {
+            background: rgba(180, 30, 30, 0.25);
+            border: 1px solid #a33;
+            border-radius: 5px;
+            color: #f88;
+            font-size: 12px;
+            padding: 8px 12px;
+            margin-bottom: 14px;
+            display: none;
+        }
+
+        .success-msg {
+            background: rgba(6, 148, 148, 0.15);
+            border: 1px solid #069494;
+            border-radius: 5px;
+            color: #4dd;
+            font-size: 12px;
+            padding: 8px 12px;
+            margin-bottom: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    <div class="login-logo">
+        <h1>AppTech</h1>
+        <p>Network Engineer Tool Belt</p>
+    </div>
+
+    <!-- ── Login form ── -->
+    <div id="loginForm" class="form-mode">
+        <h2>Sign In</h2>
+        <div class="error-msg" id="loginError"></div>
+        <div class="field">
+            <label>Username</label>
+            <input type="text" id="loginUser" autocomplete="username" placeholder="your username">
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <button class="btn-primary" onclick="doLogin()">Login</button>
+        <div class="switch-link">
+            No account? <a onclick="switchMode('create')">Create a profile</a>
+        </div>
+    </div>
+
+    <!-- ── Create profile form ── -->
+    <div id="createForm" class="form-mode hidden">
+        <h2>Create Profile</h2>
+        <div class="error-msg"   id="createError"></div>
+        <div class="success-msg" id="createSuccess"></div>
+        <div class="field">
+            <label>Username</label>
+            <input type="text" id="newUser" autocomplete="off" placeholder="choose a username">
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input type="password" id="newPass" placeholder="••••••••">
+        </div>
+        <div class="field">
+            <label>Confirm Password</label>
+            <input type="password" id="newPassConfirm" placeholder="••••••••">
+        </div>
+        <button class="btn-primary" onclick="doCreate()">Create Profile</button>
+        <div class="switch-link">
+            Already have an account? <a onclick="switchMode('login')">Sign in</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchMode(mode) {
+        document.getElementById('loginForm').classList.toggle('hidden', mode !== 'login');
+        document.getElementById('createForm').classList.toggle('hidden', mode !== 'create');
+        clearMessages();
+    }
+
+    function clearMessages() {
+        ['loginError', 'createError', 'createSuccess'].forEach(id => {
+            const el = document.getElementById(id);
+            el.style.display = 'none';
+            el.textContent = '';
+        });
+    }
+
+    function showMsg(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!document.getElementById('createForm').classList.contains('hidden')) {
+            doCreate();
+        } else {
+            doLogin();
+        }
+    });
+
+    async function doLogin() {
+        clearMessages();
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value;
+        if (!username || !password) {
+            showMsg('loginError', 'Please enter username and password.');
+            return;
+        }
+        try {
+            const res = await fetch('/api/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                window.location.href = `/${data.username}`;
+            } else {
+                showMsg('loginError', data.error || 'Invalid username or password.');
+            }
+        } catch (e) {
+            showMsg('loginError', 'Server error. Please try again.');
+        }
+    }
+
+    async function doCreate() {
+        clearMessages();
+        const username = document.getElementById('newUser').value.trim();
+        const password = document.getElementById('newPass').value;
+        const confirm  = document.getElementById('newPassConfirm').value;
+
+        if (!username || !password) {
+            showMsg('createError', 'Username and password are required.');
+            return;
+        }
+        if (!/^[a-zA-Z0-9_-]{2,32}$/.test(username)) {
+            showMsg('createError', 'Username must be 2-32 characters: letters, numbers, _ or -');
+            return;
+        }
+        if (password !== confirm) {
+            showMsg('createError', 'Passwords do not match.');
+            return;
+        }
+        if (password.length < 4) {
+            showMsg('createError', 'Password must be at least 4 characters.');
+            return;
+        }
+        try {
+            const res = await fetch('/api/users/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showMsg('createSuccess', `Profile "${username}" created. You can now sign in.`);
+                document.getElementById('newUser').value = '';
+                document.getElementById('newPass').value = '';
+                document.getElementById('newPassConfirm').value = '';
+                setTimeout(() => switchMode('login'), 1800);
+            } else {
+                showMsg('createError', data.error || 'Could not create profile.');
+            }
+        } catch (e) {
+            showMsg('createError', 'Server error. Please try again.');
+        }
+    }
+</script>
+</body>
+</html>

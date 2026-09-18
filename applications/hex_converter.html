@@ -1,0 +1,526 @@
+<!-- @tool {"id":"hexToIpModal","name":"Hex Converter","description":"Convert between hexadecimal and network addresses","author":"jokirkpa"} -->
+<!-- Hex Converter Tool -->
+    <!-- Hex to IP Modal -->
+    <div id="hexToIpModal" class="modal-overlay">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>🔢 Hex Converter</h2>
+                <button class="close-btn" onclick="closeModal('hexToIpModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div style="display: flex; border-bottom: 2px solid #555; margin-bottom: 20px;">
+                    <button id="tabIpHex" class="tab-btn active" onclick="switchHexToIpTab('ipHex')">IP ⇄ Hex</button>
+                    <button id="tabMacHex" class="tab-btn" onclick="switchHexToIpTab('macHex')">MAC ⇄ Hex</button>
+                    <button id="tabHexDecimal" class="tab-btn" onclick="switchHexToIpTab('hexDecimal')">Hex ⇄ Decimal</button>
+                </div>
+
+                <!-- Tab 1: IP ⇄ Hex (Merged) -->
+                <div id="ipHexTab" class="tab-content active">
+                    <h3 style="color: #069494; margin-bottom: 15px;">IP ⇄ Hex Converter</h3>
+                    <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">
+                        Enter IPv4 address (e.g., 10.0.0.8) or Hex format (e.g., 0a.00.00.08, 0x0a000008, or 0a000008)
+                    </p>
+                    <div class="form-group">
+                        <label for="ipHexInput">IP or Hex Input</label>
+                        <input type="text" id="ipHexInput" placeholder="e.g., 10.0.0.8 or 0x0a000008" value="">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="convertIpHex()" style="flex: 1;">Convert</button>
+                        <button class="btn" onclick="clearIpHex()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+                    <div id="ipHexResult"></div>
+                </div>
+
+                <!-- Tab 2: MAC ⇄ Hex -->
+                <div id="macHexTab" class="tab-content">
+                    <h3 style="color: #069494; margin-bottom: 15px;">MAC ⇄ Hex Converter</h3>
+                    <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">
+                        Enter MAC address (AA:BB:CC:DD:EE:FF, AA-BB-CC-DD-EE-FF, AABB.CCDD.EEFF) or Hex (0xAABBCCDDEEFF, AABBCCDDEEFF)
+                    </p>
+                    <div class="form-group">
+                        <label for="macHexInput">MAC or Hex Input</label>
+                        <input type="text" id="macHexInput" placeholder="e.g., AA:BB:CC:DD:EE:FF or 0xAABBCCDDEEFF" value="">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="convertMacHex()" style="flex: 1;">Convert</button>
+                        <button class="btn" onclick="clearMacHex()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+                    <div id="macHexResult"></div>
+                </div>
+
+                <!-- Tab 3: Hex ⇄ Decimal -->
+                <div id="hexDecimalTab" class="tab-content">
+                    <h3 style="color: #069494; margin-bottom: 15px;">Hex ⇄ Decimal Converter</h3>
+                    <p style="color: #aaa; margin-bottom: 20px; font-size: 14px;">
+                        Enter hexadecimal value (e.g., FF, 0xFF) or decimal number (e.g., 255)
+                    </p>
+                    <div class="form-group">
+                        <label for="hexDecimalInput">Hex or Decimal Input</label>
+                        <input type="text" id="hexDecimalInput" placeholder="e.g., FF or 255" value="">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="convertHexDecimal()" style="flex: 1;">Convert</button>
+                        <button class="btn" onclick="clearHexDecimal()" style="flex: 1; background-color: #555;">Clear</button>
+                    </div>
+                    <div id="hexDecimalResult"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+        // Hex to IP Functions
+        function switchHexToIpTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('#hexToIpModal .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#hexToIpModal .tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            if (tabName === 'ipHex') {
+                document.getElementById('tabIpHex').classList.add('active');
+                document.getElementById('ipHexTab').classList.add('active');
+            } else if (tabName === 'macHex') {
+                document.getElementById('tabMacHex').classList.add('active');
+                document.getElementById('macHexTab').classList.add('active');
+            } else if (tabName === 'hexDecimal') {
+                document.getElementById('tabHexDecimal').classList.add('active');
+                document.getElementById('hexDecimalTab').classList.add('active');
+            }
+        }
+
+        function convertIpHex() {
+            const input = document.getElementById('ipHexInput').value.trim();
+            const resultDiv = document.getElementById('ipHexResult');
+            
+            if (!input) {
+                alert('Please enter an IP address or hex value');
+                return;
+            }
+
+            try {
+                // Detect if input is an IPv4 address (contains digits and dots, no hex letters)
+                const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+                const ipMatch = input.match(ipv4Pattern);
+                
+                if (ipMatch) {
+                    // Input is IPv4 - convert to hex
+                    const parts = [ipMatch[1], ipMatch[2], ipMatch[3], ipMatch[4]];
+                    const bytes = parts.map(part => {
+                        const value = parseInt(part, 10);
+                        if (isNaN(value) || value < 0 || value > 255) {
+                            throw new Error(`Invalid octet value: ${part}. Must be 0-255`);
+                        }
+                        return value;
+                    });
+
+                    // Generate 0x format (0x0a000008)
+                    const hexValue = '0x' + bytes.map(b => b.toString(16).padStart(2, '0')).join('');
+
+                    resultDiv.innerHTML = `
+                        <div style="margin-top: 20px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #069494;">
+                            <h4 style="color: #069494; margin-bottom: 15px;">IP → Hex Conversion</h4>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                    ${hexValue}
+                                </div>
+                                <button class="btn" onclick="navigator.clipboard.writeText('${hexValue}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                            </div>
+                            <div style="color: #aaa; font-size: 14px; margin-top: 10px;">
+                                <strong>Input:</strong> ${input}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Input is Hex - convert to IPv4
+                    let bytes = [];
+                    
+                    // Check if it's in dotted format (0a.00.00.08)
+                    if (input.includes('.')) {
+                        const parts = input.split('.');
+                        if (parts.length !== 4) {
+                            throw new Error('Invalid dotted hex format. Expected 4 parts (e.g., 0a.00.00.08)');
+                        }
+                        bytes = parts.map(part => {
+                            const value = parseInt(part, 16);
+                            if (isNaN(value) || value < 0 || value > 255) {
+                                throw new Error(`Invalid hex value: ${part}`);
+                            }
+                            return value;
+                        });
+                    }
+                    // Check if it's in 0x format (0x0a000008) or plain hex (0a000008)
+                    else {
+                        const cleanHex = input.toLowerCase().startsWith('0x') ? input.slice(2) : input;
+                        
+                        // Validate that it only contains hex characters
+                        if (!/^[0-9a-f]+$/i.test(cleanHex)) {
+                            throw new Error('Invalid format. Must be a valid IPv4 address or hex format (e.g., 0a.00.00.08, 0x0a000008, or 0a000008)');
+                        }
+                        
+                        if (cleanHex.length > 8) {
+                            throw new Error('Hex value too long. Maximum 8 hex digits (0xFFFFFFFF)');
+                        }
+                        
+                        const paddedHex = cleanHex.padStart(8, '0');
+                        bytes = [
+                            parseInt(paddedHex.slice(0, 2), 16),
+                            parseInt(paddedHex.slice(2, 4), 16),
+                            parseInt(paddedHex.slice(4, 6), 16),
+                            parseInt(paddedHex.slice(6, 8), 16)
+                        ];
+                    }
+
+                    const ipv4 = bytes.join('.');
+                    
+                    resultDiv.innerHTML = `
+                        <div style="margin-top: 20px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #069494;">
+                            <h4 style="color: #069494; margin-bottom: 15px;">Hex → IP Conversion</h4>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                    ${ipv4}
+                                </div>
+                                <button class="btn" onclick="navigator.clipboard.writeText('${ipv4}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                            </div>
+                            <div style="color: #aaa; font-size: 14px; margin-top: 10px;">
+                                <strong>Input:</strong> ${input}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="margin-top: 20px; padding: 15px; background-color: #4a1a1a; border-radius: 8px; border: 1px solid #ff4444; color: #ff6666;">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function clearIpHex() {
+            document.getElementById('ipHexInput').value = '';
+            document.getElementById('ipHexResult').innerHTML = '';
+        }
+
+        function convertMacHex() {
+            const input = document.getElementById('macHexInput').value.trim();
+            const resultDiv = document.getElementById('macHexResult');
+            
+            if (!input) {
+                alert('Please enter a MAC address or hex value');
+                return;
+            }
+
+            try {
+                let bytes = [];
+                
+                // Parse input based on format
+                if (input.includes(':')) {
+                    // Colon format: AA:BB:CC:DD:EE:FF
+                    const parts = input.split(':');
+                    if (parts.length !== 6) {
+                        throw new Error('Invalid colon format. Expected 6 octets (e.g., AA:BB:CC:DD:EE:FF)');
+                    }
+                    bytes = parts.map(part => {
+                        if (part.length !== 2) {
+                            throw new Error(`Invalid MAC octet: ${part}. Each octet must be 2 hex digits`);
+                        }
+                        const value = parseInt(part, 16);
+                        if (isNaN(value) || value < 0 || value > 255) {
+                            throw new Error(`Invalid hex value: ${part}`);
+                        }
+                        return value;
+                    });
+                } else if (input.includes('-')) {
+                    // Dash format: AA-BB-CC-DD-EE-FF
+                    const parts = input.split('-');
+                    if (parts.length !== 6) {
+                        throw new Error('Invalid dash format. Expected 6 octets (e.g., AA-BB-CC-DD-EE-FF)');
+                    }
+                    bytes = parts.map(part => {
+                        if (part.length !== 2) {
+                            throw new Error(`Invalid MAC octet: ${part}. Each octet must be 2 hex digits`);
+                        }
+                        const value = parseInt(part, 16);
+                        if (isNaN(value) || value < 0 || value > 255) {
+                            throw new Error(`Invalid hex value: ${part}`);
+                        }
+                        return value;
+                    });
+                } else if (input.includes('.')) {
+                    // Dot format: AABB.CCDD.EEFF (Cisco format)
+                    const parts = input.split('.');
+                    if (parts.length !== 3) {
+                        throw new Error('Invalid dot format. Expected 3 parts (e.g., AABB.CCDD.EEFF)');
+                    }
+                    const cleanHex = parts.join('');
+                    if (cleanHex.length !== 12) {
+                        throw new Error('Invalid dot format. Each part should be 4 hex digits (e.g., AABB.CCDD.EEFF)');
+                    }
+                    if (!/^[0-9a-f]+$/i.test(cleanHex)) {
+                        throw new Error('Invalid hex characters in dot format');
+                    }
+                    for (let i = 0; i < 12; i += 2) {
+                        bytes.push(parseInt(cleanHex.slice(i, i + 2), 16));
+                    }
+                } else {
+                    // Plain hex format: AABBCCDDEEFF or 0xAABBCCDDEEFF
+                    const cleanHex = input.toLowerCase().startsWith('0x') ? input.slice(2) : input;
+                    
+                    if (!/^[0-9a-f]+$/i.test(cleanHex)) {
+                        throw new Error('Invalid format. Must be a valid MAC or hex format');
+                    }
+                    
+                    if (cleanHex.length !== 12) {
+                        throw new Error('Hex value must be exactly 12 hex digits (6 bytes for MAC address)');
+                    }
+                    
+                    for (let i = 0; i < 12; i += 2) {
+                        bytes.push(parseInt(cleanHex.slice(i, i + 2), 16));
+                    }
+                }
+                
+                // Generate all output formats
+                const hexBytes = bytes.map(b => b.toString(16).padStart(2, '0').toUpperCase());
+                const hexValue = '0x' + hexBytes.join('');
+                const colonFormat = hexBytes.join(':');
+                const dashFormat = hexBytes.join('-');
+                const dotFormat = hexBytes.join('').match(/.{1,4}/g).join('.');
+
+                resultDiv.innerHTML = `
+                    <div style="margin-top: 20px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #069494;">
+                        <h4 style="color: #069494; margin-bottom: 15px;">All MAC/Hex Formats</h4>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <div style="color: #aaa; font-size: 14px; margin-bottom: 5px;"><strong>Hex Format (0x):</strong></div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                    ${hexValue}
+                                </div>
+                                <button class="btn" onclick="navigator.clipboard.writeText('${hexValue}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <div style="color: #aaa; font-size: 14px; margin-bottom: 5px;"><strong>Colon Format:</strong></div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                    ${colonFormat}
+                                </div>
+                                <button class="btn" onclick="navigator.clipboard.writeText('${colonFormat}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <div style="color: #aaa; font-size: 14px; margin-bottom: 5px;"><strong>Dash Format:</strong></div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                    ${dashFormat}
+                                </div>
+                                <button class="btn" onclick="navigator.clipboard.writeText('${dashFormat}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <div style="color: #aaa; font-size: 14px; margin-bottom: 5px;"><strong>Dot Format (Cisco):</strong></div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                    ${dotFormat}
+                                </div>
+                                <button class="btn" onclick="navigator.clipboard.writeText('${dotFormat}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                            </div>
+                        </div>
+                        
+                        <div style="color: #aaa; font-size: 14px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #555;">
+                            <strong>Input:</strong> ${input}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="margin-top: 20px; padding: 15px; background-color: #4a1a1a; border-radius: 8px; border: 1px solid #ff4444; color: #ff6666;">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function clearMacHex() {
+            document.getElementById('macHexInput').value = '';
+            document.getElementById('macHexResult').innerHTML = '';
+        }
+
+        // Legacy functions for backwards compatibility (if needed elsewhere)
+        function convertHexToIp() {
+            const hexInput = document.getElementById('hexInput')?.value.trim() || 
+                             document.getElementById('ipHexInput')?.value.trim();
+            if (hexInput) {
+                document.getElementById('ipHexInput').value = hexInput;
+                convertIpHex();
+            }
+        }
+
+        function convertIpToHex() {
+            const ipv4Input = document.getElementById('ipv4Input')?.value.trim() || 
+                              document.getElementById('ipHexInput')?.value.trim();
+            if (ipv4Input) {
+                document.getElementById('ipHexInput').value = ipv4Input;
+                convertIpHex();
+            }
+        }
+
+        function clearHexToIp() {
+            if (document.getElementById('hexInput')) {
+                document.getElementById('hexInput').value = '';
+                document.getElementById('hexToIpResult').innerHTML = '';
+            }
+            clearIpHex();
+        }
+
+        function clearIpToHex() {
+            if (document.getElementById('ipv4Input')) {
+                document.getElementById('ipv4Input').value = '';
+                document.getElementById('ipv4ToHexResult').innerHTML = '';
+            }
+            clearIpHex();
+        }
+
+        function convertHexDecimal() {
+            const input = document.getElementById('hexDecimalInput').value.trim();
+            const resultDiv = document.getElementById('hexDecimalResult');
+            
+            if (!input) {
+                alert('Please enter a hexadecimal or decimal value');
+                return;
+            }
+
+            try {
+                // Detect if input is hexadecimal (contains 0x or a-f characters)
+                const isHex = input.toLowerCase().startsWith('0x') || /[a-f]/i.test(input);
+                
+                if (isHex) {
+                    // Input is Hex - convert to Decimal
+                    const cleanHex = input.toLowerCase().startsWith('0x') ? input.slice(2) : input;
+                    
+                    // Validate hex string
+                    if (!/^[0-9a-f]+$/i.test(cleanHex)) {
+                        throw new Error('Invalid hexadecimal value. Only 0-9 and A-F characters allowed.');
+                    }
+                    
+                    const decimal = parseInt(cleanHex, 16);
+                    
+                    if (isNaN(decimal)) {
+                        throw new Error('Failed to convert hexadecimal to decimal');
+                    }
+
+                    resultDiv.innerHTML = `
+                        <div style="margin-top: 20px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #069494;">
+                            <h4 style="color: #069494; margin-bottom: 15px;">Hex → Decimal Conversion</h4>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                    ${decimal.toLocaleString()}
+                                </div>
+                                <button class="btn" onclick="navigator.clipboard.writeText('${decimal}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                            </div>
+                            <div style="color: #aaa; font-size: 14px; margin-top: 10px;">
+                                <strong>Input:</strong> ${input}<br>
+                                <strong>Hex (normalized):</strong> 0x${cleanHex.toUpperCase()}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Input is Decimal - convert to Hex
+                    const decimal = parseInt(input, 10);
+                    
+                    if (isNaN(decimal)) {
+                        throw new Error('Invalid decimal value. Please enter a valid number.');
+                    }
+                    
+                    if (decimal < 0) {
+                        throw new Error('Negative numbers are not supported.');
+                    }
+
+                    const hexValue = decimal.toString(16).toUpperCase();
+                    const prefixHex = '0x' + hexValue;
+
+                    resultDiv.innerHTML = `
+                        <div style="margin-top: 20px; padding: 20px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #069494;">
+                            <h4 style="color: #069494; margin-bottom: 15px;">Decimal → Hex Conversion</h4>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="color: #aaa; font-size: 14px; margin-bottom: 5px;"><strong>Hexadecimal:</strong></div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                        ${hexValue}
+                                    </div>
+                                    <button class="btn" onclick="navigator.clipboard.writeText('${hexValue}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <div style="color: #aaa; font-size: 14px; margin-bottom: 5px;"><strong>With 0x Prefix:</strong></div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="flex: 1; background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-family: 'Monaco', monospace; font-size: 16px; color: #fff;">
+                                        ${prefixHex}
+                                    </div>
+                                    <button class="btn" onclick="navigator.clipboard.writeText('${prefixHex}').then(() => { this.textContent = '✓'; setTimeout(() => { this.textContent = '📋'; }, 1000); })" style="padding: 15px 20px; background-color: #2d8659; flex-shrink: 0;">📋</button>
+                                </div>
+                            </div>
+                            
+                            <div style="color: #aaa; font-size: 14px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #555;">
+                                <strong>Input:</strong> ${decimal.toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="margin-top: 20px; padding: 15px; background-color: #4a1a1a; border-radius: 8px; border: 1px solid #ff4444; color: #ff6666;">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function clearHexDecimal() {
+            document.getElementById('hexDecimalInput').value = '';
+            document.getElementById('hexDecimalResult').innerHTML = '';
+        }
+
+        // Legacy functions for backwards compatibility
+        function convertHexToDec() {
+            const hexInput = document.getElementById('hexDecInput')?.value.trim() || 
+                             document.getElementById('hexDecimalInput')?.value.trim();
+            if (hexInput) {
+                document.getElementById('hexDecimalInput').value = hexInput;
+                convertHexDecimal();
+            }
+        }
+
+        function convertDecToHex() {
+            const decInput = document.getElementById('decimalInput')?.value.trim() || 
+                             document.getElementById('hexDecimalInput')?.value.trim();
+            if (decInput) {
+                document.getElementById('hexDecimalInput').value = decInput;
+                convertHexDecimal();
+            }
+        }
+
+        function clearHexToDec() {
+            if (document.getElementById('hexDecInput')) {
+                document.getElementById('hexDecInput').value = '';
+                document.getElementById('hexToDecResult').innerHTML = '';
+            }
+            clearHexDecimal();
+        }
+
+        function clearDecToHex() {
+            if (document.getElementById('decimalInput')) {
+                document.getElementById('decimalInput').value = '';
+                document.getElementById('decToHexResult').innerHTML = '';
+            }
+            clearHexDecimal();
+        }
+
+        // Time/Date Calculator Functions
+</script>
